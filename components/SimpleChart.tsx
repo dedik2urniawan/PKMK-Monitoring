@@ -52,7 +52,7 @@ export default function SimpleChart({
   const xTicks = 5;
   const yTicks = 5;
 
-  const grid = [] as JSX.Element[];
+  const grid: React.ReactNode[] = [];
   for (let i = 0; i <= xTicks; i++) {
     const t = i / xTicks;
     const x = (padding.left ?? 0) + t * W;
