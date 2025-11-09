@@ -29,7 +29,14 @@ export function SheetTrigger({ className = "", children }: { className?: string;
   );
 }
 
-export function SheetContent({ side = "left", className = "", children }: { side?: "left" | "right"; className?: string; children: React.ReactNode }) {
+type SheetContentProps = React.HTMLAttributes<HTMLDivElement> & {
+  side?: "left" | "right";
+  className?: string;
+  style?: React.CSSProperties;
+  children: React.ReactNode;
+};
+
+export function SheetContent({ side = "left", className = "", style, children, ...rest }: SheetContentProps) {
   const ctx = React.useContext(SheetCtx)!;
   if (!ctx.open) return null;
   return (
@@ -37,7 +44,9 @@ export function SheetContent({ side = "left", className = "", children }: { side
       <div className="absolute inset-0 bg-black/30" />
       <div
         className={`absolute top-0 ${side === "left" ? "left-0" : "right-0"} h-full w-72 bg-white border-r border-[var(--border)] p-0 ${className}`}
+        style={style}
         onClick={(e) => e.stopPropagation()}
+        {...rest}
       >
         {children}
       </div>
