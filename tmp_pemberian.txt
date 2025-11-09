@@ -1,0 +1,159 @@
+"use client";
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "next/navigation";
+
+type Kohort = { id: string; periode_mulai?: string } | null;
+
+export default function NewPemberian() {
+  const params = useParams<{ balitaId: string }>();
+  const [kohort, setKohort] = useState<Kohort>(null);
+  const [balitaName, setBalitaName] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [form, setForm] = useState({ minggu_ke: 1, tanggal: "", jumlah_unit: "", jenis_formulasi: "", keterangan: "" });
+
+  useEffect(() => {
+    (async () => {
+      const r = await fetch(`/api/kohort/by-balita?balita_id=${params.balitaId}`);
+      const d = await r.json();
+      setKohort(d.item ?? null);
+    })();
+  }, [params.balitaId]);
+
+  useEffect(() => {
+    (async () => {
+      const rb = await fetch(`/api/monitoring/balita?balita_id=${params.balitaId}`);
+      const db = await rb.json();
+      setBalitaName((db.items?.[0]?.nama_balita) || "");
+    })();
+  }, [params.balitaId]);
+
+  useEffect(() => {
+    if (!kohort) return;
+    (async () => {
+      const rh = await fetch(`/api/monitoring/pemberian?kohort_id=${kohort.id}`);
+      const dh = await rh.json();
+      setHistory(dh.items || []);
+    })();
+  }, [kohort]);
+
+  const errors = useMemo(() => {
+    const e: Record<string, string> = {};
+    if (!(form.minggu_ke >= 1 && form.minggu_ke <= 12)) e.minggu_ke = "Minggu ke harus 1–12";
+    if (!form.tanggal) e.tanggal = "Wajib diisi";
+    if (!form.jumlah_unit || Number(form.jumlah_unit) <= 0) e.jumlah_unit = "Jumlah harus > 0";
+    if (!form.jenis_formulasi) e.jenis_formulasi = "Wajib diisi";
+    return e;
+  }, [form]);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!kohort) { setMsg("Balita belum memiliki kohort."); return; }
+    setSaving(true); setMsg(null);
+    const payload = {
+      kohort_id: kohort.id,
+      minggu_ke: Number(form.minggu_ke),
+      tanggal: form.tanggal,
+      jumlah_unit: Number(form.jumlah_unit),
+      jenis_formulasi: form.jenis_formulasi,
+      keterangan: form.keterangan || undefined,
+    };
+    const res = await fetch("/api/monitoring/pemberian", { method: editingId?"PATCH":"POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(editingId? { id: editingId, ...payload }: payload)});
+    setSaving(false);
+    if (!res.ok) return setMsg(await res.text());
+    setMsg("Tersimpan.");
+    try {
+      const rh = await fetch(`/api/monitoring/pemberian?kohort_id=${kohort.id}`);
+      const dh = await rh.json();
+      setHistory(dh.items || []);
+      setEditingId(null);
+    } catch {}
+  }
+
+  return (
+    <div className="max-w-3xl">
+      <h1 className="text-2xl font-semibold mb-2">Tambah Monitoring: PKMK Pemberian</h1>
+      {(balitaName || kohort) && (
+        <p className="mb-4 text-sm text-[var(--muted)]">
+          {balitaName ? <><span className="font-medium">{balitaName}</span> — </> : null}
+          {kohort ? <>Kohort mulai {new Date(kohort.periode_mulai as any).toLocaleDateString('id-ID')}</> : "Kohort belum dimulai"}
+        </p>
+      )}
+      {msg && <div className="mb-3 text-sm p-3 rounded bg-blue-50">{msg}</div>}
+      <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div><label className="text-sm">Minggu Ke*</label>
+          <input type="number" min={1} max={12} value={form.minggu_ke} onChange={(e)=>setForm({...form, minggu_ke: Number(e.target.value)})} className="input" required />
+          {errors.minggu_ke && <p className="text-xs text-red-600 mt-1">{errors.minggu_ke}</p>}
+        </div>
+        <div><label className="text-sm">Tanggal*</label>
+          <input type="date" value={form.tanggal} onChange={(e)=>setForm({...form, tanggal: e.target.value})} className="input" required />
+          {errors.tanggal && <p className="text-xs text-red-600 mt-1">{errors.tanggal}</p>}
+        </div>
+        <div><label className="text-sm">Jumlah Unit*</label>
+          <input type="number" value={form.jumlah_unit} onChange={(e)=>setForm({...form, jumlah_unit: e.target.value})} className="input" required />
+          {errors.jumlah_unit && <p className="text-xs text-red-600 mt-1">{errors.jumlah_unit}</p>}
+        </div>
+        <div><label className="text-sm">Jenis Formulasi*</label>
+          <input value={form.jenis_formulasi} onChange={(e)=>setForm({...form, jenis_formulasi: e.target.value})} className="input" required />
+          {errors.jenis_formulasi && <p className="text-xs text-red-600 mt-1">{errors.jenis_formulasi}</p>}
+        </div>
+        <div className="md:col-span-2"><label className="text-sm">Keterangan</label>
+          <input value={form.keterangan} onChange={(e)=>setForm({...form, keterangan: e.target.value})} className="input" /></div>
+        <div className="md:col-span-2 flex items-center gap-2">
+          <button disabled={saving || Object.keys(errors).length>0} className="px-4 py-2 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white rounded">{saving?"Menyimpan...": editingId?"Perbarui":"Simpan"}</button>
+          {editingId && (
+            <button type="button" onClick={()=>{setEditingId(null); setForm({ minggu_ke:1, tanggal:"", jumlah_unit:"", jenis_formulasi:"", keterangan:""}); }} className="px-3 py-2 border rounded">Batal</button>
+          )}
+        </div>
+      </form>
+
+      {/* Riwayat pemberian */}
+      <div className="mt-6">
+        <h2 className="text-lg font-semibold mb-2">Riwayat Pemberian</h2>
+        <div className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+          <table className="w-full text-sm">
+            <thead className="bg-[var(--background)]">
+              <tr>
+                <th className="border border-[var(--border)] p-2 text-left text-[var(--muted)]">Minggu</th>
+                <th className="border border-[var(--border)] p-2 text-left text-[var(--muted)]">Tanggal</th>
+                <th className="border border-[var(--border)] p-2 text-left text-[var(--muted)]">Jumlah Unit</th>
+                <th className="border border-[var(--border)] p-2 text-left text-[var(--muted)]">Formulasi</th>
+                <th className="border border-[var(--border)] p-2 text-left text-[var(--muted)]">Keterangan</th>
+                <th className="border border-[var(--border)] p-2 text-left text-[var(--muted)]">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.map((h:any) => (
+                <tr key={h.id} className="even:bg-gray-50/60">
+                  <td className="border border-[var(--border)] p-2">{h.minggu_ke}</td>
+                  <td className="border border-[var(--border)] p-2">{new Date(h.tanggal).toLocaleDateString('id-ID')}</td>
+                  <td className="border border-[var(--border)] p-2">{h.jumlah_unit}</td>
+                  <td className="border border-[var(--border)] p-2">{h.jenis_formulasi}</td>
+                  <td className="border border-[var(--border)] p-2">{h.keterangan ?? '-'}</td>
+                  <td className="border border-[var(--border)] p-2">
+                    <div className="flex items-center gap-2">
+                      <button className="text-[var(--primary-700)] underline" onClick={() => { setEditingId(h.id); setForm({ minggu_ke: h.minggu_ke, tanggal: h.tanggal.slice(0,10), jumlah_unit: String(h.jumlah_unit), jenis_formulasi: h.jenis_formulasi, keterangan: h.keterangan ?? "" }); }}>Edit</button>
+                      <button className="text-red-600 underline" onClick={async ()=>{ if(!confirm('Hapus entri ini?')) return; await fetch('/api/monitoring/pemberian', { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: h.id }) }); const rh = await fetch(`/api/monitoring/pemberian?kohort_id=${kohort!.id}`); const dh = await rh.json(); setHistory(dh.items||[]); }}>Hapus</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {history.length === 0 && (
+                <tr>
+                  <td className="border border-[var(--border)] p-2 text-center text-[var(--muted)]" colSpan={6}>
+                    Belum ada data pemberian.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <style jsx>{`.input{width:100%;border:1px solid #d1d5db;border-radius:.5rem;padding:.5rem .75rem;}`}</style>
+    </div>
+  );
+}
+

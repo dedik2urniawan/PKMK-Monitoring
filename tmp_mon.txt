@@ -1,0 +1,151 @@
+"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { RulerIcon, UtensilsIcon, HandIcon } from "@/components/Icons";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+type Balita = { id: string; nik: string | null; nama_balita: string; desa_kel: string | null; puskesmas_id: string };
+type Pkm = { id: string; nama: string };
+type Desa = { id: string; desa_kel: string };
+
+export default function MonitoringIndex() {
+  const [kecList, setKecList] = useState<string[]>([]);
+  const [pkmList, setPkmList] = useState<Pkm[]>([]);
+  const [desaList, setDesaList] = useState<Desa[]>([]);
+
+  const [kec, setKec] = useState("");
+  const [puskesmasId, setPuskesmasId] = useState("");
+  const [desa, setDesa] = useState("");
+  const [nik, setNik] = useState("");
+  const [items, setItems] = useState<Balita[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/ref/kecamatan");
+      const data = await res.json();
+      setKecList(data.items || []);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!kec) return;
+    (async () => {
+      const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(kec)}`);
+      const p = await rp.json();
+      setPkmList((p.items || []).map((r: any) => ({ id: r.id, nama: r.nama })));
+      setDesaList([]);
+      setDesa("");
+      setPuskesmasId("");
+    })();
+  }, [kec]);
+
+  useEffect(() => {
+    if (!puskesmasId) return;
+    (async () => {
+      const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(puskesmasId)}`);
+      const d = await rd.json();
+      setDesaList((d.items || []).map((r: any) => ({ id: r.id, desa_kel: r.desa_kel })));
+    })();
+  }, [puskesmasId]);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (puskesmasId) params.set("puskesmas_id", puskesmasId);
+    if (desa) params.set("desa_kel", desa);
+    if (nik) params.set("nik", nik);
+    const res = await fetch(`/api/monitoring/balita?${params.toString()}`);
+    const data = await res.json();
+    setItems(data.items || []);
+  }
+
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold mb-4">Monitoring PKMK</h1>
+      <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+        <select className="input" value={kec} onChange={(e) => setKec(e.target.value)}>
+          <option value="">-- Kecamatan --</option>
+          {kecList.map((k) => (
+            <option key={k} value={k}>
+              {k}
+            </option>
+          ))}
+        </select>
+        <select className="input" value={puskesmasId} onChange={(e) => setPuskesmasId(e.target.value)}>
+          <option value="">-- Puskesmas --</option>
+          {pkmList.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nama}
+            </option>
+          ))}
+        </select>
+        <select className="input" value={desa} onChange={(e) => setDesa(e.target.value)}>
+          <option value="">-- Desa/Kel --</option>
+          {desaList.map((d) => (
+            <option key={d.id} value={d.desa_kel}>
+              {d.desa_kel}
+            </option>
+          ))}
+        </select>
+        <input className="input" placeholder="NIK" value={nik} onChange={(e) => setNik(e.target.value)} />
+        <div className="md:col-span-4">
+          <button className="px-4 py-2 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white rounded">Submit</button>
+        </div>
+      </form>
+
+      <div className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+        <Table>
+          <TableHeader className="bg-[var(--background)]">
+            <TableRow>
+              <TableHead>NIK</TableHead>
+              <TableHead>Nama</TableHead>
+              <TableHead>Desa/Kel</TableHead>
+              <TableHead>Aksi</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.map((b) => (
+              <TableRow key={b.id}>
+                <TableCell>{b.nik ?? "-"}</TableCell>
+                <TableCell>{b.nama_balita}</TableCell>
+                <TableCell>{b.desa_kel ?? "-"}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Link className="inline-flex items-center gap-1.5 rounded border border-[var(--border)] bg-white hover:bg-gray-50 px-2 py-1" href={`/monitoring/${b.id}/antropometri/new`} title="Antropometri" aria-label="Antropometri">
+                      <RulerIcon width={16} height={16} />
+                      <span>Antropometri</span>
+                    </Link>
+                    <Link className="inline-flex items-center gap-1.5 rounded border border-[var(--border)] bg-white hover:bg-gray-50 px-2 py-1" href={`/monitoring/${b.id}/konsumsi/new`} title="Konsumsi" aria-label="Konsumsi">
+                      <UtensilsIcon width={16} height={16} />
+                      <span>Konsumsi</span>
+                    </Link>
+                    <Link className="inline-flex items-center gap-1.5 rounded border border-[var(--border)] bg-white hover:bg-gray-50 px-2 py-1" href={`/monitoring/${b.id}/pemberian/new`} title="Pemberian" aria-label="Pemberian">
+                      <HandIcon width={16} height={16} />
+                      <span>Pemberian</span>
+                    </Link>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {items.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-[var(--muted-foreground)]">
+                  Belum ada data hasil filter.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
+
