@@ -4,8 +4,19 @@ import * as React from "react";
 type SheetContextType = { open: boolean; setOpen: (v: boolean) => void };
 const SheetCtx = React.createContext<SheetContextType | null>(null);
 
-export function Sheet({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = React.useState(false);
+type SheetProps = {
+  children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
+export function Sheet({ children, open: openProp, onOpenChange }: SheetProps) {
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = (v: boolean) => {
+    if (onOpenChange) onOpenChange(v);
+    else setInternalOpen(v);
+  };
   return <SheetCtx.Provider value={{ open, setOpen }}>{children}</SheetCtx.Provider>;
 }
 
