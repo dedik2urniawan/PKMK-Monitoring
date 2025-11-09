@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabase } from "@/lib/supabase/client";
 
 type FormVals = {
   nik?: string;
@@ -85,6 +85,7 @@ export default function NewBalitaPage() {
   useEffect(() => {
     (async () => {
       try {
+        const supabase = getSupabase();
         const { data } = await supabase.auth.getUser();
         const meta: any = data.user?.user_metadata || {};
         if (meta.puskesmas_id && !values.puskesmas_id) {

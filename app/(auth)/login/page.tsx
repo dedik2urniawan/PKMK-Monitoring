@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabase } from "@/lib/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ function LoginForm() {
     e.preventDefault();
     setErr(null);
     setLoading(true);
+    const supabase = getSupabase();
     const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
     setLoading(false);
     if (error) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabase } from "@/lib/supabase/client";
 
 export default function LogoutButton() {
   const [loading, setLoading] = useState(false);
@@ -9,6 +9,7 @@ export default function LogoutButton() {
   async function onLogout() {
     try {
       setLoading(true);
+      const supabase = getSupabase();
       await supabase.auth.signOut();
     } finally {
       setLoading(false);
