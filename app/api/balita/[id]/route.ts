@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAppUser } from "@/lib/appUser";
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
 
-  const id = params.id;
+  const { id } = await params;
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
   if (!isUuid) return new Response("Invalid id", { status: 400 });
 
@@ -17,13 +17,14 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   return NextResponse.json({ ok: true });
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const appUser = await getAppUser();
-  const id = decodeURIComponent(params.id || '').trim();
+  const { id: pid } = await params;
+  const id = decodeURIComponent(pid || '').trim();
   if (!id) return new Response("Invalid id", { status: 400 });
 
   const body = await req.json().catch(() => ({}));
