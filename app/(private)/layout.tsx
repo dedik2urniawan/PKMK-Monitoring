@@ -7,6 +7,7 @@ import IdleGuard from "@/components/IdleGuard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+export const runtime = "nodejs";
 
 export default async function PrivateLayout({ children }: { children: React.ReactNode }) {
   // Auth gate for all /(private) pages

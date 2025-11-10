@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabase } from "@/lib/supabase/client";
 
 // Client-side idle guard with warning dialog before auto sign-out.
 // Default idle = 5 minutes, warning = 30 seconds before logout.
@@ -18,6 +18,7 @@ export default function IdleGuard({ ms, warnMs }: { ms?: number; warnMs?: number
 
   async function doLogout() {
     try {
+      const supabase = getSupabase();
       await supabase.auth.signOut();
     } finally {
       window.location.href = "/login";
@@ -105,4 +106,3 @@ export default function IdleGuard({ ms, warnMs }: { ms?: number; warnMs?: number
     </div>
   );
 }
-
