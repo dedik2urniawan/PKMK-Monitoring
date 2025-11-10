@@ -67,6 +67,7 @@ export default function NewKohort() {
     const res = await fetch("/api/kohort", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ balita_id: selected, periode_mulai: start }),
     });
     if (!res.ok) return alert(await res.text());
