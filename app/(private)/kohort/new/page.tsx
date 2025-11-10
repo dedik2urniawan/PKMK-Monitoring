@@ -78,7 +78,7 @@ export default function NewKohort() {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeader },
       credentials: "include",
-      body: JSON.stringify({ balita_id: selected, periode_mulai: start }),
+      body: JSON.stringify({ balita_id: selected, periode_mulai: start, access_token: (authHeader.Authorization||'').replace('Bearer ','') || undefined }),
     });
     if (!res.ok) return alert(await res.text());
     alert("Kohort dimulai!");

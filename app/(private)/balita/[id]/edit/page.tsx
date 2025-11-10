@@ -101,7 +101,8 @@ export default function EditBalitaPage() {
       const token = data.session?.access_token;
       if (token) authHeader = { Authorization: `Bearer ${token}` };
     } catch {}
-    const res = await fetch(`/api/balita/update`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader }, credentials: 'include', body: JSON.stringify({ id: params.id, ...payload }) });
+    const token = (authHeader.Authorization||'').replace('Bearer ','') || undefined;
+    const res = await fetch(`/api/balita/update`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader }, credentials: 'include', body: JSON.stringify({ id: params.id, access_token: token, ...payload }) });
     setSaving(false);
     if (!res.ok) { const t = await res.text(); setMsg(t); toast.error(t); return; }
     toast.success('Perubahan disimpan');

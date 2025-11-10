@@ -5,13 +5,16 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  // Ambil user via Authorization header (Bearer) jika ada, fallback ke cookie
+  const body = await req.json().catch(() => ({} as any));
+  // Ambil user via Authorization header (Bearer) atau body.access_token, fallback cookie
   let user: any = null;
+  let bearer: string | null = null;
   const authHeader = req.headers.get('authorization');
-  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
-    const token = authHeader.slice(7).trim();
+  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) bearer = authHeader.slice(7).trim();
+  if (!bearer && body?.access_token) bearer = String(body.access_token);
+  if (bearer) {
     try {
-      const { data, error } = await supabase.auth.getUser(token);
+      const { data, error } = await supabase.auth.getUser(bearer);
       if (!error) user = data.user;
     } catch {}
   }
@@ -24,7 +27,7 @@ export async function POST(req: NextRequest) {
   const meta = (user.user_metadata || {}) as any;
   let puskesmas_id: string | null = meta.puskesmas_id ?? null;
 
-  const { balita_id, periode_mulai, puskesmas_id: bodyPkm } = await req.json();
+  const { balita_id, periode_mulai, puskesmas_id: bodyPkm } = body;
   if (!balita_id || !periode_mulai) return new Response("Data kurang", { status: 400 });
 
   // Fallback body

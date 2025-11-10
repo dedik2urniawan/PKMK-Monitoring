@@ -6,13 +6,16 @@ import { getAppUser } from "@/lib/appUser";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  // Terima Bearer token jika dikirim klien, fallback cookie
+  const body = await req.json().catch(() => ({} as any));
+  // Terima Bearer token dari header atau body.access_token, fallback cookie
   let user: any = null;
+  let bearer: string | null = null;
   const authHeader = req.headers.get('authorization');
-  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
-    const token = authHeader.slice(7).trim();
+  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) bearer = authHeader.slice(7).trim();
+  if (!bearer && body?.access_token) bearer = String(body.access_token);
+  if (bearer) {
     try {
-      const { data, error } = await supabase.auth.getUser(token);
+      const { data, error } = await supabase.auth.getUser(bearer);
       if (!error) user = data.user;
     } catch {}
   }
@@ -23,7 +26,6 @@ export async function POST(req: NextRequest) {
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const appUser = await getAppUser();
-  const body = await req.json().catch(() => ({}));
   const id: string | undefined = body?.id ?? undefined;
   const nik: string | undefined = body?.nik ?? undefined;
   const isUuid = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
