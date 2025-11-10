@@ -22,11 +22,11 @@ export default function NewKohort() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/ref/kecamatan");
+        const res = await fetch("/api/ref/kecamatan", { credentials: 'include' });
         const data = await res.json();
         setKecList(data.items || []);
       } catch {}
-      const r = await fetch("/api/monitoring/balita");
+      const r = await fetch("/api/monitoring/balita", { credentials: 'include' });
       const d = await r.json();
       setBalita(d.items || []);
       setLoading(false);
@@ -36,7 +36,7 @@ export default function NewKohort() {
   useEffect(() => {
     if (!kec) return;
     (async () => {
-      const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(kec)}`);
+      const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(kec)}`, { credentials: 'include' });
       const p = await rp.json();
       setPkmList((p.items || []).map((r: any) => ({ id: r.id, nama: r.nama })));
       setDesaList([]); setDesa(""); setPuskesmasId("");
@@ -46,7 +46,7 @@ export default function NewKohort() {
   useEffect(() => {
     if (!puskesmasId) return;
     (async () => {
-      const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(puskesmasId)}`);
+      const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(puskesmasId)}`, { credentials: 'include' });
       const d = await rd.json();
       setDesaList((d.items || []).map((r: any) => ({ id: r.id, desa_kel: r.desa_kel })));
     })();

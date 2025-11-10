@@ -23,12 +23,23 @@ function LoginForm() {
     setErr(null);
     setLoading(true);
     const supabase = getSupabase();
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
     setLoading(false);
     if (error) {
       setErr(error.message);
       return;
     }
+    try {
+      const session = data.session || (await supabase.auth.getSession()).data.session;
+      if (session?.access_token && session.refresh_token) {
+        await fetch("/api/auth/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ access_token: session.access_token, refresh_token: session.refresh_token }),
+        });
+      }
+    } catch {}
     await new Promise((r) => setTimeout(r, 150));
     const target = searchParams.get("redirectedFrom") || "/dashboard";
     router.replace(target);

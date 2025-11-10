@@ -72,7 +72,7 @@ export default function NewBalitaPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/ref/kecamatan");
+        const res = await fetch("/api/ref/kecamatan", { credentials: 'include' });
         const data = await res.json();
         setKecList(data.items || []);
       } catch (e: any) {
@@ -104,7 +104,7 @@ export default function NewBalitaPage() {
     if (!values.kec) return;
     (async () => {
       try {
-        const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(values.kec || '')}`);
+        const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(values.kec || '')}`, { credentials: 'include' });
         const p = await rp.json();
         setPkmList((p.items || []).map((r: any) => ({ id: r.id, nama: r.nama })));
         setDesaList([]);
@@ -120,7 +120,7 @@ export default function NewBalitaPage() {
     if (!values.puskesmas_id) return;
     (async () => {
       try {
-        const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(values.puskesmas_id || '')}`);
+        const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(values.puskesmas_id || '')}`, { credentials: 'include' });
         const d = await rd.json();
         setDesaList((d.items || []).map((r: any) => ({ id: r.id, desa_kel: r.desa_kel })));
       } catch (e: any) {
