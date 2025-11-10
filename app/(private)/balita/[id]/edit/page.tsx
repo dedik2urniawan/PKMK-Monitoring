@@ -92,7 +92,16 @@ export default function EditBalitaPage() {
       bb_lahir_kg: values.bb_lahir_kg === "" ? undefined : Number(values.bb_lahir_kg),
       tb_lahir_cm: values.tb_lahir_cm === "" ? undefined : Number(values.tb_lahir_cm),
     };
-    const res = await fetch(`/api/balita/update`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: params.id, ...payload }) });
+    // Sertakan token + cookies untuk stabilitas auth di production
+    let authHeader: Record<string,string> = {};
+    try {
+      const { getSupabase } = await import('@/lib/supabase/client');
+      const supabase = getSupabase();
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) authHeader = { Authorization: `Bearer ${token}` };
+    } catch {}
+    const res = await fetch(`/api/balita/update`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader }, credentials: 'include', body: JSON.stringify({ id: params.id, ...payload }) });
     setSaving(false);
     if (!res.ok) { const t = await res.text(); setMsg(t); toast.error(t); return; }
     toast.success('Perubahan disimpan');

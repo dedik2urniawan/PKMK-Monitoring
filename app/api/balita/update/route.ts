@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 import { createClient } from "@/lib/supabase/server";
 import { getAppUser } from "@/lib/appUser";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Terima Bearer token jika dikirim klien, fallback cookie
+  let user: any = null;
+  const authHeader = req.headers.get('authorization');
+  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+    const token = authHeader.slice(7).trim();
+    try {
+      const { data, error } = await supabase.auth.getUser(token);
+      if (!error) user = data.user;
+    } catch {}
+  }
+  if (!user) {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  }
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const appUser = await getAppUser();
@@ -53,4 +68,3 @@ export async function POST(req: NextRequest) {
   if (error) return new Response(error.message, { status: 400 });
   return NextResponse.json({ ok: true });
 }
-
