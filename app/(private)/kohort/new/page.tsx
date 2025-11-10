@@ -64,9 +64,19 @@ export default function NewKohort() {
   }
 
   async function createKohort() {
+    // Sertakan token akses agar server dapat mengidentifikasi user saat cookies tidak terbaca
+    let authHeader: Record<string, string> = {};
+    try {
+      const { getSupabase } = await import('@/lib/supabase/client');
+      const supabase = getSupabase();
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) authHeader = { Authorization: `Bearer ${token}` };
+    } catch {}
+
     const res = await fetch("/api/kohort", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeader },
       credentials: "include",
       body: JSON.stringify({ balita_id: selected, periode_mulai: start }),
     });

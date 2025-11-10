@@ -5,9 +5,20 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Ambil user via Authorization header (Bearer) jika ada, fallback ke cookie
+  let user: any = null;
+  const authHeader = req.headers.get('authorization');
+  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+    const token = authHeader.slice(7).trim();
+    try {
+      const { data, error } = await supabase.auth.getUser(token);
+      if (!error) user = data.user;
+    } catch {}
+  }
+  if (!user) {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  }
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const meta = (user.user_metadata || {}) as any;
