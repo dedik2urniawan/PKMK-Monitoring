@@ -13,12 +13,10 @@ export function middleware(req: NextRequest) {
   // Proteksi halaman privat
   const isProtected = pathname.startsWith("/dashboard") || pathname.startsWith("/balita") || pathname.startsWith("/kohort") || pathname.startsWith("/monitoring");
 
-  // Biarkan request RSC/prefetch lewat agar tidak memicu redirect palsu
-  const isRscPrefetch = req.nextUrl.searchParams.has("_rsc") ||
-    req.headers.get("next-router-prefetch") === "1" ||
-    req.headers.get("purpose") === "prefetch";
+  // Hanya redirect untuk navigasi dokumen penuh, jangan untuk prefetch/RSC/data requests
+  const isNavigation = req.headers.get("sec-fetch-mode") === "navigate" || req.headers.get("sec-fetch-dest") === "document";
 
-  if (isProtected && !hasAuthCookie && !isRscPrefetch) {
+  if (isProtected && !hasAuthCookie && isNavigation) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirectedFrom", pathname);
