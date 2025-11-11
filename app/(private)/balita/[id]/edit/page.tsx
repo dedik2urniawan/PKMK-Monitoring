@@ -98,7 +98,8 @@ export default function EditBalitaPage() {
       const { getSupabase } = await import('@/lib/supabase/client');
       const supabase = getSupabase();
       const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
+      let token = data.session?.access_token;
+      if (!token) { try { token = window.localStorage.getItem('sb:access_token') || undefined as any; } catch {} }
       if (token) authHeader = { Authorization: `Bearer ${token}` };
     } catch {}
     const token = (authHeader.Authorization||'').replace('Bearer ','') || undefined;

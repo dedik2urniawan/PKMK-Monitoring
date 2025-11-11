@@ -38,6 +38,7 @@ function LoginForm() {
           credentials: "include",
           body: JSON.stringify({ access_token: session.access_token, refresh_token: session.refresh_token }),
         });
+        try { window.localStorage.setItem('sb:access_token', session.access_token); } catch {}
       }
     } catch {}
     await new Promise((r) => setTimeout(r, 150));
