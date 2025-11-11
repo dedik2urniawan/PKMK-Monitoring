@@ -4,6 +4,7 @@ import SideNav from "@/components/SideNav";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import IdleGuard from "@/components/IdleGuard";
+import AuthSessionSync from "@/components/AuthSessionSync";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -32,6 +33,8 @@ export default async function PrivateLayout({ children }: { children: React.Reac
       <section className="p-4 md:p-6 bg-[var(--background)]">
         {/* Auto sign-out on 5 minutes idle */}
         <IdleGuard />
+        {/* Sync Supabase session cookie for server APIs */}
+        <AuthSessionSync />
         {children}
       </section>
     </div>
