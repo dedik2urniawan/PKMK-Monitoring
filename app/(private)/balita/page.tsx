@@ -97,7 +97,17 @@ export default function BalitaList() {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch("/api/ref/kecamatan");
+      // Sync server session cookie once on mount to avoid ALL dropdowns
+      try {
+        const { getSupabase } = await import('@/lib/supabase/client');
+        const supabase = getSupabase();
+        const { data } = await supabase.auth.getSession();
+        const s = data.session;
+        if (s?.access_token && s.refresh_token) {
+          await fetch('/api/auth/session', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token }) });
+        }
+      } catch {}
+      const res = await fetch("/api/ref/kecamatan", { credentials: 'include' });
       const data = await res.json();
       setKecList(data.items || []);
     })();
@@ -106,7 +116,7 @@ export default function BalitaList() {
   useEffect(() => {
     if (!kec) return;
     (async () => {
-      const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(kec)}`);
+      const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(kec)}`, { credentials: 'include' });
       const p = await rp.json();
       setPkmList((p.items || []).map((r: any) => ({ id: r.id, nama: r.nama })));
       setDesaList([]);
@@ -118,7 +128,7 @@ export default function BalitaList() {
   useEffect(() => {
     if (!puskesmasId) return;
     (async () => {
-      const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(puskesmasId)}`);
+      const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(puskesmasId)}`, { credentials: 'include' });
       const d = await rd.json();
       setDesaList((d.items || []).map((r: any) => ({ id: r.id, desa_kel: r.desa_kel })));
     })();
@@ -137,7 +147,7 @@ export default function BalitaList() {
     if (nik) params.set("nik", nik);
     params.set('page', String(e ? 1 : page));
     params.set('limit', String(limit));
-    const res = await fetch(`/api/monitoring/balita?${params.toString()}`);
+    const res = await fetch(`/api/monitoring/balita?${params.toString()}`, { credentials: 'include' });
     const data = await res.json();
     setItems(data.items || []);
     setPages(data.pages || 1);
