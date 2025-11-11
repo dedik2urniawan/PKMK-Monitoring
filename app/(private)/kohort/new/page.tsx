@@ -22,6 +22,21 @@ export default function NewKohort() {
   useEffect(() => {
     (async () => {
       try {
+        // Pastikan cookie sesi server terset (sinkron) – penting di Vercel/mobile
+        try {
+          const { getSupabase } = await import('@/lib/supabase/client');
+          const supabase = getSupabase();
+          const { data } = await supabase.auth.getSession();
+          const s = data.session;
+          if (s?.access_token && s.refresh_token) {
+            await fetch('/api/auth/session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token })
+            });
+          }
+        } catch {}
         const res = await fetch("/api/ref/kecamatan", { credentials: 'include' });
         const data = await res.json();
         setKecList(data.items || []);
@@ -57,20 +72,27 @@ export default function NewKohort() {
     const params = new URLSearchParams();
     if (puskesmasId) params.set("puskesmas_id", puskesmasId);
     if (desa) params.set("desa_kel", desa);
-    const r = await fetch(`/api/monitoring/balita?${params.toString()}`);
+    const r = await fetch(`/api/monitoring/balita?${params.toString()}`, { credentials: 'include' });
     const d = await r.json();
     setBalita(d.items || []);
     setSelected("");
   }
 
   async function createKohort() {
-    // Sertakan token akses agar server dapat mengidentifikasi user saat cookies tidak terbaca
+    // Pastikan server session sync; lalu kirim token sebagai header/body jaga-jaga
     let authHeader: Record<string, string> = {};
     try {
       const { getSupabase } = await import('@/lib/supabase/client');
       const supabase = getSupabase();
       const { data } = await supabase.auth.getSession();
       let token = data.session?.access_token;
+      const refresh = data.session?.refresh_token;
+      if (token && refresh) {
+        await fetch('/api/auth/session', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify({ access_token: token, refresh_token: refresh })
+        });
+      }
       if (!token) {
         try { token = window.localStorage.getItem('sb:access_token') || undefined as any; } catch {}
       }

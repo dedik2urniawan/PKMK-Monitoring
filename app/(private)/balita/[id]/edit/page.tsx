@@ -92,13 +92,17 @@ export default function EditBalitaPage() {
       bb_lahir_kg: values.bb_lahir_kg === "" ? undefined : Number(values.bb_lahir_kg),
       tb_lahir_cm: values.tb_lahir_cm === "" ? undefined : Number(values.tb_lahir_cm),
     };
-    // Sertakan token + cookies untuk stabilitas auth di production
+    // Sinkronkan session server dan sertakan token + cookies untuk stabilitas auth di production
     let authHeader: Record<string,string> = {};
     try {
       const { getSupabase } = await import('@/lib/supabase/client');
       const supabase = getSupabase();
       const { data } = await supabase.auth.getSession();
       let token = data.session?.access_token;
+      const refresh = data.session?.refresh_token;
+      if (token && refresh) {
+        await fetch('/api/auth/session', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ access_token: token, refresh_token: refresh }) });
+      }
       if (!token) { try { token = window.localStorage.getItem('sb:access_token') || undefined as any; } catch {} }
       if (token) authHeader = { Authorization: `Bearer ${token}` };
     } catch {}
