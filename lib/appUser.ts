@@ -12,7 +12,7 @@ export type AppUser = {
 export async function getAppUser(): Promise<AppUser | null> {
   const supabase = await createClient()
   try {
-    const hdrs = headers()
+    const hdrs = await headers()
     const auth = hdrs.get('authorization')
     const refresh = hdrs.get('x-refresh-token')
     if (auth && refresh && auth.toLowerCase().startsWith('bearer ')) {
