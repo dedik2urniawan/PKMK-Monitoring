@@ -60,3 +60,11 @@ export async function syncServerSession(access?: string | null, refresh?: string
     return false
   }
 }
+
+export async function buildAuthHeaders() {
+  const { access, refresh } = await getClientTokens()
+  const headers: Record<string, string> = {}
+  if (access) headers['authorization'] = `Bearer ${access}`
+  if (refresh) headers['x-refresh-token'] = refresh
+  return headers
+}
