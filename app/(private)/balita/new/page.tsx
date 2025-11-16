@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase/client";
+import { syncServerSession } from "@/lib/clientSession";
 
 type FormVals = {
   nik?: string;
@@ -72,6 +73,7 @@ export default function NewBalitaPage() {
   useEffect(() => {
     (async () => {
       try {
+        await syncServerSession();
         const res = await fetch("/api/ref/kecamatan", { credentials: 'include' });
         const data = await res.json();
         setKecList(data.items || []);

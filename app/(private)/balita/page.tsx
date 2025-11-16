@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { syncServerSession } from "@/lib/clientSession";
 import BalitaActions from "@/components/BalitaActions";
 import {
   Table,
@@ -97,16 +98,7 @@ export default function BalitaList() {
 
   useEffect(() => {
     (async () => {
-      // Sync server session cookie once on mount to avoid ALL dropdowns
-      try {
-        const { getSupabase } = await import('@/lib/supabase/client');
-        const supabase = getSupabase();
-        const { data } = await supabase.auth.getSession();
-        const s = data.session;
-        if (s?.access_token && s.refresh_token) {
-          await fetch('/api/auth/session', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token }) });
-        }
-      } catch {}
+      await syncServerSession();
       const res = await fetch("/api/ref/kecamatan", { credentials: 'include' });
       const data = await res.json();
       setKecList(data.items || []);

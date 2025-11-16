@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getSupabase } from "@/lib/supabase/client";
+import { clearClientTokens } from "@/lib/clientSession";
 
 export default function LogoutButton() {
   const [loading, setLoading] = useState(false);
@@ -12,6 +13,7 @@ export default function LogoutButton() {
       const supabase = getSupabase();
       await supabase.auth.signOut();
     } finally {
+      clearClientTokens();
       setLoading(false);
       window.location.href = "/login";
     }

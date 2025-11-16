@@ -5,6 +5,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { getSupabase } from "@/lib/supabase/client";
+import { persistClientTokens, syncServerSession } from "@/lib/clientSession";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -31,17 +32,11 @@ function LoginForm() {
     }
     try {
       const session = data.session || (await supabase.auth.getSession()).data.session;
+      persistClientTokens(session?.access_token ?? null, session?.refresh_token ?? null);
       if (session?.access_token && session.refresh_token) {
-        await fetch("/api/auth/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ access_token: session.access_token, refresh_token: session.refresh_token }),
-        });
-        try { window.localStorage.setItem('sb:access_token', session.access_token); } catch {}
+        await syncServerSession(session.access_token, session.refresh_token);
       }
     } catch {}
-    await new Promise((r) => setTimeout(r, 150));
     const target = searchParams.get("redirectedFrom") || "/dashboard";
     if (typeof window !== "undefined") window.location.assign(target);
     else router.replace(target);
