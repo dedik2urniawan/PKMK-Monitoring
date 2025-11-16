@@ -43,7 +43,8 @@ function LoginForm() {
     } catch {}
     await new Promise((r) => setTimeout(r, 150));
     const target = searchParams.get("redirectedFrom") || "/dashboard";
-    router.replace(target);
+    if (typeof window !== "undefined") window.location.assign(target);
+    else router.replace(target);
   }
 
   return (
