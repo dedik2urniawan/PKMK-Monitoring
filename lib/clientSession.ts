@@ -1,5 +1,7 @@
 'use client'
 
+import { getSupabase } from "@/lib/supabase/client";
+
 export function persistClientTokens(access?: string | null, refresh?: string | null) {
   if (typeof window === 'undefined') return
   try {
@@ -44,4 +46,24 @@ export async function syncServerSession(accessToken?: string | null, refreshToke
 
 export async function ensureServerSession() {
   return syncServerSession()
+}
+
+export async function getAuthHeaders() {
+  if (typeof window === 'undefined') return {}
+  try {
+    const supabase = getSupabase()
+    const { data } = await supabase.auth.getSession()
+    let token = data.session?.access_token ?? null
+    let refresh = data.session?.refresh_token ?? null
+    try {
+      if (!token) token = window.localStorage.getItem('sb:access_token')
+      if (!refresh) refresh = window.localStorage.getItem('sb:refresh_token')
+    } catch {}
+    const headers: Record<string, string> = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    if (refresh) headers['x-refresh-token'] = refresh
+    return headers
+  } catch {
+    return {}
+  }
 }

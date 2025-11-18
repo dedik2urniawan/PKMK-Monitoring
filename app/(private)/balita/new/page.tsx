@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase/client";
-import { ensureServerSession } from "@/lib/clientSession";
+import { ensureServerSession, getAuthHeaders } from "@/lib/clientSession";
 
 type FormVals = {
   nik?: string;
@@ -74,7 +74,8 @@ export default function NewBalitaPage() {
     (async () => {
       try {
         await ensureServerSession();
-        const res = await fetch("/api/ref/kecamatan", { credentials: "include" });
+        const authHeaders = await getAuthHeaders();
+        const res = await fetch("/api/ref/kecamatan", { credentials: "include", headers: authHeaders });
         const data = await res.json();
         setKecList(data.items || []);
       } catch (e: any) {
@@ -107,7 +108,8 @@ export default function NewBalitaPage() {
     (async () => {
       try {
         await ensureServerSession();
-        const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(values.kec || '')}`, { credentials: "include" });
+        const authHeaders = await getAuthHeaders();
+        const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(values.kec || '')}`, { credentials: "include", headers: authHeaders });
         const p = await rp.json();
         setPkmList((p.items || []).map((r: any) => ({ id: r.id, nama: r.nama })));
         setDesaList([]);
@@ -124,7 +126,8 @@ export default function NewBalitaPage() {
     (async () => {
       try {
         await ensureServerSession();
-        const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(values.puskesmas_id || '')}`, { credentials: "include" });
+        const authHeaders = await getAuthHeaders();
+        const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(values.puskesmas_id || '')}`, { credentials: "include", headers: authHeaders });
         const d = await rd.json();
         setDesaList((d.items || []).map((r: any) => ({ id: r.id, desa_kel: r.desa_kel })));
       } catch (e: any) {
@@ -143,10 +146,12 @@ export default function NewBalitaPage() {
       tb_lahir_cm: values.tb_lahir_cm === "" ? undefined : Number(values.tb_lahir_cm),
       puskesmas_id: !values.puskesmas_id ? undefined : values.puskesmas_id,
     };
+    await ensureServerSession();
+    const authHeaders = await getAuthHeaders();
     const res = await fetch("/api/balita", {
       method: "POST",
       body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
     });
     setSaving(false);
     if (!res.ok) {

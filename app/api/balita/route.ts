@@ -17,11 +17,22 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-    error: uerr,
-  } = await supabase.auth.getUser();
-  if (uerr || !user) return new Response("Unauthorized", { status: 401 });
+  let user: any = null;
+  const authHeader = req.headers.get('authorization');
+  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+    const token = authHeader.slice(7).trim();
+    if (token) {
+      try {
+        const { data, error } = await supabase.auth.getUser(token);
+        if (!error) user = data.user;
+      } catch {}
+    }
+  }
+  if (!user) {
+    const { data: getUserData } = await supabase.auth.getUser();
+    user = getUserData.user;
+  }
+  if (!user) return new Response("Unauthorized", { status: 401 });
 
   const meta = (user.user_metadata || {}) as any;
   let puskesmas_id = meta.puskesmas_id ?? null;
