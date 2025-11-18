@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ensureServerSession } from "@/lib/clientSession";
 
 type FormVals = {
   nik?: string;
@@ -45,8 +46,9 @@ export default function EditBalitaPage() {
   useEffect(() => {
     (async () => {
       try {
+        await ensureServerSession();
         const base = (typeof window !== 'undefined' ? window.location.origin : '') || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const res = await fetch(`${base}/api/balita/detail?id=${encodeURIComponent(params.id)}`, { cache: 'no-store' });
+        const res = await fetch(`${base}/api/balita/detail?id=${encodeURIComponent(params.id)}`, { cache: 'no-store', credentials: 'include' });
         if (!res.ok) throw new Error(await res.text());
         const j = await res.json();
         const d = j.item;
@@ -92,22 +94,8 @@ export default function EditBalitaPage() {
       bb_lahir_kg: values.bb_lahir_kg === "" ? undefined : Number(values.bb_lahir_kg),
       tb_lahir_cm: values.tb_lahir_cm === "" ? undefined : Number(values.tb_lahir_cm),
     };
-    // Sinkronkan session server dan sertakan token + cookies untuk stabilitas auth di production
-    let authHeader: Record<string,string> = {};
-    try {
-      const { getSupabase } = await import('@/lib/supabase/client');
-      const supabase = getSupabase();
-      const { data } = await supabase.auth.getSession();
-      let token = data.session?.access_token;
-      const refresh = data.session?.refresh_token;
-      if (token && refresh) {
-        await fetch('/api/auth/session', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ access_token: token, refresh_token: refresh }) });
-      }
-      if (!token) { try { token = window.localStorage.getItem('sb:access_token') || undefined as any; } catch {} }
-      if (token) authHeader = { Authorization: `Bearer ${token}` };
-    } catch {}
-    const token = (authHeader.Authorization||'').replace('Bearer ','') || undefined;
-    const res = await fetch(`/api/balita/update`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader }, credentials: 'include', body: JSON.stringify({ id: params.id, access_token: token, ...payload }) });
+    await ensureServerSession();
+    const res = await fetch(`/api/balita/update`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ id: params.id, ...payload }) });
     setSaving(false);
     if (!res.ok) { const t = await res.text(); setMsg(t); toast.error(t); return; }
     toast.success('Perubahan disimpan');

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { ensureServerSession } from "@/lib/clientSession";
 
 type Balita = { id: string; nama_balita: string };
 type Pkm = { id: string; nama: string };
@@ -22,21 +23,7 @@ export default function NewKohort() {
   useEffect(() => {
     (async () => {
       try {
-        // Pastikan cookie sesi server terset (sinkron) – penting di Vercel/mobile
-        try {
-          const { getSupabase } = await import('@/lib/supabase/client');
-          const supabase = getSupabase();
-          const { data } = await supabase.auth.getSession();
-          const s = data.session;
-          if (s?.access_token && s.refresh_token) {
-            await fetch('/api/auth/session', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token })
-            });
-          }
-        } catch {}
+        await ensureServerSession();
         const res = await fetch("/api/ref/kecamatan", { credentials: 'include' });
         const data = await res.json();
         setKecList(data.items || []);
@@ -51,6 +38,7 @@ export default function NewKohort() {
   useEffect(() => {
     if (!kec) return;
     (async () => {
+      await ensureServerSession();
       const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(kec)}`, { credentials: 'include' });
       const p = await rp.json();
       setPkmList((p.items || []).map((r: any) => ({ id: r.id, nama: r.nama })));
@@ -61,6 +49,7 @@ export default function NewKohort() {
   useEffect(() => {
     if (!puskesmasId) return;
     (async () => {
+      await ensureServerSession();
       const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(puskesmasId)}`, { credentials: 'include' });
       const d = await rd.json();
       setDesaList((d.items || []).map((r: any) => ({ id: r.id, desa_kel: r.desa_kel })));
@@ -79,31 +68,12 @@ export default function NewKohort() {
   }
 
   async function createKohort() {
-    // Pastikan server session sync; lalu kirim token sebagai header/body jaga-jaga
-    let authHeader: Record<string, string> = {};
-    try {
-      const { getSupabase } = await import('@/lib/supabase/client');
-      const supabase = getSupabase();
-      const { data } = await supabase.auth.getSession();
-      let token = data.session?.access_token;
-      const refresh = data.session?.refresh_token;
-      if (token && refresh) {
-        await fetch('/api/auth/session', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-          body: JSON.stringify({ access_token: token, refresh_token: refresh })
-        });
-      }
-      if (!token) {
-        try { token = window.localStorage.getItem('sb:access_token') || undefined as any; } catch {}
-      }
-      if (token) authHeader = { Authorization: `Bearer ${token}` };
-    } catch {}
-
+    await ensureServerSession();
     const res = await fetch("/api/kohort", {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeader },
+      headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ balita_id: selected, periode_mulai: start, access_token: (authHeader.Authorization||'').replace('Bearer ','') || undefined }),
+      body: JSON.stringify({ balita_id: selected, periode_mulai: start }),
     });
     if (!res.ok) return alert(await res.text());
     alert("Kohort dimulai!");

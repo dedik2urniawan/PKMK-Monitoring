@@ -16,42 +16,23 @@ export function clearClientTokens() {
   } catch {}
 }
 
-export async function getClientTokens(): Promise<{ access: string | null; refresh: string | null }> {
-  let access: string | null = null
-  let refresh: string | null = null
-  if (typeof window === 'undefined') return { access, refresh }
+export async function syncServerSession(accessToken?: string | null, refreshToken?: string | null) {
+  if (typeof window === 'undefined') return false
   try {
     const { getSupabase } = await import('@/lib/supabase/client')
     const supabase = getSupabase()
-    const { data } = await supabase.auth.getSession()
-    access = data.session?.access_token ?? null
-    refresh = data.session?.refresh_token ?? null
-  } catch {}
-  try {
-    if (!access) access = window.localStorage.getItem('sb:access_token')
-    if (!refresh) refresh = window.localStorage.getItem('sb:refresh_token')
-  } catch {}
-  return { access, refresh }
-}
-
-export async function syncServerSession(access?: string | null, refresh?: string | null) {
-  if (typeof window === 'undefined') return false
-  let acc = access
-  let ref = refresh
-  if (!acc || !ref) {
-    const stored = await getClientTokens()
-    if (!acc) acc = stored.access
-    if (!ref) ref = stored.refresh
-  }
-  if (!acc || !ref) return false
-  try {
-    const key = `sb:synced:${acc.slice(0, 16)}`
+    let session = (await supabase.auth.getSession()).data.session
+    if (accessToken && refreshToken && (!session?.access_token || !session.refresh_token)) {
+      session = { access_token: accessToken, refresh_token: refreshToken } as any
+    }
+    if (!session?.access_token || !session.refresh_token) return false
+    const key = `sb:synced:${session.access_token.slice(0, 16)}`
     if (sessionStorage.getItem(key)) return true
     const res = await fetch('/api/auth/session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ access_token: acc, refresh_token: ref }),
+      body: JSON.stringify({ access_token: session.access_token, refresh_token: session.refresh_token }),
     })
     if (!res.ok) return false
     sessionStorage.setItem(key, '1')
@@ -61,10 +42,6 @@ export async function syncServerSession(access?: string | null, refresh?: string
   }
 }
 
-export async function buildAuthHeaders() {
-  const { access, refresh } = await getClientTokens()
-  const headers: Record<string, string> = {}
-  if (access) headers['authorization'] = `Bearer ${access}`
-  if (refresh) headers['x-refresh-token'] = refresh
-  return headers
+export async function ensureServerSession() {
+  return syncServerSession()
 }
