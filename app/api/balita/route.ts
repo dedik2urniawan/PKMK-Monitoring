@@ -16,23 +16,17 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-
-  let user: any = null;
+  // Set session dari header jika ada
   const authHeader = req.headers.get('authorization');
-  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+  const refresh = req.headers.get('x-refresh-token');
+  if (authHeader && refresh && authHeader.toLowerCase().startsWith('bearer ')) {
     const token = authHeader.slice(7).trim();
     if (token) {
-      try {
-        const { data, error } = await supabase.auth.getUser(token);
-        if (!error) user = data.user;
-      } catch {}
+      await supabase.auth.setSession({ access_token: token, refresh_token: refresh });
     }
   }
-  if (!user) {
-    const { data: getUserData } = await supabase.auth.getUser();
-    user = getUserData.user;
-  }
-  if (!user) return new Response("Unauthorized", { status: 401 });
+  const { data: { user }, error: uerr } = await supabase.auth.getUser();
+  if (uerr || !user) return new Response("Unauthorized", { status: 401 });
 
   const meta = (user.user_metadata || {}) as any;
   let puskesmas_id = meta.puskesmas_id ?? null;

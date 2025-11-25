@@ -7,21 +7,16 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const body = await req.json().catch(() => ({} as any));
   // Ambil user via Authorization header (Bearer), fallback cookie
-  let user: any = null;
-  let bearer: string | null = null;
   const authHeader = req.headers.get('authorization');
-  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) bearer = authHeader.slice(7).trim();
-  if (bearer) {
-    try {
-      const { data, error } = await supabase.auth.getUser(bearer);
-      if (!error) user = data.user;
-    } catch {}
+  const refresh = req.headers.get('x-refresh-token');
+  if (authHeader && refresh && authHeader.toLowerCase().startsWith('bearer ')) {
+    const token = authHeader.slice(7).trim();
+    if (token) {
+      await supabase.auth.setSession({ access_token: token, refresh_token: refresh });
+    }
   }
-  if (!user) {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
-  }
-  if (!user) return new Response("Unauthorized", { status: 401 });
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return new Response("Unauthorized", { status: 401 });
 
   const meta = (user.user_metadata || {}) as any;
   let puskesmas_id: string | null = meta.puskesmas_id ?? null;

@@ -1,5 +1,6 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
+import { headers } from 'next/headers'
 
 export type AppUser = {
   id: string
@@ -10,6 +11,18 @@ export type AppUser = {
 
 export async function getAppUser(): Promise<AppUser | null> {
   const supabase = await createClient()
+  // Jika ada Authorization/x-refresh-token di header, set session dulu
+  try {
+    const hdrs = await headers()
+    const authHeader = hdrs.get('authorization')
+    const refresh = hdrs.get('x-refresh-token')
+    if (authHeader && refresh && authHeader.toLowerCase().startsWith('bearer ')) {
+      const token = authHeader.slice(7).trim()
+      if (token && refresh) {
+        await supabase.auth.setSession({ access_token: token, refresh_token: refresh })
+      }
+    }
+  } catch {}
   const { data: auth } = await supabase.auth.getUser()
   const user = auth.user
   if (!user) return null
