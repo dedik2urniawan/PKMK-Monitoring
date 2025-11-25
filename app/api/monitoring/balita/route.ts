@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAppUser } from "@/lib/appUser";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
   const puskesmas_id = req.nextUrl.searchParams.get("puskesmas_id");
   const desa_kel = req.nextUrl.searchParams.get("desa_kel");
   const nik = req.nextUrl.searchParams.get("nik");
   const balita_id = req.nextUrl.searchParams.get("balita_id");
+  const kec = req.nextUrl.searchParams.get("kec") || req.nextUrl.searchParams.get("kecamatan");
   const page = Number(req.nextUrl.searchParams.get("page") || "1");
   const limit = Math.max(1, Number(req.nextUrl.searchParams.get("limit") || "10"));
 
@@ -25,6 +29,7 @@ export async function GET(req: NextRequest) {
   } else if (puskesmas_id) {
     qFilter = qFilter.eq('puskesmas_id', puskesmas_id); qData = qData.eq('puskesmas_id', puskesmas_id)
   }
+  if (kec) { qFilter = qFilter.eq("kec", kec); qData = qData.eq("kec", kec); }
   if (desa_kel) { qFilter = qFilter.eq("desa_kel", desa_kel); qData = qData.eq("desa_kel", desa_kel); }
   if (nik) { qFilter = qFilter.ilike("nik", `%${nik}%`); qData = qData.ilike("nik", `%${nik}%`); }
 

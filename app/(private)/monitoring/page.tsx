@@ -38,21 +38,32 @@ export default function MonitoringIndex() {
       const authHeaders = await getAuthHeaders();
       const res = await fetch("/api/ref/kecamatan", { credentials: 'include', headers: authHeaders });
       const data = await res.json();
-      setKecList(data.items || []);
+      const items: string[] = data.items || [];
+      setKecList(items);
+      if (items.length === 1) {
+        setKec((prev) => prev || items[0]);
+      }
     })();
   }, []);
 
   useEffect(() => {
-    if (!kec) return;
+    if (!kec) {
+      setPkmList([]);
+      setPuskesmasId("");
+      setDesaList([]);
+      setDesa("");
+      return;
+    }
     (async () => {
       await ensureServerSession();
       const authHeaders = await getAuthHeaders();
       const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(kec)}`, { credentials: 'include', headers: authHeaders });
       const p = await rp.json();
-      setPkmList((p.items || []).map((r: any) => ({ id: r.id, nama: r.nama })));
+      const mapped = (p.items || []).map((r: any) => ({ id: r.id, nama: r.nama }));
+      setPkmList(mapped);
       setDesaList([]);
       setDesa("");
-      setPuskesmasId("");
+      setPuskesmasId(mapped.length === 1 ? mapped[0].id : "");
     })();
   }, [kec]);
 
@@ -63,7 +74,11 @@ export default function MonitoringIndex() {
       const authHeaders = await getAuthHeaders();
       const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(puskesmasId)}`, { credentials: 'include', headers: authHeaders });
       const d = await rd.json();
-      setDesaList((d.items || []).map((r: any) => ({ id: r.id, desa_kel: r.desa_kel })));
+      const mapped = (d.items || []).map((r: any) => ({ id: r.id, desa_kel: r.desa_kel }));
+      setDesaList(mapped);
+      if (mapped.length === 1) {
+        setDesa((prev) => prev || mapped[0].desa_kel);
+      }
     })();
   }, [puskesmasId]);
 
@@ -74,6 +89,7 @@ export default function MonitoringIndex() {
       setPageInput("1");
     }
     const params = new URLSearchParams();
+    if (kec) params.set("kec", kec);
     if (puskesmasId) params.set("puskesmas_id", puskesmasId);
     if (desa) params.set("desa_kel", desa);
     if (nik) params.set("nik", nik);
