@@ -19,15 +19,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  // Set session dari header jika ada
-  const authHeader = req.headers.get('authorization');
-  const refresh = req.headers.get('x-refresh-token');
-  if (authHeader && refresh && authHeader.toLowerCase().startsWith('bearer ')) {
-    const token = authHeader.slice(7).trim();
-    if (token) {
-      await supabase.auth.setSession({ access_token: token, refresh_token: refresh });
-    }
-  }
+  // Session Supabase dibaca dari cookie (middleware sudah refresh)
   const { data: { user }, error: uerr } = await supabase.auth.getUser();
   if (uerr || !user) return new Response("Unauthorized", { status: 401 });
 
