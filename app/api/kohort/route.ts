@@ -45,12 +45,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { error } = await supabase.from("kohort").insert({
+  const { error: insertError } = await supabase.from("kohort").insert({
     balita_id,
     puskesmas_id,
     periode_mulai,
   });
-  if (error) return new Response(error.message, { status: 400 });
+  if (insertError) return new Response(insertError.message, { status: 400 });
 
   return NextResponse.json({ ok: true });
 }
