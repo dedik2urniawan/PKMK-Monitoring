@@ -5,7 +5,6 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { getSupabase } from "@/lib/supabase/client";
-import { persistClientTokens, syncServerSession } from "@/lib/clientSession";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -30,13 +29,6 @@ function LoginForm() {
       setErr(error.message);
       return;
     }
-    try {
-      const session = data.session || (await supabase.auth.getSession()).data.session;
-      persistClientTokens(session?.access_token ?? null, session?.refresh_token ?? null);
-      if (session?.access_token && session.refresh_token) {
-        await syncServerSession(session.access_token, session.refresh_token);
-      }
-    } catch {}
     const target = searchParams.get("redirectedFrom") || "/dashboard";
     if (typeof window !== "undefined") window.location.assign(target);
     else router.replace(target);
