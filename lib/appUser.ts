@@ -9,13 +9,32 @@ export type AppUser = {
   puskesmas_id: string | null
 }
 
+// Helper untuk decode JWT (base64url decode)
+function decodeJWT(token: string): any {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    // Decode payload (part 1)
+    const payload = parts[1];
+    // Base64url to base64
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = Buffer.from(base64, 'base64').toString('utf8');
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error('[decodeJWT] Error:', e);
+    return null;
+  }
+}
+
 export async function getAppUser(): Promise<AppUser | null> {
   console.log('[getAppUser] START');
   const supabase = await createClient()
 
-  let user: any = null;
+  let userId: string | null = null;
+  let userEmail: string | null = null;
 
-  // CRITICAL: Baca dari Authorization header PERTAMA (untuk Vercel compatibility)
+  // CRITICAL: Baca dari Authorization header dan decode JWT
   try {
     const hdrs = await headers()
     const authHeader = hdrs.get('authorization')
@@ -24,18 +43,30 @@ export async function getAppUser(): Promise<AppUser | null> {
       hasAuth: !!authHeader
     });
 
-    // Jika ada header Authorization, gunakan itu (prioritas utama)
     if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
       const jwt = authHeader.slice(7).trim()
       if (jwt) {
-        console.log('[getAppUser] Getting user from JWT token...');
-        // Gunakan getUser() dengan JWT langsung (tidak perlu setSession)
-        const { data, error } = await supabase.auth.getUser(jwt)
-        if (error) {
-          console.error('[getAppUser] getUser(jwt) error:', error.message)
-        } else if (data.user) {
-          console.log('[getAppUser] User from JWT:', { id: data.user.id, email: data.user.email });
-          user = data.user;
+        console.log('[getAppUser] Decoding JWT token...');
+        const decoded = decodeJWT(jwt);
+
+        if (decoded) {
+          console.log('[getAppUser] JWT decoded:', {
+            sub: decoded.sub,
+            email: decoded.email,
+            exp: decoded.exp,
+            now: Math.floor(Date.now() / 1000)
+          });
+
+          // Check expiration
+          if (decoded.exp && decoded.exp > Math.floor(Date.now() / 1000)) {
+            userId = decoded.sub; // 'sub' is user ID in JWT
+            userEmail = decoded.email;
+            console.log('[getAppUser] JWT valid, user:', { userId, userEmail });
+          } else {
+            console.error('[getAppUser] JWT expired!');
+          }
+        } else {
+          console.error('[getAppUser] JWT decode failed');
         }
       }
     }
@@ -44,26 +75,26 @@ export async function getAppUser(): Promise<AppUser | null> {
   }
 
   // Fallback: coba baca dari cookie jika header tidak ada
-  if (!user) {
-    console.log('[getAppUser] No user from headers, trying cookies...');
+  if (!userId) {
+    console.log('[getAppUser] No user from JWT, trying cookies...');
     const { data: auth, error: authErr } = await supabase.auth.getUser()
-    if (authErr) {
-      console.error('[getAppUser] auth.getUser (cookie) error:', authErr.message)
-      return null
+    if (!authErr && auth.user) {
+      userId = auth.user.id;
+      userEmail = auth.user.email || null;
+      console.log('[getAppUser] Got user from cookie:', { userId, userEmail });
+    } else {
+      console.error('[getAppUser] auth.getUser (cookie) error:', authErr?.message);
     }
-    user = auth.user;
   }
 
-  console.log('[getAppUser] Final user:', { id: user?.id, email: user?.email });
-
-  if (!user) {
-    console.log('[getAppUser] No user found, returning null');
+  if (!userId) {
+    console.log('[getAppUser] No user ID found, returning null');
     return null;
   }
 
-  // Lookup user di app_users table
-  console.log('[getAppUser] Looking up in app_users by id:', user.id);
-  let q = supabase.from('app_users').select('id,email,role,puskesmas_id').eq('id', user.id).maybeSingle()
+  // Lookup user di app_users table menggunakan user ID dari JWT/cookie
+  console.log('[getAppUser] Looking up in app_users by id:', userId);
+  let q = supabase.from('app_users').select('id,email,role,puskesmas_id').eq('id', userId).maybeSingle()
   let { data, error } = await q
 
   if (error && error.code !== 'PGRST116') {
@@ -71,9 +102,9 @@ export async function getAppUser(): Promise<AppUser | null> {
     throw error;
   }
 
-  if (!data) {
-    console.log('[getAppUser] No data by ID, trying email:', user.email);
-    const r2 = await supabase.from('app_users').select('id,email,role,puskesmas_id').eq('email', user.email!).maybeSingle()
+  if (!data && userEmail) {
+    console.log('[getAppUser] No data by ID, trying email:', userEmail);
+    const r2 = await supabase.from('app_users').select('id,email,role,puskesmas_id').eq('email', userEmail).maybeSingle()
     if (r2.error && r2.error.code !== 'PGRST116') {
       console.error('[getAppUser] app_users email query error:', r2.error);
       throw r2.error;
@@ -82,7 +113,7 @@ export async function getAppUser(): Promise<AppUser | null> {
   }
 
   if (!data) {
-    console.error('[getAppUser] User not found in app_users table!', { userId: user.id, userEmail: user.email });
+    console.error('[getAppUser] User not found in app_users table!', { userId, userEmail });
     return null;
   }
 
