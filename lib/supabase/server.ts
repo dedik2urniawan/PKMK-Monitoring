@@ -28,16 +28,20 @@ export async function createClient() {
 
   function safeSet(name: string, value: string, options: CookieOptions) {
     try {
-      // @ts-ignore - Next.js cookies API typing differences across versions
+      // @ts-ignore
       cookieStore.set({ name, value, ...options });
-    } catch {}
+    } catch (error) {
+      console.error('Error setting cookie:', name, error);
+    }
   }
 
   function safeRemove(name: string, options: CookieOptions) {
     try {
-      // @ts-ignore - Next.js cookies API typing differences across versions
+      // @ts-ignore
       cookieStore.set({ name, value: '', ...options });
-    } catch {}
+    } catch (error) {
+      console.error('Error removing cookie:', name, error);
+    }
   }
 
   return createServerClient(

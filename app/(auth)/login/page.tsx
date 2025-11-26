@@ -32,6 +32,7 @@ function LoginForm() {
     try {
       const session = data.session || (await supabase.auth.getSession()).data.session;
       if (session?.access_token && session.refresh_token) {
+        // Await the sync to ensure cookies are set before redirecting
         await fetch("/api/auth/session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -40,9 +41,11 @@ function LoginForm() {
             access_token: session.access_token,
             refresh_token: session.refresh_token,
           }),
-        });
+        }).catch(e => console.error("Sync error:", e));
       }
-    } catch {}
+    } catch (e) {
+      console.error("Session handling error:", e);
+    }
     const target = searchParams.get("redirectedFrom") || "/dashboard";
     if (typeof window !== "undefined") window.location.assign(target);
     else router.replace(target);
@@ -133,7 +136,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div />}> 
+    <Suspense fallback={<div />}>
       <LoginForm />
     </Suspense>
   );

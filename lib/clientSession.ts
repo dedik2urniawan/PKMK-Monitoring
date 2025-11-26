@@ -5,8 +5,8 @@ import { getSupabase } from "@/lib/supabase/client";
 // Dengan cookie-based auth Supabase (@supabase/ssr), token ada di cookie,
 // tapi kita juga kirimkan via header sebagai fallback agar route handler bisa setSession.
 
-export function persistClientTokens() {}
-export function clearClientTokens() {}
+export function persistClientTokens() { }
+export function clearClientTokens() { }
 
 export async function getAuthHeaders() {
   if (typeof window === "undefined") return {};
@@ -31,19 +31,30 @@ export async function syncServerSession() {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     const refresh = data.session?.refresh_token;
+
     if (!token || !refresh) return false;
+
+    // Check if we already synced this token recently to avoid spamming
     const key = `sb:synced:${token.slice(0, 12)}`;
     if (sessionStorage.getItem(key)) return true;
+
+    console.log('Syncing session to server...');
     const res = await fetch("/api/auth/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
+      credentials: "include", // Important for cookies
       body: JSON.stringify({ access_token: token, refresh_token: refresh }),
     });
-    if (!res.ok) return false;
+
+    if (!res.ok) {
+      console.error('Failed to sync session:', await res.text());
+      return false;
+    }
+
     sessionStorage.setItem(key, "1");
     return true;
-  } catch {
+  } catch (e) {
+    console.error('Error syncing session:', e);
     return false;
   }
 }

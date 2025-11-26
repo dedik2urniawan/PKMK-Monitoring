@@ -23,18 +23,29 @@ export function getSupabase() {
         set(name, value, options) {
           if (typeof document === 'undefined') return;
           const parts = [`${name}=${encodeURIComponent(value)}`];
+          // Force path=/ if not present
           if (options?.path) parts.push(`Path=${options.path}`);
+          else parts.push('Path=/');
+
           if (options?.expires) parts.push(`Expires=${options.expires.toUTCString()}`);
           if (options?.maxAge) parts.push(`Max-Age=${options.maxAge}`);
           if (options?.domain) parts.push(`Domain=${options.domain}`);
+
+          // Force SameSite=Lax if not present
           if (options?.sameSite) parts.push(`SameSite=${options.sameSite}`);
+          else parts.push('SameSite=Lax');
+
           if (options?.secure) parts.push('Secure');
+          else if (window.location.protocol === 'https:') parts.push('Secure');
+
           document.cookie = parts.join('; ');
         },
         remove(name, options) {
           if (typeof document === 'undefined') return;
           const parts = [`${name}=`, 'Max-Age=0'];
           if (options?.path) parts.push(`Path=${options.path}`);
+          else parts.push('Path=/');
+
           if (options?.domain) parts.push(`Domain=${options.domain}`);
           document.cookie = parts.join('; ');
         },
