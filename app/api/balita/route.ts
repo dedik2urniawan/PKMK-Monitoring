@@ -19,13 +19,19 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  // Session Supabase dibaca dari cookie (middleware sudah refresh)
-  const { data: { user }, error: uerr } = await supabase.auth.getUser();
-  if (uerr || !user) return new Response("Unauthorized", { status: 401 });
 
-  const meta = (user.user_metadata || {}) as any;
-  let puskesmas_id = meta.puskesmas_id ?? null;
+  // Get user menggunakan getAppUser yang sudah support JWT decode
   const appUser = await getAppUser();
+  if (!appUser) {
+    console.error('[POST /api/balita] No appUser, unauthorized');
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  console.log('[POST /api/balita] User:', {
+    id: appUser.id,
+    role: appUser.role,
+    puskesmas_id: appUser.puskesmas_id
+  });
 
   const body = await req.json();
   if (!body?.nama_balita || !body?.jk || !body?.tgl_lahir) {
@@ -33,14 +39,19 @@ export async function POST(req: NextRequest) {
   }
 
   // Role-based resolution for puskesmas_id
-  if (appUser?.role === 'admin_puskesmas') {
-    puskesmas_id = appUser.puskesmas_id ?? puskesmas_id;
-  } else {
-    // superadmin may specify via body
-    if (!puskesmas_id && body?.puskesmas_id) {
+  let puskesmas_id = appUser.puskesmas_id;
+  if (appUser.role === 'admin_puskesmas') {
+    // Admin puskesmas harus pakai puskesmas_id dari profile
+    if (!puskesmas_id) {
+      return new Response("puskesmas_id tidak ditemukan di profile user", { status: 400 });
+    }
+  } else if (appUser.role === 'superadmin') {
+    // Superadmin bisa specify via body
+    if (body?.puskesmas_id) {
       puskesmas_id = body.puskesmas_id;
     }
   }
+
   if (!puskesmas_id) {
     return new Response(
       "puskesmas_id tidak ditemukan (set di user_metadata atau kirim via body)",

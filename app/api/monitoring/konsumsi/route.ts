@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAppUser } from "@/lib/appUser";
 
 export async function POST(req: NextRequest) {
+  // Auth check
+  const appUser = await getAppUser();
+  if (!appUser) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
   const supabase = await createClient();
   const body = await req.json();
   if (!body?.kohort_id || !body?.minggu_ke || !body?.tanggal) {
@@ -57,7 +64,7 @@ export async function DELETE(req: NextRequest) {
   try {
     const b = await req.json();
     id = b?.id ?? null;
-  } catch {}
+  } catch { }
   if (!id) id = req.nextUrl.searchParams.get("id");
   if (!id) return new Response("id required", { status: 400 });
   const { error } = await supabase.from("monitoring_pkmk_konsumsi").delete().eq("id", id);
