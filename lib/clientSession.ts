@@ -47,13 +47,16 @@ export async function syncServerSession() {
 
     if (!token || !refresh) return false;
 
+    // Check PERTAMA - jangan sync lagi jika sudah pernah sync
+    const key = `sb:synced:${token.slice(0, 12)}`;
+    if (sessionStorage.getItem(key)) {
+      console.log('Session already synced, skipping...');
+      return true; // Sudah sync sebelumnya
+    }
+
     // Simpan ke localStorage sebagai fallback
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(REFRESH_KEY, refresh);
-
-    // Check if we already synced this token recently to avoid spamming
-    const key = `sb:synced:${token.slice(0, 12)}`;
-    if (sessionStorage.getItem(key)) return true;
 
     console.log('Syncing session to server...');
     const res = await fetch("/api/auth/session", {
@@ -68,11 +71,14 @@ export async function syncServerSession() {
     });
 
     if (!res.ok) {
-      console.error('Failed to sync session:', await res.text());
+      const errorText = await res.text();
+      console.error('Failed to sync session:', errorText);
       return false;
     }
 
+    // Mark sebagai sudah sync
     sessionStorage.setItem(key, "1");
+    console.log('Session synced successfully!');
     return true;
   } catch (e) {
     console.error('Error syncing session:', e);

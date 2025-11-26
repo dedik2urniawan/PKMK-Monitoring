@@ -11,22 +11,42 @@ export type AppUser = {
 
 export async function getAppUser(): Promise<AppUser | null> {
   const supabase = await createClient()
-  // Jika ada Authorization/x-refresh-token di header, set session dulu
+
+  // CRITICAL: Baca dari Authorization header PERTAMA (untuk Vercel compatibility)
   try {
     const hdrs = await headers()
     const authHeader = hdrs.get('authorization')
     const refresh = hdrs.get('x-refresh-token')
-    if (authHeader && refresh && authHeader.toLowerCase().startsWith('bearer ')) {
+
+    // Jika ada header Authorization, gunakan itu (prioritas utama)
+    if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
       const token = authHeader.slice(7).trim()
       if (token && refresh) {
-        await supabase.auth.setSession({ access_token: token, refresh_token: refresh })
+        // Set session dari header tokens
+        const { error } = await supabase.auth.setSession({
+          access_token: token,
+          refresh_token: refresh
+        })
+        if (error) {
+          console.error('getAppUser setSession error:', error.message)
+        }
       }
     }
-  } catch {}
-  const { data: auth } = await supabase.auth.getUser()
+  } catch (e) {
+    console.error('getAppUser header parsing error:', e)
+  }
+
+  // Dapatkan user (dari session yang baru di-set atau dari cookie)
+  const { data: auth, error: authErr } = await supabase.auth.getUser()
+  if (authErr) {
+    console.error('getAppUser auth.getUser error:', authErr.message)
+    return null
+  }
+
   const user = auth.user
   if (!user) return null
-  // Prefer lookup by id; fallback to email to be resilient
+
+  // Lookup user di app_users table
   let q = supabase.from('app_users').select('id,email,role,puskesmas_id').eq('id', user.id).maybeSingle()
   let { data, error } = await q
   if (error && error.code !== 'PGRST116') throw error
