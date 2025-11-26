@@ -29,6 +29,20 @@ function LoginForm() {
       setErr(error.message);
       return;
     }
+    try {
+      const session = data.session || (await supabase.auth.getSession()).data.session;
+      if (session?.access_token && session.refresh_token) {
+        await fetch("/api/auth/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+          }),
+        });
+      }
+    } catch {}
     const target = searchParams.get("redirectedFrom") || "/dashboard";
     if (typeof window !== "undefined") window.location.assign(target);
     else router.replace(target);
