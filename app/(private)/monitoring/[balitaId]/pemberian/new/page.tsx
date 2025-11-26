@@ -62,16 +62,16 @@ export default function NewPemberian() {
       jenis_formulasi: form.jenis_formulasi,
       keterangan: form.keterangan || undefined,
     };
-    const res = await fetch("/api/monitoring/pemberian", { method: editingId?"PATCH":"POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(editingId? { id: editingId, ...payload }: payload)});
+    const res = await fetch("/api/monitoring/pemberian", { method: editingId ? "PATCH" : "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editingId ? { id: editingId, ...payload } : payload) });
     setSaving(false);
     if (!res.ok) { const t = await res.text(); setMsg(t); toast.error(t); return; }
-    setMsg("Tersimpan."); toast.success(editingId?"Perubahan disimpan":"Tersimpan");
+    setMsg("Tersimpan."); toast.success(editingId ? "Perubahan disimpan" : "Tersimpan");
     try {
       const rh = await fetch(`/api/monitoring/pemberian?kohort_id=${kohort.id}`);
       const dh = await rh.json();
       setHistory(dh.items || []);
       setEditingId(null);
-    } catch {}
+    } catch { }
   }
 
   return (
@@ -86,27 +86,27 @@ export default function NewPemberian() {
       {msg && <div className="mb-3 text-sm p-3 rounded bg-blue-50">{msg}</div>}
       <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div><label className="text-sm">Minggu Ke*</label>
-          <input type="number" min={1} max={12} value={form.minggu_ke} onChange={(e)=>setForm({...form, minggu_ke: Number(e.target.value)})} className="input" required />
+          <input type="number" min={1} max={12} value={form.minggu_ke} onChange={(e) => setForm({ ...form, minggu_ke: Number(e.target.value) })} className="input" required />
           {errors.minggu_ke && <p className="text-xs text-red-600 mt-1">{errors.minggu_ke}</p>}
         </div>
         <div><label className="text-sm">Tanggal Pemberian PKMK*</label>
-          <input type="date" value={form.tanggal} onChange={(e)=>setForm({...form, tanggal: e.target.value})} className="input" required />
+          <input type="date" value={form.tanggal} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} className="input" required />
           {errors.tanggal && <p className="text-xs text-red-600 mt-1">{errors.tanggal}</p>}
         </div>
         <div><label className="text-sm">Jumlah Unit (ml)*</label>
-          <input type="number" value={form.jumlah_unit} onChange={(e)=>setForm({...form, jumlah_unit: e.target.value})} className="input" required />
+          <input type="number" value={form.jumlah_unit} onChange={(e) => setForm({ ...form, jumlah_unit: e.target.value })} className="input" required />
           {errors.jumlah_unit && <p className="text-xs text-red-600 mt-1">{errors.jumlah_unit}</p>}
         </div>
         <div><label className="text-sm">Jenis Formulasi*</label>
-          <input value={form.jenis_formulasi} onChange={(e)=>setForm({...form, jenis_formulasi: e.target.value})} className="input" required />
+          <input value={form.jenis_formulasi} onChange={(e) => setForm({ ...form, jenis_formulasi: e.target.value })} className="input" required />
           {errors.jenis_formulasi && <p className="text-xs text-red-600 mt-1">{errors.jenis_formulasi}</p>}
         </div>
         <div className="md:col-span-2"><label className="text-sm">Keterangan</label>
-          <input value={form.keterangan} onChange={(e)=>setForm({...form, keterangan: e.target.value})} className="input" /></div>
+          <input value={form.keterangan} onChange={(e) => setForm({ ...form, keterangan: e.target.value })} className="input" /></div>
         <div className="md:col-span-2 flex items-center gap-2">
-          <button disabled={saving || Object.keys(errors).length>0} className="px-4 py-2 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white rounded">{saving?"Menyimpan...": editingId?"Perbarui":"Simpan"}</button>
+          <button disabled={saving || Object.keys(errors).length > 0} className="px-4 py-2 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white rounded">{saving ? "Menyimpan..." : editingId ? "Perbarui" : "Simpan"}</button>
           {editingId && (
-            <button type="button" onClick={()=>{setEditingId(null); setForm({ minggu_ke:1, tanggal:"", jumlah_unit:"", jenis_formulasi:"", keterangan:""}); }} className="px-3 py-2 border rounded">Batal</button>
+            <button type="button" onClick={() => { setEditingId(null); setForm({ minggu_ke: 1, tanggal: "", jumlah_unit: "", jenis_formulasi: "", keterangan: "" }); }} className="px-3 py-2 border rounded">Batal</button>
           )}
         </div>
       </form>
@@ -127,7 +127,7 @@ export default function NewPemberian() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {history.map((h:any) => (
+              {history.map((h: any) => (
                 <TableRow key={h.id}>
                   <TableCell>{h.minggu_ke}</TableCell>
                   <TableCell>{new Date(h.tanggal).toLocaleDateString('id-ID')}</TableCell>
@@ -136,8 +136,8 @@ export default function NewPemberian() {
                   <TableCell>{h.keterangan ?? '-'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <button className="text-[var(--primary-700)] underline" onClick={() => { setEditingId(h.id); setForm({ minggu_ke: h.minggu_ke, tanggal: h.tanggal.slice(0,10), jumlah_unit: String(h.jumlah_unit), jenis_formulasi: h.jenis_formulasi, keterangan: h.keterangan ?? "" }); }}>Edit</button>
-                      <button className="text-red-600 underline" onClick={async ()=>{ if(!confirm('Hapus entri ini?')) return; const r = await fetch('/api/monitoring/pemberian', { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: h.id }) }); if(!r.ok){ toast.error(await r.text()); return;} toast.success('Dihapus'); const rh = await fetch(`/api/monitoring/pemberian?kohort_id=${kohort!.id}`); const dh = await rh.json(); setHistory(dh.items||[]); }}>Hapus</button>
+                      <button className="text-[var(--primary-700)] underline" onClick={() => { setEditingId(h.id); setForm({ minggu_ke: h.minggu_ke, tanggal: h.tanggal.slice(0, 10), jumlah_unit: String(h.jumlah_unit), jenis_formulasi: h.jenis_formulasi, keterangan: h.keterangan ?? "" }); }}>Edit</button>
+                      <button className="text-red-600 underline" onClick={async () => { if (!confirm('Hapus entri ini?')) return; const r = await fetch('/api/monitoring/pemberian', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: h.id }) }); if (!r.ok) { toast.error(await r.text()); return; } toast.success('Dihapus'); const rh = await fetch(`/api/monitoring/pemberian?kohort_id=${kohort!.id}`); const dh = await rh.json(); setHistory(dh.items || []); }}>Hapus</button>
                     </div>
                   </TableCell>
                 </TableRow>

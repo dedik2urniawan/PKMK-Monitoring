@@ -4,7 +4,6 @@ let _client: ReturnType<typeof createBrowserClient> | null = null;
 
 export function getSupabase() {
   if (typeof window === 'undefined') {
-    // During SSR/build, avoid instantiating the browser client
     throw new Error('Supabase browser client is not available on the server');
   }
   if (!_client) {
@@ -13,9 +12,37 @@ export function getSupabase() {
     if (!url || !key) {
       throw new Error('Supabase env (URL/ANON_KEY) tidak ditemukan');
     }
-    // Use default Supabase SSR cookie handling - do NOT override with custom handlers
-    // This ensures cookies set by server-side are readable by client-side
-    _client = createBrowserClient(url, key);
+
+    // Minimal cookie handlers to read server-set cookies
+    _client = createBrowserClient(url, key, {
+      cookies: {
+        get(name: string) {
+          const cookies = document.cookie.split(';');
+          for (const cookie of cookies) {
+            const [cookieName, ...cookieValue] = cookie.split('=');
+            if (cookieName.trim() === name) {
+              return cookieValue.join('=').trim();
+            }
+          }
+          return null;
+        },
+        set(name: string, value: string, options: any) {
+          let cookie = `${name}=${value}`;
+          if (options?.maxAge) cookie += `; Max-Age=${options.maxAge}`;
+          if (options?.path) cookie += `; Path=${options.path}`;
+          if (options?.domain) cookie += `; Domain=${options.domain}`;
+          if (options?.sameSite) cookie += `; SameSite=${options.sameSite}`;
+          if (options?.secure) cookie += `; Secure`;
+          document.cookie = cookie;
+        },
+        remove(name: string, options: any) {
+          let cookie = `${name}=; Max-Age=0`;
+          if (options?.path) cookie += `; Path=${options.path}`;
+          if (options?.domain) cookie += `; Domain=${options.domain}`;
+          document.cookie = cookie;
+        },
+      },
+    });
   }
   return _client;
 }

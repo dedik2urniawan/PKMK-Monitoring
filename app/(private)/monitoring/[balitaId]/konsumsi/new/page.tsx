@@ -15,8 +15,8 @@ export default function NewKonsumsi() {
   const [msg, setMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ minggu_ke: 1, tanggal: "", kepatuhan_pct: "", catatan: "" });
-  const [mt, setMt] = useState([false,false,false,false,false,false,false]);
-  const [history, setHistory] = useState<Array<{id:string; minggu_ke:number; tanggal:string; kepatuhan_pct:number|null; catatan:string|null}>>([]);
+  const [mt, setMt] = useState([false, false, false, false, false, false, false]);
+  const [history, setHistory] = useState<Array<{ id: string; minggu_ke: number; tanggal: string; kepatuhan_pct: number | null; catatan: string | null }>>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function NewKonsumsi() {
       kepatuhan_pct: form.kepatuhan_pct === "" ? undefined : Number(form.kepatuhan_pct),
       catatan: form.catatan || undefined,
     };
-    const res = await fetch("/api/monitoring/konsumsi", { method: editingId ? "PATCH" : "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(editingId ? { id: editingId, ...payload } : payload)});
+    const res = await fetch("/api/monitoring/konsumsi", { method: editingId ? "PATCH" : "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editingId ? { id: editingId, ...payload } : payload) });
     setSaving(false);
     if (!res.ok) { const t = await res.text(); setMsg(t); toast.error(t); return; }
     toast.success(editingId ? "Perubahan disimpan" : "Tersimpan");
@@ -73,8 +73,8 @@ export default function NewKonsumsi() {
       const dh = await rh.json();
       setHistory(dh.items || []);
       setEditingId(null);
-      setMt([false,false,false,false,false,false,false]);
-    } catch {}
+      setMt([false, false, false, false, false, false, false]);
+    } catch { }
   }
 
   return (
@@ -89,30 +89,30 @@ export default function NewKonsumsi() {
       {msg && <div className="mb-3 text-sm p-3 rounded bg-blue-50">{msg}</div>}
       <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div><label className="text-sm">Minggu Ke*</label>
-          <input type="number" min={1} max={12} value={form.minggu_ke} onChange={(e)=>setForm({...form, minggu_ke: Number(e.target.value)})} className="input" required />
+          <input type="number" min={1} max={12} value={form.minggu_ke} onChange={(e) => setForm({ ...form, minggu_ke: Number(e.target.value) })} className="input" required />
           {errors.minggu_ke && <p className="text-xs text-red-600 mt-1">{errors.minggu_ke}</p>}
         </div>
         <div><label className="text-sm">Tanggal Monitoring PKMK*</label>
-          <input type="date" value={form.tanggal} onChange={(e)=>setForm({...form, tanggal: e.target.value})} className="input" required />
+          <input type="date" value={form.tanggal} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} className="input" required />
           {errors.tanggal && <p className="text-xs text-red-600 mt-1">{errors.tanggal}</p>}
         </div>
         <div className="md:col-span-2">
           <label className="text-sm">Ceklist Monitoring MT (1–7, retrospektif)</label>
           <div className="grid grid-cols-7 gap-2 mt-1">
-            {mt.map((v, i)=> (
+            {mt.map((v, i) => (
               <Tooltip key={i}>
                 <TooltipTrigger asChild>
                   <label className="flex items-center justify-center gap-2 border rounded p-2 cursor-pointer">
-                    <input type="checkbox" checked={v} onChange={(e)=>{
+                    <input type="checkbox" checked={v} onChange={(e) => {
                       const arr = [...mt]; arr[i] = e.target.checked; setMt(arr);
                       const count = arr.filter(Boolean).length;
-                      const pct = Math.round((count/7)*100);
-                      setForm((f)=>({...f, kepatuhan_pct: String(pct)}));
+                      const pct = Math.round((count / 7) * 100);
+                      setForm((f) => ({ ...f, kepatuhan_pct: String(pct) }));
                     }} />
-                    <span>{i+1}</span>
+                    <span>{i + 1}</span>
                   </label>
                 </TooltipTrigger>
-                <TooltipContent sideOffset={6}>Centang jika konsumsi dilakukan hari ke-{i+1}</TooltipContent>
+                <TooltipContent sideOffset={6}>Centang jika konsumsi dilakukan hari ke-{i + 1}</TooltipContent>
               </Tooltip>
             ))}
           </div>
@@ -121,16 +121,16 @@ export default function NewKonsumsi() {
           <input type="number" min={0} max={100} value={form.kepatuhan_pct} className="input" readOnly />
         </div>
         <div className="md:col-span-2"><label className="text-sm">Pemantauan Kesehatan</label>
-          <select value={form.catatan} onChange={(e)=>setForm({...form, catatan: e.target.value})} className="input">
+          <select value={form.catatan} onChange={(e) => setForm({ ...form, catatan: e.target.value })} className="input">
             <option value="">- Pilih -</option>
             <option value="Sehat">Sehat</option>
             <option value="Sakit">Sakit</option>
           </select>
         </div>
         <div className="md:col-span-2 flex items-center gap-2">
-          <button disabled={saving || Object.keys(errors).length>0} className="px-4 py-2 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white rounded">{saving?"Menyimpan...": editingId?"Perbarui":"Simpan"}</button>
+          <button disabled={saving || Object.keys(errors).length > 0} className="px-4 py-2 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white rounded">{saving ? "Menyimpan..." : editingId ? "Perbarui" : "Simpan"}</button>
           {editingId && (
-            <button type="button" onClick={()=>{setEditingId(null); setForm({ minggu_ke:1, tanggal:"", kepatuhan_pct:"", catatan:""}); }} className="px-3 py-2 border rounded">Batal</button>
+            <button type="button" onClick={() => { setEditingId(null); setForm({ minggu_ke: 1, tanggal: "", kepatuhan_pct: "", catatan: "" }); }} className="px-3 py-2 border rounded">Batal</button>
           )}
         </div>
       </form>
@@ -157,8 +157,8 @@ export default function NewKonsumsi() {
                   <TableCell>{h.catatan ?? '-'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <button className="text-[var(--primary-700)] underline" onClick={() => { setEditingId(h.id); setForm({ minggu_ke: h.minggu_ke, tanggal: h.tanggal.slice(0,10), kepatuhan_pct: h.kepatuhan_pct?.toString() ?? "", catatan: h.catatan ?? "" }); setMt([false,false,false,false,false,false,false]); }}>Edit</button>
-                      <button className="text-red-600 underline" onClick={async ()=>{ if(!confirm('Hapus entri ini?')) return; const r = await fetch('/api/monitoring/konsumsi', { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: h.id }) }); if(!r.ok){ toast.error(await r.text()); return;} toast.success('Dihapus'); const rh = await fetch(`/api/monitoring/konsumsi?kohort_id=${kohort!.id}`); const dh = await rh.json(); setHistory(dh.items||[]); }}>Hapus</button>
+                      <button className="text-[var(--primary-700)] underline" onClick={() => { setEditingId(h.id); setForm({ minggu_ke: h.minggu_ke, tanggal: h.tanggal.slice(0, 10), kepatuhan_pct: h.kepatuhan_pct?.toString() ?? "", catatan: h.catatan ?? "" }); setMt([false, false, false, false, false, false, false]); }}>Edit</button>
+                      <button className="text-red-600 underline" onClick={async () => { if (!confirm('Hapus entri ini?')) return; const r = await fetch('/api/monitoring/konsumsi', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: h.id }) }); if (!r.ok) { toast.error(await r.text()); return; } toast.success('Dihapus'); const rh = await fetch(`/api/monitoring/konsumsi?kohort_id=${kohort!.id}`); const dh = await rh.json(); setHistory(dh.items || []); }}>Hapus</button>
                     </div>
                   </TableCell>
                 </TableRow>

@@ -32,10 +32,18 @@ function LoginForm() {
     try {
       const session = data.session || (await supabase.auth.getSession()).data.session;
       if (session?.access_token && session.refresh_token) {
+        // Simpan ke localStorage PERTAMA (paling penting untuk Vercel)
+        localStorage.setItem('sb_access_token', session.access_token);
+        localStorage.setItem('sb_refresh_token', session.refresh_token);
+
         // Await the sync to ensure cookies are set before redirecting
         await fetch("/api/auth/session", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+            "x-refresh-token": session.refresh_token,
+          },
           credentials: "include",
           body: JSON.stringify({
             access_token: session.access_token,
