@@ -13,31 +13,29 @@ export async function getAppUser(): Promise<AppUser | null> {
   console.log('[getAppUser] START');
   const supabase = await createClient()
 
+  let user: any = null;
+
   // CRITICAL: Baca dari Authorization header PERTAMA (untuk Vercel compatibility)
   try {
     const hdrs = await headers()
     const authHeader = hdrs.get('authorization')
-    const refresh = hdrs.get('x-refresh-token')
 
     console.log('[getAppUser] Headers:', {
-      hasAuth: !!authHeader,
-      hasRefresh: !!refresh
+      hasAuth: !!authHeader
     });
 
     // Jika ada header Authorization, gunakan itu (prioritas utama)
     if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
-      const token = authHeader.slice(7).trim()
-      if (token && refresh) {
-        console.log('[getAppUser] Setting session from headers...');
-        // Set session dari header tokens
-        const { error } = await supabase.auth.setSession({
-          access_token: token,
-          refresh_token: refresh
-        })
+      const jwt = authHeader.slice(7).trim()
+      if (jwt) {
+        console.log('[getAppUser] Getting user from JWT token...');
+        // Gunakan getUser() dengan JWT langsung (tidak perlu setSession)
+        const { data, error } = await supabase.auth.getUser(jwt)
         if (error) {
-          console.error('[getAppUser] setSession error:', error.message)
-        } else {
-          console.log('[getAppUser] Session set successfully from headers');
+          console.error('[getAppUser] getUser(jwt) error:', error.message)
+        } else if (data.user) {
+          console.log('[getAppUser] User from JWT:', { id: data.user.id, email: data.user.email });
+          user = data.user;
         }
       }
     }
@@ -45,15 +43,18 @@ export async function getAppUser(): Promise<AppUser | null> {
     console.error('[getAppUser] Header parsing error:', e)
   }
 
-  // Dapatkan user (dari session yang baru di-set atau dari cookie)
-  const { data: auth, error: authErr } = await supabase.auth.getUser()
-  if (authErr) {
-    console.error('[getAppUser] auth.getUser error:', authErr.message)
-    return null
+  // Fallback: coba baca dari cookie jika header tidak ada
+  if (!user) {
+    console.log('[getAppUser] No user from headers, trying cookies...');
+    const { data: auth, error: authErr } = await supabase.auth.getUser()
+    if (authErr) {
+      console.error('[getAppUser] auth.getUser (cookie) error:', authErr.message)
+      return null
+    }
+    user = auth.user;
   }
 
-  const user = auth.user
-  console.log('[getAppUser] Auth user:', { id: user?.id, email: user?.email });
+  console.log('[getAppUser] Final user:', { id: user?.id, email: user?.email });
 
   if (!user) {
     console.log('[getAppUser] No user found, returning null');
