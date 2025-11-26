@@ -13,44 +13,9 @@ export function getSupabase() {
     if (!url || !key) {
       throw new Error('Supabase env (URL/ANON_KEY) tidak ditemukan');
     }
-    _client = createBrowserClient(url, key, {
-      cookies: {
-        get(name) {
-          if (typeof document === 'undefined') return null;
-          const m = document.cookie.split(';').map((s) => s.trim()).find((s) => s.startsWith(`${name}=`));
-          return m ? decodeURIComponent(m.split('=').slice(1).join('=')) : null;
-        },
-        set(name, value, options) {
-          if (typeof document === 'undefined') return;
-          const parts = [`${name}=${encodeURIComponent(value)}`];
-          // Force path=/ if not present
-          if (options?.path) parts.push(`Path=${options.path}`);
-          else parts.push('Path=/');
-
-          if (options?.expires) parts.push(`Expires=${options.expires.toUTCString()}`);
-          if (options?.maxAge) parts.push(`Max-Age=${options.maxAge}`);
-          if (options?.domain) parts.push(`Domain=${options.domain}`);
-
-          // Force SameSite=Lax if not present
-          if (options?.sameSite) parts.push(`SameSite=${options.sameSite}`);
-          else parts.push('SameSite=Lax');
-
-          if (options?.secure) parts.push('Secure');
-          else if (window.location.protocol === 'https:') parts.push('Secure');
-
-          document.cookie = parts.join('; ');
-        },
-        remove(name, options) {
-          if (typeof document === 'undefined') return;
-          const parts = [`${name}=`, 'Max-Age=0'];
-          if (options?.path) parts.push(`Path=${options.path}`);
-          else parts.push('Path=/');
-
-          if (options?.domain) parts.push(`Domain=${options.domain}`);
-          document.cookie = parts.join('; ');
-        },
-      },
-    });
+    // Use default Supabase SSR cookie handling - do NOT override with custom handlers
+    // This ensures cookies set by server-side are readable by client-side
+    _client = createBrowserClient(url, key);
   }
   return _client;
 }
