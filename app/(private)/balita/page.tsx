@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ensureServerSession } from "@/lib/clientSession";
+import { ensureServerSession, getAuthHeaders } from "@/lib/clientSession";
 import BalitaActions from "@/components/BalitaActions";
 import {
   Table,
@@ -99,7 +99,8 @@ export default function BalitaList() {
   useEffect(() => {
     (async () => {
       await ensureServerSession();
-      const res = await fetch("/api/ref/kecamatan", { credentials: 'include' });
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch("/api/ref/kecamatan", { credentials: 'include', headers: authHeaders });
       const data = await res.json();
       const items: string[] = data.items || [];
       setKecList(items);
@@ -119,7 +120,8 @@ export default function BalitaList() {
     }
     (async () => {
       await ensureServerSession();
-      const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(kec)}`, { credentials: 'include' });
+      const authHeaders = await getAuthHeaders();
+      const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(kec)}`, { credentials: 'include', headers: authHeaders });
       const p = await rp.json();
       const mapped = (p.items || []).map((r: any) => ({ id: r.id, nama: r.nama }));
       setPkmList(mapped);
@@ -133,7 +135,8 @@ export default function BalitaList() {
     if (!puskesmasId) return;
     (async () => {
       await ensureServerSession();
-      const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(puskesmasId)}`, { credentials: 'include' });
+      const authHeaders = await getAuthHeaders();
+      const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(puskesmasId)}`, { credentials: 'include', headers: authHeaders });
       const d = await rd.json();
       const mapped = (d.items || []).map((r: any) => ({ id: r.id, desa_kel: r.desa_kel }));
       setDesaList(mapped);
@@ -158,7 +161,8 @@ export default function BalitaList() {
     params.set('page', String(e ? 1 : page));
     params.set('limit', String(limit));
     await ensureServerSession();
-    const res = await fetch(`/api/monitoring/balita?${params.toString()}`, { credentials: 'include' });
+    const authHeaders = await getAuthHeaders();
+    const res = await fetch(`/api/monitoring/balita?${params.toString()}`, { credentials: 'include', headers: authHeaders });
     const data = await res.json();
     setItems(data.items || []);
     setPages(data.pages || 1);

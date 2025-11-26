@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ensureServerSession } from "@/lib/clientSession";
+import { ensureServerSession, getAuthHeaders } from "@/lib/clientSession";
 
 type Balita = { id: string; nama_balita: string };
 type Pkm = { id: string; nama: string };
@@ -24,7 +24,8 @@ export default function NewKohort() {
     (async () => {
       try {
         await ensureServerSession();
-        const res = await fetch("/api/ref/kecamatan", { credentials: 'include' });
+        const authHeaders = await getAuthHeaders();
+        const res = await fetch("/api/ref/kecamatan", { credentials: 'include', headers: authHeaders });
         const data = await res.json();
         setKecList(data.items || []);
       } catch {}
@@ -40,7 +41,8 @@ export default function NewKohort() {
     (async () => {
       await ensureServerSession();
       await ensureServerSession();
-      const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(kec)}`, { credentials: 'include' });
+      const authHeaders = await getAuthHeaders();
+      const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(kec)}`, { credentials: 'include', headers: authHeaders });
       const p = await rp.json();
       setPkmList((p.items || []).map((r: any) => ({ id: r.id, nama: r.nama })));
       setDesaList([]); setDesa(""); setPuskesmasId("");
@@ -52,7 +54,8 @@ export default function NewKohort() {
     (async () => {
       await ensureServerSession();
       await ensureServerSession();
-      const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(puskesmasId)}`, { credentials: 'include' });
+      const authHeaders = await getAuthHeaders();
+      const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(puskesmasId)}`, { credentials: 'include', headers: authHeaders });
       const d = await rd.json();
       setDesaList((d.items || []).map((r: any) => ({ id: r.id, desa_kel: r.desa_kel })));
     })();
@@ -64,7 +67,8 @@ export default function NewKohort() {
     if (puskesmasId) params.set("puskesmas_id", puskesmasId);
     if (desa) params.set("desa_kel", desa);
     await ensureServerSession();
-    const r = await fetch(`/api/monitoring/balita?${params.toString()}`, { credentials: 'include' });
+    const authHeaders = await getAuthHeaders();
+    const r = await fetch(`/api/monitoring/balita?${params.toString()}`, { credentials: 'include', headers: authHeaders });
     const d = await r.json();
     setBalita(d.items || []);
     setSelected("");
@@ -72,9 +76,10 @@ export default function NewKohort() {
 
   async function createKohort() {
     await ensureServerSession();
+    const authHeaders = await getAuthHeaders();
     const res = await fetch("/api/kohort", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       credentials: "include",
       body: JSON.stringify({ balita_id: selected, periode_mulai: start }),
     });
