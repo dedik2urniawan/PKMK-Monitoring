@@ -12,7 +12,7 @@ export async function createClient() {
     try {
       const v = cookieStore.get(name)?.value;
       if (typeof v !== 'undefined') return v;
-    } catch {}
+    } catch { }
     try {
       const raw = headerStore.get('cookie') ?? '';
       const part = raw
@@ -29,7 +29,14 @@ export async function createClient() {
   function safeSet(name: string, value: string, options: CookieOptions) {
     try {
       // @ts-ignore
-      cookieStore.set({ name, value, ...options });
+      cookieStore.set({
+        name,
+        value,
+        ...options,
+        path: '/', // Force path to be root
+        sameSite: 'lax', // Force SameSite to Lax
+        secure: process.env.NODE_ENV === 'production', // Force Secure in production
+      });
     } catch (error) {
       console.error('Error setting cookie:', name, error);
     }
@@ -38,7 +45,13 @@ export async function createClient() {
   function safeRemove(name: string, options: CookieOptions) {
     try {
       // @ts-ignore
-      cookieStore.set({ name, value: '', ...options });
+      cookieStore.set({
+        name,
+        value: '',
+        ...options,
+        path: '/', // Force path to be root
+        maxAge: 0,
+      });
     } catch (error) {
       console.error('Error removing cookie:', name, error);
     }
