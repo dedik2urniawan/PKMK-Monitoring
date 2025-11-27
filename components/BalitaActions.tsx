@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { getAuthHeaders } from "@/lib/clientSession";
 
 export default function BalitaActions({ id, nik, onDeleted }: { id?: string | null; nik?: string | null; onDeleted?: () => void }) {
   const [loading, setLoading] = useState(false);
@@ -10,9 +11,11 @@ export default function BalitaActions({ id, nik, onDeleted }: { id?: string | nu
     if (loading) return;
     if (!confirm("Hapus balita ini? Tindakan tidak bisa dibatalkan.")) return;
     setLoading(true);
+    const authHeaders = await getAuthHeaders();
     const res = await fetch(`/api/balita/delete`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
+      credentials: "include",
       body: JSON.stringify({ id: id ?? undefined, nik: nik ?? undefined }),
     });
     setLoading(false);

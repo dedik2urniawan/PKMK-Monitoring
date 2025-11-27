@@ -6,26 +6,21 @@ import { getAppUser } from "@/lib/appUser";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  const body = await req.json().catch(() => ({} as any));
-  // Terima Bearer token dari header atau body.access_token, fallback cookie
-  let user: any = null;
-  let bearer: string | null = null;
-  const authHeader = req.headers.get('authorization');
-  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) bearer = authHeader.slice(7).trim();
-  if (!bearer && body?.access_token) bearer = String(body.access_token);
-  if (bearer) {
-    try {
-      const { data, error } = await supabase.auth.getUser(bearer);
-      if (!error) user = data.user;
-    } catch {}
-  }
-  if (!user) {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
-  }
-  if (!user) return new Response("Unauthorized", { status: 401 });
 
+  // Auth check menggunakan getAppUser (support JWT decode)
   const appUser = await getAppUser();
+  if (!appUser) {
+    console.error('[POST /api/balita/update] No appUser, unauthorized');
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  console.log('[POST /api/balita/update] User:', {
+    id: appUser.id,
+    role: appUser.role,
+    puskesmas_id: appUser.puskesmas_id
+  });
+
+  const body = await req.json().catch(() => ({} as any));
   const id: string | undefined = body?.id ?? undefined;
   const nik: string | undefined = body?.nik ?? undefined;
   const isUuid = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
