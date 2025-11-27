@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import SimpleChart from "@/components/SimpleChart";
 import { toast } from "sonner";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { getAuthHeaders } from "@/lib/clientSession";
 
 type Kohort = { id: string; periode_mulai?: string } | null;
 
