@@ -267,10 +267,11 @@ export default function NewAntropometri() {
       assesment: form.medis_lanjutan && form.assesment ? form.assesment : undefined,
       plan: form.medis_lanjutan && form.plan ? form.plan : undefined,
     };
+    const authHeaders = await getAuthHeaders();
     const res = await fetch("/api/monitoring/antropometri", {
       method: editingId ? "PATCH" : "POST",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify(editingId ? { id: editingId, ...payload } : payload),
     });
     setSaving(false);
