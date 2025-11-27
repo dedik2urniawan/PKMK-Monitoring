@@ -64,7 +64,8 @@ export default function NewKonsumsi() {
       kepatuhan_pct: form.kepatuhan_pct === "" ? undefined : Number(form.kepatuhan_pct),
       catatan: form.catatan || undefined,
     };
-    const res = await fetch("/api/monitoring/konsumsi", { method: editingId ? "PATCH" : "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editingId ? { id: editingId, ...payload } : payload) });
+    const authHeaders = await getAuthHeaders();
+    const res = await fetch("/api/monitoring/konsumsi", { method: editingId ? "PATCH" : "POST", credentials: "include", headers: { "Content-Type": "application/json", ...authHeaders }, body: JSON.stringify(editingId ? { id: editingId, ...payload } : payload) });
     setSaving(false);
     if (!res.ok) { const t = await res.text(); setMsg(t); toast.error(t); return; }
     toast.success(editingId ? "Perubahan disimpan" : "Tersimpan");
