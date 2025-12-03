@@ -6,6 +6,7 @@ interface RedFlagData {
     name: string;
     value: number;
     percentage: number;
+    [key: string]: string | number; // Index signature for Recharts compatibility
 }
 
 interface RedFlagPieChartProps {
@@ -65,7 +66,7 @@ export default function RedFlagPieChart({
                                 cx="50%"
                                 cy="50%"
                                 labelLine={false}
-                                label={({ name, percentage }) => `${name}: ${percentage}%`}
+                                label={({ name, percentage }: any) => `${name}: ${percentage}%`}
                                 outerRadius={120}
                                 fill="#8884d8"
                                 dataKey="value"
@@ -89,7 +90,7 @@ export default function RedFlagPieChart({
                                 verticalAlign="bottom"
                                 height={36}
                                 iconType="circle"
-                                formatter={(value, entry: any) => (
+                                formatter={(value: any, entry: any) => (
                                     <span className="text-sm">
                                         {value} ({entry.payload.value})
                                     </span>
