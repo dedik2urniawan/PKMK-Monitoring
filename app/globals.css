@@ -23,6 +23,16 @@
   --primary-600: #0d9488; /* teal-600 */
   --primary-700: #0f766e; /* teal-700 */
 
+  /* Status Colors for Data Visualization */
+  --success: 34 197 94;       /* rgb(34, 197, 94) - Green */
+  --warning: 245 158 11;      /* rgb(245, 158, 11) - Orange */
+  --danger: 239 68 68;        /* rgb(239, 68, 68) - Red */
+  --info: 59 130 246;         /* rgb(59, 130, 246) - Blue */
+  --success-light: 220 252 231;
+  --warning-light: 254 243 199;
+  --danger-light: 254 226 226;
+  --info-light: 219 234 254;
+
   --font-sans: Arial, Helvetica, sans-serif;
   --font-mono: 'Courier New', monospace;
   --radius: 0.625rem;

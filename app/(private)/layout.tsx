@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import SideNav from "@/components/SideNav";
+import Header from "@/components/Header";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import IdleGuard from "@/components/IdleGuard";
@@ -19,24 +20,32 @@ export default async function PrivateLayout({ children }: { children: React.Reac
   if (!user) redirect("/login");
 
   return (
-    <div className="grid grid-cols-[240px_1fr] gap-0 min-h-[100svh]">
-      {/* Sidebar desktop */}
-      <aside className="border-r border-black/10 bg-[var(--primary-700)] text-white min-h-[100svh] overflow-y-auto">
-        <div className="flex items-center gap-2 p-4 border-b border-white/15">
-          <Image src="/tindik-anting-logo.png" alt="PKMK" width={24} height={24} />
-          <span className="font-bold">Sistem Pelaporan PKMK</span>
+    <div className="grid grid-cols-[auto_1fr] min-h-screen max-h-screen overflow-hidden">
+      {/* Sidebar - Full height with internal scroll */}
+      <aside className="relative border-r border-white/10 bg-gradient-to-b from-[var(--primary-700)] via-[var(--primary-600)] to-[var(--primary-600)] text-white shadow-xl flex flex-col h-screen">
+        <div className="flex items-center gap-2 p-4 border-b border-white/15 flex-shrink-0">
+          <Image src="/tindik-anting-logo.png" alt="PKMK" width={24} height={24} className="flex-shrink-0" />
+          <span className="font-bold text-sm whitespace-nowrap">Sistem Pelaporan PKMK</span>
         </div>
-        <SideNav />
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <SideNav />
+        </div>
       </aside>
 
-      {/* Content */}
-      <section className="p-4 md:p-6 bg-[var(--background)]">
-        {/* Auto sign-out on 5 minutes idle */}
-        <IdleGuard />
-        {/* Sync Supabase session cookie for server APIs */}
-        <AuthSessionSync />
-        {children}
-      </section>
+      {/* Main Content Area with Header */}
+      <div className="flex flex-col h-screen overflow-hidden">
+        {/* Header Bar - Fixed at top */}
+        <Header />
+
+        {/* Content - Scrollable */}
+        <section className="flex-1 overflow-y-auto p-4 md:p-6 bg-[var(--background)]">
+          {/* Auto sign-out on 1 hour idle */}
+          <IdleGuard />
+          {/* Sync Supabase session cookie for server APIs */}
+          <AuthSessionSync />
+          {children}
+        </section>
+      </div>
     </div>
   );
 }
