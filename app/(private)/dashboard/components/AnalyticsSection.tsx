@@ -146,11 +146,8 @@ export default function AnalyticsSection() {
         setSelectedMonth(month);
     };
 
-    const handleExport = async () => {
-        const element = document.getElementById('analytics-dashboard');
-        if (element) {
-            await exportAnalyticsToPDF(element, `Analytics_${selectedYear}_${selectedMonth}`);
-        }
+    const handleExport = () => {
+        exportAnalyticsToPDF(complianceData, nutritionData, selectedYear, selectedMonth);
     };
 
     return (
