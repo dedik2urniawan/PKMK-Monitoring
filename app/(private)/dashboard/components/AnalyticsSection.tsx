@@ -10,12 +10,15 @@ import RedFlagPieChart from "./RedFlagPieChart";
 import KepatuhanBarChart from "./KepatuhanBarChart";
 import HealthStatusBarChart from "./HealthStatusBarChart";
 import DosageBarChart from "./DosageBarChart";
-import { BarChart3, Heart, TrendingUp } from "lucide-react";
+import MonitoringComplianceScorecard from "./MonitoringComplianceScorecard";
+import ComplianceStackedBarChart from "./ComplianceStackedBarChart";
+import { BarChart3, Heart, TrendingUp, CheckCircle2, Download } from "lucide-react";
 import { exportAnalyticsToPDF } from "@/lib/exportAnalytics";
 
 export default function AnalyticsSection() {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedWeek, setSelectedWeek] = useState<string>("all");
 
     const [complianceData, setComplianceData] = useState<any>(null);
     const [complianceLoading, setComplianceLoading] = useState(true);
@@ -31,6 +34,9 @@ export default function AnalyticsSection() {
 
     const [dosageData, setDosageData] = useState<any>(null);
     const [dosageLoading, setDosageLoading] = useState(true);
+
+    const [monitoringComplianceData, setMonitoringComplianceData] = useState<any>(null);
+    const [monitoringComplianceLoading, setMonitoringComplianceLoading] = useState(true);
 
     const fetchComplianceData = async () => {
         setComplianceLoading(true);
@@ -107,6 +113,22 @@ export default function AnalyticsSection() {
         }
     };
 
+    const fetchMonitoringComplianceData = async () => {
+        setMonitoringComplianceLoading(true);
+        try {
+            const weekQuery = selectedWeek !== "all" ? `&week=${selectedWeek}` : "";
+            const response = await fetch(`/api/analytics/monitoring-compliance?year=${selectedYear}&month=${selectedMonth}${weekQuery}`);
+            if (response.ok) {
+                const data = await response.json();
+                setMonitoringComplianceData(data);
+            }
+        } catch (error) {
+            console.error("Error fetching monitoring compliance data:", error);
+        } finally {
+            setMonitoringComplianceLoading(false);
+        }
+    };
+
     useEffect(() => {
         fetchComplianceData();
         fetchNutritionData();
@@ -115,18 +137,44 @@ export default function AnalyticsSection() {
         fetchDosageData();
     }, [selectedYear, selectedMonth]);
 
+    useEffect(() => {
+        fetchMonitoringComplianceData();
+    }, [selectedYear, selectedMonth, selectedWeek]);
+
     const handleFilterChange = (year: number, month: number) => {
         setSelectedYear(year);
         setSelectedMonth(month);
     };
 
-    const handleExport = () => {
-        exportAnalyticsToPDF(complianceData, nutritionData, selectedYear, selectedMonth);
+    const handleExport = async () => {
+        const element = document.getElementById('analytics-dashboard');
+        if (element) {
+            await exportAnalyticsToPDF(element, `Analytics_${selectedYear}_${selectedMonth}`);
+        }
     };
 
     return (
-        <div className="space-y-8 mt-8">
-            <FilterSection onFilterChange={handleFilterChange} onExport={handleExport} />
+        <div id="analytics-dashboard" className="space-y-8 pb-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-800">Dashboard Analytics</h1>
+                    <p className="text-gray-600">Overview kinerja program PKMK dan status gizi balita</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <FilterSection
+                        selectedYear={selectedYear}
+                        selectedMonth={selectedMonth}
+                        onFilterChange={handleFilterChange}
+                    />
+                    <button
+                        onClick={handleExport}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                    >
+                        <Download size={18} />
+                        Export PDF
+                    </button>
+                </div>
+            </div>
 
             <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -151,6 +199,63 @@ export default function AnalyticsSection() {
                     level={complianceData?.level || "puskesmas"}
                     loading={complianceLoading}
                 />
+            </div>
+
+            {/* Monitoring Compliance Section */}
+            <div className="space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
+                            <CheckCircle2 className="text-white" size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-800">Monitoring Compliance</h2>
+                            <p className="text-sm text-gray-600">Kelengkapan monitoring Antropometri, Konsumsi, dan Pemberian</p>
+                        </div>
+                    </div>
+
+                    {/* Week Filter */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700">Filter Minggu:</span>
+                        <select
+                            value={selectedWeek}
+                            onChange={(e) => setSelectedWeek(e.target.value)}
+                            className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="all">Semua Minggu</option>
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map((week) => (
+                                <option key={week} value={week}>Minggu ke-{week}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                <MonitoringComplianceScorecard
+                    totalBalita={monitoringComplianceData?.totalBalita || 0}
+                    data={monitoringComplianceData?.overall || {}}
+                    loading={monitoringComplianceLoading}
+                />
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <ComplianceStackedBarChart
+                        title="Antropometri"
+                        data={monitoringComplianceData?.byLocation || []}
+                        type="antropometri"
+                        loading={monitoringComplianceLoading}
+                    />
+                    <ComplianceStackedBarChart
+                        title="Konsumsi"
+                        data={monitoringComplianceData?.byLocation || []}
+                        type="konsumsi"
+                        loading={monitoringComplianceLoading}
+                    />
+                    <ComplianceStackedBarChart
+                        title="Pemberian"
+                        data={monitoringComplianceData?.byLocation || []}
+                        type="pemberian"
+                        loading={monitoringComplianceLoading}
+                    />
+                </div>
             </div>
 
             <div className="space-y-4">
