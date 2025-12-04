@@ -5,6 +5,8 @@ import { Calendar, Filter, Download } from "lucide-react";
 interface FilterSectionProps {
     onFilterChange: (year: number, month: number) => void;
     onExport?: () => void;
+    selectedYear?: number;
+    selectedMonth?: number;
 }
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -27,9 +29,14 @@ const MONTHS = [
 
 const YEARS = Array.from({ length: CURRENT_YEAR - 2019 }, (_, i) => 2020 + i);
 
-export default function FilterSection({ onFilterChange, onExport }: FilterSectionProps) {
-    const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
-    const [selectedMonth, setSelectedMonth] = useState(CURRENT_MONTH);
+export default function FilterSection({
+    onFilterChange,
+    onExport,
+    selectedYear: initialYear,
+    selectedMonth: initialMonth
+}: FilterSectionProps) {
+    const [selectedYear, setSelectedYear] = useState(initialYear || CURRENT_YEAR);
+    const [selectedMonth, setSelectedMonth] = useState(initialMonth || CURRENT_MONTH);
 
     const handleApply = () => {
         onFilterChange(selectedYear, selectedMonth);
