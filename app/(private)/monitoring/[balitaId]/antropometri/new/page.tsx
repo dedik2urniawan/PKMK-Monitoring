@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState, Fragment } from "react";
 import { useParams } from "next/navigation";
-import SimpleChart from "@/components/SimpleChart";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, Area } from "recharts";
 import { toast } from "sonner";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { getAuthHeaders } from "@/lib/clientSession";
@@ -730,159 +730,177 @@ export default function NewAntropometri() {
 }
 
 function WhoCharts({ history, jk }: { history: any[]; jk?: 'L' | 'P' }) {
-  const [bbuRef, setBbuRef] = useState<{ month: number; values: Record<string, number> }[]>([]);
-  const [tbuRef, setTbuRef] = useState<{ month: number; values: Record<string, number> }[]>([]);
-  const [bbtbRef, setBbtbRef] = useState<{ len: number; values: Record<string, number> }[]>([]);
+  const [bbuData, setBbuData] = useState<any[]>([]);
+  const [tbuData, setTbuData] = useState<any[]>([]);
+  const [bbtbData, setBbtbData] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
-      if (!jk || history.length === 0) return;
+      if (!jk) return;
       const jkNum = jk === 'L' ? 1 : 2;
-      // derive months from history (if usia not available, estimate from tanggal differences is complex; here we use the stored usia_bulan in each history if available; else skip)
-      const months = Array.from(new Set(history
-        .map((h) => Number(h.usia_bulan))
-        .filter((v) => !isNaN(v)))).sort((a, b) => a - b);
-      if (months.length === 0) return;
-      let minM = months[0];
-      let maxM = months[months.length - 1];
-      if (minM === maxM) { minM = Math.max(0, minM - 3); maxM = Math.min(60, maxM + 3); }
-      const reqMonths: number[] = [];
-      for (let m = minM; m <= maxM; m++) reqMonths.push(m);
 
-      // helper to get x for given z
-      function xForZ(L: number, M: number, S: number, z: number) {
-        if (L === 0) return M * Math.exp(S * z);
-        return M * Math.pow(1 + L * S * z, 1 / L);
-      }
+      // Determine ranges based on history or default to 0-24 months
+      const maxAge = Math.max(24, ...history.map(h => Number(h.usia_bulan || 0))) + 2;
+      const maxLength = Math.max(100, ...history.map(h => Number(h.tb_corr_cm || h.tb_cm || 0))) + 5;
 
-      // BBU
-      const bbu: { month: number; values: Record<string, number> }[] = [];
-      for (const m of reqMonths) {
-        const r = await fetch(`/api/ref/lms-bbu?jk=${jkNum}&month=${m}`);
+      // --- BBU Data ---
+      try {
+        const r = await fetch(`/api/ref/lms-bbu?jk=${jkNum}&min_month=0&max_month=${maxAge}`);
         const d = await r.json();
-        if (d.item) {
-          const vals: Record<string, number> = {};
-          for (const z of [-3, -2, -1, 0, 1, 2, 3]) vals[z.toString()] = xForZ(d.item.L, d.item.M, d.item.S, z);
-          bbu.push({ month: m, values: vals });
+        if (d.items) {
+          // Merge child data
+          const merged = d.items.map((item: any) => {
+            const childPoints = history.filter(h => Number(h.usia_bulan) === item.umur_bulan && h.bb_kg != null);
+            // If multiple points in same month, take average or last? Taking last for now.
+            const childVal = childPoints.length > 0 ? Number(childPoints[childPoints.length - 1].bb_kg) : null;
+            return {
+              x: item.umur_bulan,
+              ...item,
+              sd0: item.sd0 ?? item.M, // Fallback to M if sd0 is missing
+              anak: childVal
+            };
+          });
+          setBbuData(merged);
         }
-      }
-      setBbuRef(bbu);
+      } catch (e) { console.error("Failed to fetch BBU ref", e); }
 
-      // TBU
-      const tbu: { month: number; values: Record<string, number> }[] = [];
-      for (const m of reqMonths) {
-        const r = await fetch(`/api/ref/lms-tbu?jk=${jkNum}&month=${m}`);
+      // --- TBU Data ---
+      try {
+        const r = await fetch(`/api/ref/lms-tbu?jk=${jkNum}&min_month=0&max_month=${maxAge}`);
         const d = await r.json();
-        if (d.item) {
-          const vals: Record<string, number> = {};
-          for (const z of [-3, -2, -1, 0, 1, 2, 3]) vals[z.toString()] = xForZ(d.item.L, d.item.M, d.item.S, z);
-          tbu.push({ month: m, values: vals });
+        if (d.items) {
+          const merged = d.items.map((item: any) => {
+            const childPoints = history.filter(h => Number(h.usia_bulan) === item.umur_bulan && (h.tb_corr_cm != null || h.tb_cm != null));
+            const childVal = childPoints.length > 0 ? Number(childPoints[childPoints.length - 1].tb_corr_cm ?? childPoints[childPoints.length - 1].tb_cm) : null;
+            return {
+              x: item.umur_bulan,
+              ...item,
+              sd0: item.sd0 ?? item.M, // Fallback to M
+              anak: childVal
+            };
+          });
+          setTbuData(merged);
         }
-      }
-      setTbuRef(tbu);
+      } catch (e) { console.error("Failed to fetch TBU ref", e); }
 
-      // BBTB: generate by length domain from child data
-      const pointsLen = history
-        .map((h) => Number(h.tb_corr_cm ?? h.tb_cm))
-        .filter((v) => !isNaN(v));
-      if (pointsLen.length > 0) {
-        let minL = Math.min(...pointsLen);
-        let maxL = Math.max(...pointsLen);
-        if (minL === maxL) { minL = Math.max(30, minL - 3); maxL = Math.min(120, maxL + 3); }
-        const reqLen: number[] = [];
-        for (let L = Math.round(minL * 2) / 2; L <= Math.round(maxL * 2) / 2; L += 0.5) reqLen.push(Number(L.toFixed(1)));
-        const arr: { len: number; values: Record<string, number> }[] = [];
-        for (const Lval of reqLen) {
-          const r = await fetch(`/api/ref/lms-bbtb?jk=${jkNum}&length=${Lval}`);
-          const d = await r.json();
-          if (d.item) {
-            const vals: Record<string, number> = {};
-            for (const z of [-3, -2, -1, 0, 1, 2, 3]) vals[z.toString()] = xForZ(d.item.L, d.item.M, d.item.S, z);
-            arr.push({ len: Lval, values: vals });
-          }
+      // --- BBTB Data ---
+      try {
+        // BBTB range usually starts from 45cm
+        const r = await fetch(`/api/ref/lms-bbtb?jk=${jkNum}&min_length=45&max_length=${maxLength}`);
+        const d = await r.json();
+        if (d.items) {
+          const merged = d.items.map((item: any) => {
+            // Match child data by length (rounded to nearest 0.5 or 1??)
+            // Reference is by 0.5 or 1 cm steps. Child data is precise.
+            // We can't just map reference to child. We need to plot child points on top of reference curves.
+            // Recharts 'ComposedChart' with 'Scatter' for child points might be better, or just Line with nulls.
+            // But child x-axis (length) might not match reference x-axis exactly.
+            // Strategy: Use reference data as the "Line" basis. Add child points as a separate "Scatter" or "Line" data?
+            // Recharts XAxis type="number" allows mixing data if we combine them into one array sorted by X.
+            return {
+              x: item.tb_cm,
+              ...item,
+              sd0: item.sd0 ?? item.M, // Fallback to M
+              anak: null // Placeholder, we'll add child points separately or merge carefully
+            };
+          });
+
+          // Add child points that don't align exactly with reference steps
+          const childPoints = history
+            .filter(h => (h.tb_corr_cm != null || h.tb_cm != null) && h.bb_kg != null)
+            .map(h => ({
+              x: Number(h.tb_corr_cm ?? h.tb_cm),
+              anak: Number(h.bb_kg)
+            }));
+
+          // Combine and sort
+          const combined = [...merged, ...childPoints].sort((a, b) => a.x - b.x);
+          setBbtbData(combined);
         }
-        setBbtbRef(arr);
-      }
+      } catch (e) { console.error("Failed to fetch BBTB ref", e); }
+
     })();
   }, [history, jk]);
 
-  // Build child series from history
-  const pointsBB = history
-    .filter((h) => typeof h.usia_bulan !== 'undefined' && h.bb_kg != null)
-    .map((h) => ({ x: Number(h.usia_bulan), y: Number(h.bb_kg) }))
-    .sort((a, b) => a.x - b.x);
-  const pointsTB = history
-    .filter((h) => typeof h.usia_bulan !== 'undefined' && (h.tb_corr_cm != null || h.tb_cm != null))
-    .map((h) => ({ x: Number(h.usia_bulan), y: Number(h.tb_corr_cm ?? h.tb_cm) }))
-    .sort((a, b) => a.x - b.x);
-  const pointsBBTB = history
-    .filter((h) => (h.tb_corr_cm != null || h.tb_cm != null) && h.bb_kg != null)
-    .map((h) => ({ x: Number(h.tb_corr_cm ?? h.tb_cm), y: Number(h.bb_kg) }))
-    .sort((a, b) => a.x - b.x);
+  const CommonChart = ({ data, xLabel, yLabel, title }: any) => (
+    <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <h3 className="text-base font-semibold text-gray-800 mb-4">{title}</h3>
+      <div className="h-[400px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={data} margin={{ top: 5, right: 20, bottom: 20, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+            <XAxis
+              dataKey="x"
+              type="number"
+              domain={['dataMin', 'dataMax']}
+              tick={{ fontSize: 12 }}
+              label={{ value: xLabel, position: 'insideBottom', offset: -10, fontSize: 12 }}
+              allowDuplicatedCategory={false}
+            />
+            <YAxis
+              tick={{ fontSize: 12 }}
+              label={{ value: yLabel, angle: -90, position: 'insideLeft', fontSize: 12 }}
+              domain={['auto', 'auto']}
+            />
+            <Tooltip
+              contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+              itemStyle={{ fontSize: '12px', padding: '2px 0' }}
+              labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
+              formatter={(value: number) => value ? value.toFixed(2) : '-'}
+            />
+            <Legend verticalAlign="top" height={36} iconType="plainline" />
+
+            {/* Reference Lines - Smooth Curves */}
+            <Line type="monotone" dataKey="sd3pos" stroke="#ef4444" strokeWidth={1.5} dot={false} name="+3 SD" connectNulls />
+            <Line type="monotone" dataKey="sd2pos" stroke="#f97316" strokeWidth={1.5} dot={false} name="+2 SD" connectNulls />
+            <Line type="monotone" dataKey="sd1pos" stroke="#eab308" strokeWidth={1.5} dot={false} name="+1 SD" connectNulls />
+            <Line type="monotone" dataKey="sd0" stroke="#22c55e" strokeWidth={2} dot={false} name="Median" connectNulls />
+            <Line type="monotone" dataKey="sd1neg" stroke="#eab308" strokeWidth={1.5} dot={false} name="-1 SD" connectNulls />
+            <Line type="monotone" dataKey="sd2neg" stroke="#f97316" strokeWidth={1.5} dot={false} name="-2 SD" connectNulls />
+            <Line type="monotone" dataKey="sd3neg" stroke="#ef4444" strokeWidth={1.5} dot={false} name="-3 SD" connectNulls />
+
+            {/* Child Line - Linear with Dots */}
+            <Line
+              type="linear"
+              dataKey="anak"
+              stroke="#3b82f6"
+              strokeWidth={3}
+              dot={{ r: 5, fill: "#3b82f6", strokeWidth: 2, stroke: "#fff" }}
+              activeDot={{ r: 7 }}
+              name="Anak"
+              connectNulls
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      {pointsBB.length > 0 && bbuRef.length > 0 && (
-        <div>
-          <div className="mb-1 text-sm text-[var(--muted-foreground)]">BB (kg) vs Umur (bulan)</div>
-          <SimpleChart
-            height={260}
-            xLabel="Bulan"
-            yLabel="BB (kg)"
-            series={[
-              { name: "Anak", color: "#0ea5e9", points: pointsBB, legend: true },
-              { name: "-3 SD", color: "#9ca3af", points: bbuRef.map(r => ({ x: r.month, y: r.values['-3'] })), dashed: true },
-              { name: "-2 SD", color: "#ef4444", points: bbuRef.map(r => ({ x: r.month, y: r.values['-2'] })), dashed: true, legend: true },
-              { name: "-1 SD", color: "#9ca3af", points: bbuRef.map(r => ({ x: r.month, y: r.values['-1'] })), dashed: true },
-              { name: "Median", color: "#6b7280", points: bbuRef.map(r => ({ x: r.month, y: r.values['0'] })), dashed: true, legend: true },
-              { name: "+1 SD", color: "#9ca3af", points: bbuRef.map(r => ({ x: r.month, y: r.values['1'] })), dashed: true },
-              { name: "+2 SD", color: "#22c55e", points: bbuRef.map(r => ({ x: r.month, y: r.values['2'] })), dashed: true, legend: true },
-              { name: "+3 SD", color: "#9ca3af", points: bbuRef.map(r => ({ x: r.month, y: r.values['3'] })), dashed: true },
-            ]}
-          />
-        </div>
+    <div className="space-y-8">
+      {bbuData.length > 0 && (
+        <CommonChart
+          data={bbuData}
+          title="Grafik Status Gizi BB Menurut Umur (BB/U)"
+          xLabel="Umur (bulan)"
+          yLabel="Berat Badan (kg)"
+        />
       )}
-
-      {pointsTB.length > 0 && tbuRef.length > 0 && (
-        <div>
-          <div className="mb-1 text-sm text-[var(--muted-foreground)]">TB (cm, terkoreksi) vs Umur (bulan)</div>
-          <SimpleChart
-            height={260}
-            xLabel="Bulan"
-            yLabel="TB (cm)"
-            series={[
-              { name: "Anak", color: "#0ea5e9", points: pointsTB, legend: true },
-              { name: "-3 SD", color: "#9ca3af", points: tbuRef.map(r => ({ x: r.month, y: r.values['-3'] })), dashed: true },
-              { name: "-2 SD", color: "#ef4444", points: tbuRef.map(r => ({ x: r.month, y: r.values['-2'] })), dashed: true, legend: true },
-              { name: "-1 SD", color: "#9ca3af", points: tbuRef.map(r => ({ x: r.month, y: r.values['-1'] })), dashed: true },
-              { name: "Median", color: "#6b7280", points: tbuRef.map(r => ({ x: r.month, y: r.values['0'] })), dashed: true, legend: true },
-              { name: "+1 SD", color: "#9ca3af", points: tbuRef.map(r => ({ x: r.month, y: r.values['1'] })), dashed: true },
-              { name: "+2 SD", color: "#22c55e", points: tbuRef.map(r => ({ x: r.month, y: r.values['2'] })), dashed: true, legend: true },
-              { name: "+3 SD", color: "#9ca3af", points: tbuRef.map(r => ({ x: r.month, y: r.values['3'] })), dashed: true },
-            ]}
-          />
-        </div>
+      {tbuData.length > 0 && (
+        <CommonChart
+          data={tbuData}
+          title="Grafik Status Gizi TB Menurut Umur (TB/U)"
+          xLabel="Umur (bulan)"
+          yLabel="Tinggi Badan (cm)"
+        />
       )}
-
-      {pointsBBTB.length > 0 && bbtbRef.length > 0 && (
-        <div>
-          <div className="mb-1 text-sm text-[var(--muted-foreground)]">BB (kg) vs TB Corr (cm)</div>
-          <SimpleChart
-            height={260}
-            xLabel="TB Corr (cm)"
-            yLabel="BB (kg)"
-            series={[
-              { name: "Anak", color: "#0ea5e9", points: pointsBBTB, legend: true },
-              { name: "-3 SD", color: "#9ca3af", points: bbtbRef.map(r => ({ x: r.len, y: r.values['-3'] })), dashed: true, showPoints: false },
-              { name: "-2 SD", color: "#ef4444", points: bbtbRef.map(r => ({ x: r.len, y: r.values['-2'] })), dashed: true, legend: true, showPoints: false },
-              { name: "-1 SD", color: "#9ca3af", points: bbtbRef.map(r => ({ x: r.len, y: r.values['-1'] })), dashed: true, showPoints: false },
-              { name: "Median", color: "#6b7280", points: bbtbRef.map(r => ({ x: r.len, y: r.values['0'] })), dashed: true, legend: true, showPoints: false },
-              { name: "+1 SD", color: "#9ca3af", points: bbtbRef.map(r => ({ x: r.len, y: r.values['1'] })), dashed: true, showPoints: false },
-              { name: "+2 SD", color: "#22c55e", points: bbtbRef.map(r => ({ x: r.len, y: r.values['2'] })), dashed: true, legend: true, showPoints: false },
-              { name: "+3 SD", color: "#9ca3af", points: bbtbRef.map(r => ({ x: r.len, y: r.values['3'] })), dashed: true, showPoints: false },
-            ]}
-          />
-        </div>
+      {bbtbData.length > 0 && (
+        <CommonChart
+          data={bbtbData}
+          title="Grafik Status Gizi BB Menurut TB (BB/TB)"
+          xLabel="Tinggi Badan (cm)"
+          yLabel="Berat Badan (kg)"
+        />
       )}
     </div>
   );
@@ -891,7 +909,8 @@ function WhoCharts({ history, jk }: { history: any[]; jk?: 'L' | 'P' }) {
 function DeltaBBInsights({ history }: { history: any[] }) {
   // build weekly delta from sorted history by minggu_ke
   const sorted = [...history].sort((a, b) => a.minggu_ke - b.minggu_ke);
-  const deltas: { week: number; delta: number; low: number; high: number }[] = [];
+  const data: any[] = [];
+
   for (let i = 1; i < sorted.length; i++) {
     const prev = sorted[i - 1];
     const cur = sorted[i];
@@ -899,44 +918,86 @@ function DeltaBBInsights({ history }: { history: any[] }) {
       const delta = Number(cur.bb_kg) - Number(prev.bb_kg);
       const low = Number(cur.bb_kg) * 0.005;
       const high = Number(cur.bb_kg) * 0.01;
-      deltas.push({ week: cur.minggu_ke, delta, low, high });
+      data.push({
+        week: cur.minggu_ke,
+        delta,
+        low,
+        high,
+        status: delta < low ? 'kurang' : delta > high ? 'lebih' : 'sesuai'
+      });
     }
   }
-  const series = [
-    { name: 'ΔBB Anak', color: '#0ea5e9', points: deltas.map(d => ({ x: d.week, y: d.delta })), legend: true },
-    { name: 'Rekom Low', color: '#ef4444', points: deltas.map(d => ({ x: d.week, y: d.low })), dashed: true, showPoints: false, legend: true },
-    { name: 'Rekom High', color: '#22c55e', points: deltas.map(d => ({ x: d.week, y: d.high })), dashed: true, showPoints: false, legend: true },
-  ];
+
   return (
-    <div>
-      <div className="mb-2 text-sm text-[var(--muted-foreground)]">Perbandingan kenaikan BB (kg) per minggu dengan rekomendasi 5–10 gram/kg BB.</div>
-      <SimpleChart height={260} xLabel="Minggu" yLabel="ΔBB (kg)" series={series as any} />
-      <div className="mt-3 overflow-x-auto">
-        <table className="w-full text-sm text-[var(--foreground)]">
-          <thead className="bg-[var(--background)]">
+    <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <div className="mb-4">
+        <h3 className="text-base font-semibold text-gray-800">Analisis Kenaikan Berat Badan (ΔBB)</h3>
+        <p className="text-sm text-gray-500">Perbandingan kenaikan BB per minggu dengan rekomendasi 5–10 gram/kg BB.</p>
+      </div>
+
+      <div className="h-[300px] w-full mb-6">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={data} margin={{ top: 10, right: 20, bottom: 20, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+            <XAxis
+              dataKey="week"
+              tick={{ fontSize: 12 }}
+              label={{ value: 'Minggu Ke', position: 'insideBottom', offset: -10, fontSize: 12 }}
+            />
+            <YAxis
+              tick={{ fontSize: 12 }}
+              label={{ value: 'ΔBB (kg)', angle: -90, position: 'insideLeft', fontSize: 12 }}
+            />
+            <Tooltip
+              contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+              formatter={(value: number, name: string) => [value.toFixed(3) + ' kg', name === 'delta' ? 'ΔBB Anak' : name === 'low' ? 'Min. Rekom' : 'Max. Rekom']}
+            />
+            <Legend verticalAlign="top" height={36} />
+
+            <Area type="monotone" dataKey="high" stackId="1" stroke="none" fill="#dcfce7" name="Area Rekomendasi" />
+            <Area type="monotone" dataKey="low" stackId="2" stroke="none" fill="#ffffff" name="Area Bawah" />
+
+            <Line type="monotone" dataKey="high" stroke="#22c55e" strokeDasharray="5 5" dot={false} name="Max. Rekom" />
+            <Line type="monotone" dataKey="low" stroke="#ef4444" strokeDasharray="5 5" dot={false} name="Min. Rekom" />
+            <Line
+              type="monotone"
+              dataKey="delta"
+              stroke="#3b82f6"
+              strokeWidth={2.5}
+              dot={{ r: 4, fill: "#3b82f6", strokeWidth: 2, stroke: "#fff" }}
+              name="ΔBB Anak"
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-gray-700">
+          <thead className="bg-gray-50">
             <tr>
-              <th className="border border-[var(--border)] p-2 text-left text-[var(--muted-foreground)]">Minggu</th>
-              <th className="border border-[var(--border)] p-2 text-left text-[var(--muted-foreground)]">ΔBB (kg)</th>
-              <th className="border border-[var(--border)] p-2 text-left text-[var(--muted-foreground)]">Rekom (kg)</th>
-              <th className="border border-[var(--border)] p-2 text-left text-[var(--muted-foreground)]">Status</th>
+              <th className="border border-gray-200 p-3 text-left font-medium text-gray-600">Minggu</th>
+              <th className="border border-gray-200 p-3 text-left font-medium text-gray-600">ΔBB (kg)</th>
+              <th className="border border-gray-200 p-3 text-left font-medium text-gray-600">Rekom (kg)</th>
+              <th className="border border-gray-200 p-3 text-left font-medium text-gray-600">Status</th>
             </tr>
           </thead>
           <tbody>
-            {deltas.map(d => {
-              const status = d.delta < d.low ? 'di bawah' : d.delta > d.high ? 'di atas' : 'sesuai';
-              const cls = status === 'sesuai' ? 'text-emerald-600' : status === 'di atas' ? 'text-orange-600' : 'text-red-600';
+            {data.map(d => {
+              const cls = d.status === 'sesuai' ? 'text-emerald-600 font-medium' : d.status === 'lebih' ? 'text-orange-600' : 'text-red-600 font-medium';
               return (
-                <tr key={d.week} className="even:bg-gray-50/60">
-                  <td className="border border-[var(--border)] p-2">{d.week}</td>
-                  <td className="border border-[var(--border)] p-2">{d.delta.toFixed(3)}</td>
-                  <td className="border border-[var(--border)] p-2">{d.low.toFixed(3)}–{d.high.toFixed(3)}</td>
-                  <td className={`border border-[var(--border)] p-2 ${cls}`}>{status}</td>
+                <tr key={d.week} className="hover:bg-gray-50 transition-colors">
+                  <td className="border border-gray-200 p-3">{d.week}</td>
+                  <td className="border border-gray-200 p-3">{d.delta.toFixed(3)}</td>
+                  <td className="border border-gray-200 p-3">{d.low.toFixed(3)} – {d.high.toFixed(3)}</td>
+                  <td className={`border border-gray-200 p-3 ${cls}`}>
+                    {d.status === 'sesuai' ? 'Sesuai' : d.status === 'lebih' ? 'Di Atas' : 'Di Bawah'}
+                  </td>
                 </tr>
               );
             })}
-            {deltas.length === 0 && (
+            {data.length === 0 && (
               <tr>
-                <td className="border border-[var(--border)] p-2 text-center text-[var(--muted-foreground)]" colSpan={4}>Belum cukup data untuk analisis.</td>
+                <td className="border border-gray-200 p-4 text-center text-gray-500" colSpan={4}>Belum cukup data untuk analisis (minimal 2 pengukuran).</td>
               </tr>
             )}
           </tbody>

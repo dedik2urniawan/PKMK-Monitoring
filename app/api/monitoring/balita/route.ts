@@ -18,8 +18,16 @@ export async function GET(req: NextRequest) {
   // Base query builder
   const base = supabase.from("balita");
   // Build filter once
+  // Build filter once
   let qFilter = base.select("id", { count: 'exact', head: true });
-  let qData = base.select("*").order("nama_balita");
+  // Fetch balita with their latest cohort and the latest anthropometry from that cohort
+  // Note: This assumes 1-level deep relation or we fetch kohort and then frontend finds latest.
+  // We want to show "Status Redflag". This is usually in monitoring_antropometri.
+  // Relation: balita -> kohort -> monitoring_antropometri
+  // We'll fetch kohort info. For redflag, it's complex to join 2 levels deep efficiently in one list query if not optimized.
+  // Let's try fetching kohort first.
+  let qData = base.select("*, kohort(id, periode_mulai, monitoring_antropometri(bb_tidak_adekuat, murmur_edema, delayed_development, wajah_dismorfik, organomegali_limfadenopati, ispa_cystitis, muntah_diare_berulang, diagnosa_penyakit_penyerta, subjective, objective, assesment, plan))")
+    .order("nama_balita");
 
   const appUser = await getAppUser();
   if (balita_id) { qFilter = qFilter.eq("id", balita_id); qData = qData.eq("id", balita_id); }
