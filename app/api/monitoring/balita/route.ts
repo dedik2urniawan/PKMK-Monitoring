@@ -24,9 +24,16 @@ export async function GET(req: NextRequest) {
   // Note: This assumes 1-level deep relation or we fetch kohort and then frontend finds latest.
   // We want to show "Status Redflag". This is usually in monitoring_antropometri.
   // Relation: balita -> kohort -> monitoring_antropometri
-  // We'll fetch kohort info. For redflag, it's complex to join 2 levels deep efficiently in one list query if not optimized.
-  // Let's try fetching kohort first.
-  let qData = base.select("*, kohort(id, periode_mulai, monitoring_antropometri(bb_tidak_adekuat, murmur_edema, delayed_development, wajah_dismorfik, organomegali_limfadenopati, ispa_cystitis, muntah_diare_berulang, diagnosa_penyakit_penyerta, subjective, objective, assesment, plan))")
+  // Fetch full monitoring data for modal display
+  let qData = base.select(`
+    *,
+    kohort (
+      *,
+      monitoring_antropometri (*),
+      monitoring_pkmk_konsumsi (*),
+      monitoring_pkmk_pemberian (*)
+    )
+  `)
     .order("nama_balita");
 
   const appUser = await getAppUser();
@@ -50,5 +57,6 @@ export async function GET(req: NextRequest) {
   const pages = Math.max(1, Math.ceil(total / limit));
   const { data, error } = await qData.range(from, to);
   if (error) return new Response(error.message, { status: 400 });
+
   return NextResponse.json({ items: data ?? [], page, pages, total, limit });
 }
