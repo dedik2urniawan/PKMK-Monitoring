@@ -44,6 +44,25 @@ export default async function PrivateLayout({ children }: { children: React.Reac
           {/* Sync Supabase session cookie for server APIs */}
           <AuthSessionSync />
           {children}
+
+          {/* Global Footer - Developer Credit */}
+          <footer className="mt-12 pt-6 pb-4 border-t border-gray-200">
+            <div className="text-center space-y-1">
+              <p className="text-xs text-gray-600 flex items-center justify-center gap-1">
+                Crafted with
+                <span className="text-red-500 animate-pulse inline-block">♥</span>
+                by{' '}
+                <a
+                  href="https://dedik2urniawan.github.io/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors"
+                >
+                  DK
+                </a>
+              </p>
+            </div>
+          </footer>
         </section>
       </div>
     </div>
