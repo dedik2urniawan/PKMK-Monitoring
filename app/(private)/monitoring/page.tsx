@@ -244,17 +244,17 @@ export default function MonitoringIndex() {
               // This covers cases where data might be split or dates are unordered
               const cohorts = b.kohort || [];
 
-              const antroWeeks = Array.from(new Set(
+              const antroWeeks: number[] = Array.from(new Set(
                 cohorts.flatMap((c: any) => c.monitoring_antropometri || [])
                   .map((m: any) => Number(m.minggu_ke))
                   .filter((w: number) => !isNaN(w))
               ));
-              const konsumsiWeeks = Array.from(new Set(
+              const konsumsiWeeks: number[] = Array.from(new Set(
                 cohorts.flatMap((c: any) => c.monitoring_pkmk_konsumsi || [])
                   .map((m: any) => Number(m.minggu_ke))
                   .filter((w: number) => !isNaN(w))
               ));
-              const pemberianWeeks = Array.from(new Set(
+              const pemberianWeeks: number[] = Array.from(new Set(
                 cohorts.flatMap((c: any) => c.monitoring_pkmk_pemberian || [])
                   .map((m: any) => Number(m.minggu_ke))
                   .filter((w: number) => !isNaN(w))
