@@ -4,9 +4,7 @@ import Link from "next/link";
 import { X, ChevronDown, ChevronRight, TrendingUp, TrendingDown, Activity, Coffee, Pill, Eye } from "lucide-react";
 
 type AntropometriItem = {
-    bal
-
-    ita_id: string;
+    balita_id: string;
     nama_balita: string;
     nik: string;
     jk: string;
