@@ -82,7 +82,7 @@ export default function ComplianceStackedBarChart({
     const chartHeight = Math.max(300, displayData.length * 50);
 
     return (
-        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 flex flex-col h-full">
+        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 flex flex-col" style={{ minHeight: '500px' }}>
             <div className="flex items-center justify-between mb-4">
                 <div>
                     <h3 className="text-lg font-bold text-gray-800">{chartTitle}</h3>
@@ -105,11 +105,8 @@ export default function ComplianceStackedBarChart({
                     <p>Tidak ada data tersedia</p>
                 </div>
             ) : (
-                <div
-                    className="w-full overflow-x-auto"
-                    style={{ height: `${chartHeight}px` }}
-                >
-                    <ResponsiveContainer width="100%" height="100%">
+                <div style={{ minHeight: '400px', height: 'auto', position: 'relative' }}>
+                    <ResponsiveContainer width="100%" height={Math.max(400, chartHeight)}>
                         <BarChart
                             layout="vertical"
                             data={displayData}

@@ -22,10 +22,15 @@ export default async function PrivateLayout({ children }: { children: React.Reac
   return (
     <div className="grid grid-cols-[auto_1fr] min-h-screen max-h-screen overflow-hidden">
       {/* Sidebar - Full height with internal scroll */}
-      <aside className="relative border-r border-white/10 bg-gradient-to-b from-[var(--primary-700)] via-[var(--primary-600)] to-[var(--primary-600)] text-white shadow-xl flex flex-col h-screen">
-        <div className="flex items-center gap-2 p-4 border-b border-white/15 flex-shrink-0">
+      <aside
+        className="relative border-r border-gray-200 shadow-xl flex flex-col h-screen"
+        style={{
+          background: 'linear-gradient(to bottom right, #ecfdf5, #f0fdfa, #ecfeff)'
+        }}
+      >
+        <div className="flex items-center gap-2 p-4 border-b border-gray-200 bg-white/40 backdrop-blur-sm flex-shrink-0">
           <Image src="/tindik-anting-logo.png" alt="PKMK" width={24} height={24} className="flex-shrink-0" />
-          <span className="font-bold text-sm whitespace-nowrap">Sistem Pelaporan PKMK</span>
+          <span className="font-bold text-sm whitespace-nowrap text-gray-800">Sistem Pelaporan PKMK</span>
         </div>
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           <SideNav />

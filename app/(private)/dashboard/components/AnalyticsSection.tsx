@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import FilterSection from "./FilterSection";
 import ComplianceScorecard from "./ComplianceScorecard";
 import ComplianceDrilldownChart from "./ComplianceDrilldownChart";
@@ -113,7 +113,7 @@ export default function AnalyticsSection() {
         }
     };
 
-    const fetchMonitoringComplianceData = async () => {
+    const fetchMonitoringComplianceData = useCallback(async () => {
         setMonitoringComplianceLoading(true);
         try {
             const weekQuery = selectedWeek !== "all" ? `&week=${selectedWeek}` : "";
@@ -127,7 +127,7 @@ export default function AnalyticsSection() {
         } finally {
             setMonitoringComplianceLoading(false);
         }
-    };
+    }, [selectedYear, selectedMonth, selectedWeek]);
 
     useEffect(() => {
         fetchComplianceData();
@@ -139,7 +139,7 @@ export default function AnalyticsSection() {
 
     useEffect(() => {
         fetchMonitoringComplianceData();
-    }, [selectedYear, selectedMonth, selectedWeek]);
+    }, [selectedYear, selectedMonth, selectedWeek, fetchMonitoringComplianceData]);
 
     const handleFilterChange = (year: number, month: number) => {
         setSelectedYear(year);

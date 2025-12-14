@@ -1,9 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAppUser } from "@/lib/appUser";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+// GET - Return current user session data
+export async function GET(req: NextRequest) {
+  try {
+    const user = await getAppUser();
+
+    if (!user) {
+      return NextResponse.json({ user: null }, { status: 401 });
+    }
+
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        puskesmas_id: user.puskesmas_id
+      }
+    });
+  } catch (error) {
+    console.error('[API /auth/session GET] Error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// POST - Set session from tokens (existing functionality)
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const body = await req.json().catch(() => ({} as any));
