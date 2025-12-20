@@ -24,6 +24,32 @@ export async function GET(request: Request) {
 
         console.log(`[Compliance API] Period: up to ${periodEndStr}, User: ${appUser.role}, Puskesmas: ${appUser.puskesmas_id}`);
 
+        // 0. Get ref_desa mapping (correct desa -> puskesmas relationship)
+        const { data: refDesaData } = await supabase
+            .from("ref_desa")
+            .select("id, desa_kel, puskesmas_id");
+
+        const desaToPuskesmasMap = new Map<string, string>();
+        refDesaData?.forEach((d: any) => {
+            if (d.desa_kel && d.puskesmas_id) {
+                desaToPuskesmasMap.set(d.desa_kel.toLowerCase().trim(), d.puskesmas_id);
+            }
+        });
+
+        // Get ref_puskesmas names
+        const { data: refPuskesmasData } = await supabase
+            .from("ref_puskesmas")
+            .select("id, nama");
+
+        const puskesmasNameMap = new Map<string, string>();
+        refPuskesmasData?.forEach((p: any) => {
+            if (p.id && p.nama) {
+                puskesmasNameMap.set(p.id, p.nama);
+            }
+        });
+
+        console.log(`[Compliance API] ref_desa: ${desaToPuskesmasMap.size}, ref_puskesmas: ${puskesmasNameMap.size}`);
+
         // 1. COUNT TOTAL BALITA (created_at <= periodEnd)
         let balitaQuery = supabase
             .from("balita")
@@ -83,14 +109,20 @@ export async function GET(request: Request) {
             const puskesmasMap = new Map();
 
             balitaData?.forEach((balita: any) => {
-                const puskData = Array.isArray(balita.puskesmas) ? balita.puskesmas[0] : balita.puskesmas;
-                if (!puskData || !puskData.id) return;
+                // FIX: Use ref_desa mapping for correct puskesmas assignment
+                const desaKey = balita.desa_kel?.toLowerCase().trim();
+                const correctPuskesmasId = desaKey ? desaToPuskesmasMap.get(desaKey) : null;
 
-                const puskId = puskData.id;
+                // Use correct puskesmas_id from ref_desa, fallback to balita.puskesmas_id
+                const effectivePuskesmasId = correctPuskesmasId || balita.puskesmas_id;
+
+                if (!effectivePuskesmasId) return;
+
+                const puskId = effectivePuskesmasId;
                 if (!puskesmasMap.has(puskId)) {
                     puskesmasMap.set(puskId, {
                         id: puskId,
-                        name: puskData.nama || `Puskesmas ${puskId}`,
+                        name: puskesmasNameMap.get(puskId) || `Puskesmas ${puskId}`,
                         total: 0,
                         kohort: 0,
                         balitaIds: new Set(),
@@ -101,19 +133,19 @@ export async function GET(request: Request) {
                 pusk.total++;
                 pusk.balitaIds.add(balita.id);
 
-                // Add desa children (using desa_kel text field)
+                // Add desa children under the CORRECT puskesmas
                 if (balita.desa_kel) {
-                    const desaKey = balita.desa_kel.toLowerCase().trim();
-                    if (!pusk.children.has(desaKey)) {
-                        pusk.children.set(desaKey, {
-                            id: desaKey,
+                    const childDesaKey = balita.desa_kel.toLowerCase().trim();
+                    if (!pusk.children.has(childDesaKey)) {
+                        pusk.children.set(childDesaKey, {
+                            id: childDesaKey,
                             name: balita.desa_kel,
                             total: 0,
                             kohort: 0,
                             balitaIds: new Set(),
                         });
                     }
-                    const desa = pusk.children.get(desaKey);
+                    const desa = pusk.children.get(childDesaKey);
                     desa.total++;
                     desa.balitaIds.add(balita.id);
                 }
@@ -121,18 +153,25 @@ export async function GET(request: Request) {
 
             // Count kohort entries
             kohortData?.forEach((kohort: any) => {
-                const puskId = kohort.puskesmas_id;
-                if (puskesmasMap.has(puskId)) {
-                    const pusk = puskesmasMap.get(puskId);
+                // Find the balita to get their desa_kel
+                const balita = balitaData?.find((b: any) => b.id === kohort.balita_id);
+                if (!balita) return;
+
+                // Determine the correct puskesmas using ref_desa mapping
+                const desaKey = balita.desa_kel?.toLowerCase().trim();
+                const correctPuskesmasId = desaKey ? desaToPuskesmasMap.get(desaKey) : null;
+                const effectivePuskesmasId = correctPuskesmasId || balita.puskesmas_id;
+
+                if (puskesmasMap.has(effectivePuskesmasId)) {
+                    const pusk = puskesmasMap.get(effectivePuskesmasId);
                     if (pusk.balitaIds.has(kohort.balita_id)) {
                         pusk.kohort++;
                     }
 
-                    // Count for desa children - need to lookup balita's desa_kel
-                    const balita = balitaData?.find((b: any) => b.id === kohort.balita_id);
-                    if (balita && balita.desa_kel) {
-                        const desaKey = balita.desa_kel.toLowerCase().trim();
-                        const desa = pusk.children.get(desaKey);
+                    // Count for desa children
+                    if (balita.desa_kel) {
+                        const childDesaKey = balita.desa_kel.toLowerCase().trim();
+                        const desa = pusk.children.get(childDesaKey);
                         if (desa && desa.balitaIds.has(kohort.balita_id)) {
                             desa.kohort++;
                         }

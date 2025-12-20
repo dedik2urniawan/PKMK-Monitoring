@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ensureServerSession, getAuthHeaders } from "@/lib/clientSession";
-import BalitaActions from "@/components/BalitaActions";
+import BalitaActionsNew from "@/components/BalitaActionsNew";
 import {
   Table,
   TableBody,
@@ -73,16 +73,16 @@ export default function BalitaList() {
     if (!items.length) { alert('Tidak ada data untuk diekspor.'); return; }
     const headers = compact
       ? [
-          'nik','nama_balita','jk','tgl_lahir','kec','desa_kel','redflag_any'
-        ]
+        'nik', 'nama_balita', 'jk', 'tgl_lahir', 'kec', 'desa_kel', 'redflag_any'
+      ]
       : [
-          'nik','nama_balita','jk','tgl_lahir','bb_lahir_kg','tb_lahir_cm','nama_ortu','kab_kota','kec','desa_kel','posyandu','rt','rw','alamat','puskesmas_id','sumber_data','created_at','bb_tidak_adekuat','murmur_edema','delayed_development','wajah_dismorfik','organomegali_limfadenopati','ispa_cystitis','muntah_diare_berulang','diagnosa_penyakit_penyerta','keterangan_redflag','redflag_any'
-        ];
-    const rows = items.map((d)=> headers.map((h)=> {
+        'nik', 'nama_balita', 'jk', 'tgl_lahir', 'bb_lahir_kg', 'tb_lahir_cm', 'nama_ortu', 'kab_kota', 'kec', 'desa_kel', 'posyandu', 'rt', 'rw', 'alamat', 'puskesmas_id', 'sumber_data', 'created_at', 'bb_tidak_adekuat', 'murmur_edema', 'delayed_development', 'wajah_dismorfik', 'organomegali_limfadenopati', 'ispa_cystitis', 'muntah_diare_berulang', 'diagnosa_penyakit_penyerta', 'keterangan_redflag', 'redflag_any'
+      ];
+    const rows = items.map((d) => headers.map((h) => {
       const v = (d as any)[h];
       if (v == null) return '';
       const s = typeof v === 'string' ? v : (v instanceof Date ? v.toISOString() : String(v));
-      return '"' + s.replaceAll('"','""') + '"';
+      return '"' + s.replaceAll('"', '""') + '"';
     }).join(','));
     const csv = headers.join(',') + '\n' + rows.join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -183,7 +183,7 @@ export default function BalitaList() {
       <h1 className="text-2xl font-semibold mb-4">Data Balita</h1>
       <div className="mb-3 text-sm flex items-center gap-4">
         <label className="inline-flex items-center gap-2">
-          <input type="checkbox" checked={compact} onChange={(e)=>setCompact(e.target.checked)} />
+          <input type="checkbox" checked={compact} onChange={(e) => setCompact(e.target.checked)} />
           <span>Tampilan ringkas</span>
         </label>
         <button type="button" onClick={exportCsv} className="px-3 py-1.5 rounded border border-[var(--border)] bg-white hover:bg-gray-50">Export CSV</button>
@@ -278,14 +278,11 @@ export default function BalitaList() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <a href={`/balita/${encodeURIComponent(d.id)}/edit`} className="px-2 py-1 rounded border border-[var(--border)] bg-white hover:bg-gray-50 text-[13px]">Edit</a>
-                        <BalitaActions
-                          id={d.id}
-                          nik={d.nik ?? undefined}
-                          onDeleted={() => setItems((prev) => prev.filter((x) => x.id !== d.id))}
-                        />
-                      </div>
+                      <BalitaActionsNew
+                        balita={d}
+                        onDeleted={() => setItems((prev) => prev.filter((x) => x.id !== d.id))}
+                        onUpdated={() => onSubmit()}
+                      />
                     </TableCell>
                   </>
                 ) : (
@@ -322,14 +319,11 @@ export default function BalitaList() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <a href={`/balita/${encodeURIComponent(d.id)}/edit`} className="px-2 py-1 rounded border border-[var(--border)] bg-white hover:bg-gray-50 text-[13px]">Edit</a>
-                        <BalitaActions
-                          id={d.id}
-                          nik={d.nik ?? undefined}
-                          onDeleted={() => setItems((prev) => prev.filter((x) => x.id !== d.id))}
-                        />
-                      </div>
+                      <BalitaActionsNew
+                        balita={d}
+                        onDeleted={() => setItems((prev) => prev.filter((x) => x.id !== d.id))}
+                        onUpdated={() => onSubmit()}
+                      />
                     </TableCell>
                   </>
                 )}
@@ -353,7 +347,7 @@ export default function BalitaList() {
             <select
               className="h-8 rounded-md border border-[var(--border)] bg-white px-2"
               value={limit}
-              onChange={(e)=>{ setLimit(Number(e.target.value)); setPage(1); }}
+              onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
             >
               <option value={10}>10</option>
               <option value={25}>25</option>
@@ -382,8 +376,8 @@ export default function BalitaList() {
               min={1}
               max={pages}
               value={pageInput}
-              onChange={(e)=> setPageInput(e.target.value)}
-              onKeyDown={(e)=>{
+              onChange={(e) => setPageInput(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   const n = Math.max(1, Math.min(pages, Number(pageInput) || 1));
                   setPage(n);
@@ -395,7 +389,7 @@ export default function BalitaList() {
             <button
               type="button"
               className="px-2 py-1 border rounded"
-              onClick={()=>{ const n = Math.max(1, Math.min(pages, Number(pageInput) || 1)); setPage(n); }}
+              onClick={() => { const n = Math.max(1, Math.min(pages, Number(pageInput) || 1)); setPage(n); }}
             >
               Go
             </button>

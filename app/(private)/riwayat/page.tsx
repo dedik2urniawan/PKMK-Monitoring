@@ -50,7 +50,11 @@ export default function RiwayatIntervensiPage() {
                 if (userData.user.role === 'superadmin') {
                     const kecRes = await fetch("/api/ref/kecamatan", { credentials: 'include', headers: authHeaders });
                     const kecData = await kecRes.json();
-                    setKecList(kecData.items || []);
+                    // Filter out Kabupaten from kecamatan list
+                    const filteredKec = (kecData.items || []).filter((k: string) =>
+                        !k.toLowerCase().includes('kabupaten')
+                    );
+                    setKecList(filteredKec);
                 } else {
                     // For admin_puskesmas, auto-set puskesmas filter
                     setPuskesmasId(userData.user.puskesmas_id);
@@ -277,93 +281,121 @@ export default function RiwayatIntervensiPage() {
         <div className="max-w-full mx-auto p-4">
             <h1 className="text-3xl font-bold mb-6 text-gray-900">Daftar Riwayat Intervensi</h1>
 
-            {/* Filter Section */}
-            <form onSubmit={applyFilter} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 bg-gradient-to-br from-white to-gray-50 p-6 rounded-xl border-2 border-emerald-100 shadow-md">
-                <div className="col-span-full">
-                    <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                        <Filter size={16} className="text-emerald-600" />
-                        Filter Data Balita
-                    </h3>
+            {/* Filter Section - Improved Professional UI */}
+            <form onSubmit={applyFilter} className="bg-white p-5 rounded-xl border-2 border-emerald-100 shadow-md mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
+                        <Filter size={16} className="text-white" />
+                    </div>
+                    <h3 className="text-base font-bold text-gray-800">Filter Data Balita</h3>
                 </div>
 
-                {/* Kecamatan (Superadmin only) */}
-                {user?.role === 'superadmin' && (
-                    <div>
-                        <label className="text-xs font-medium text-gray-700 mb-1.5 block">Kecamatan</label>
-                        <select className="input" value={kec} onChange={(e) => setKec(e.target.value)}>
-                            <option value="">-- Kecamatan --</option>
-                            {kecList.map(k => <option key={k} value={k}>{k}</option>)}
+                <div className="flex flex-wrap items-end gap-4">
+                    {/* Kecamatan (Superadmin only) */}
+                    {user?.role === 'superadmin' && (
+                        <div className="flex flex-col">
+                            <label className="text-xs font-semibold text-gray-600 mb-1.5 flex items-center gap-1">
+                                <MapPin size={12} /> Kecamatan
+                            </label>
+                            <select
+                                className="h-10 px-3 border-2 border-gray-200 rounded-lg text-sm font-medium bg-white hover:border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all min-w-[160px]"
+                                value={kec}
+                                onChange={(e) => setKec(e.target.value)}
+                            >
+                                <option value="">-- Kecamatan --</option>
+                                {kecList.map(k => <option key={k} value={k}>{k}</option>)}
+                            </select>
+                        </div>
+                    )}
+
+                    {/* Puskesmas (Superadmin only) */}
+                    {user?.role === 'superadmin' && (
+                        <div className="flex flex-col">
+                            <label className="text-xs font-semibold text-gray-600 mb-1.5">Puskesmas</label>
+                            <select
+                                className="h-10 px-3 border-2 border-gray-200 rounded-lg text-sm font-medium bg-white hover:border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all min-w-[160px]"
+                                value={puskesmasId}
+                                onChange={(e) => setPuskesmasId(e.target.value)}
+                            >
+                                <option value="">-- Puskesmas --</option>
+                                {pkmList.map(p => <option key={p.id} value={p.id}>{p.nama}</option>)}
+                            </select>
+                        </div>
+                    )}
+
+                    {/* Desa/Kel */}
+                    <div className="flex flex-col">
+                        <label className="text-xs font-semibold text-gray-600 mb-1.5">Desa/Kelurahan</label>
+                        <select
+                            className="h-10 px-3 border-2 border-gray-200 rounded-lg text-sm font-medium bg-white hover:border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all min-w-[160px]"
+                            value={desa}
+                            onChange={(e) => setDesa(e.target.value)}
+                        >
+                            <option value="">-- Desa/Kel --</option>
+                            {desaList.map(d => <option key={d.id} value={d.desa_kel}>{d.desa_kel}</option>)}
                         </select>
                     </div>
-                )}
 
-                {/* Puskesmas (Superadmin only) */}
-                {user?.role === 'superadmin' && (
-                    <div>
-                        <label className="text-xs font-medium text-gray-700 mb-1.5 block">Puskesmas</label>
-                        <select className="input" value={puskesmasId} onChange={(e) => setPuskesmasId(e.target.value)}>
-                            <option value="">-- Puskesmas --</option>
-                            {pkmList.map(p => <option key={p.id} value={p.id}>{p.nama}</option>)}
+                    {/* NIK Search */}
+                    <div className="flex flex-col">
+                        <label className="text-xs font-semibold text-gray-600 mb-1.5 flex items-center gap-1">
+                            <User size={12} /> NIK Balita
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Cari NIK..."
+                            className="h-10 px-3 border-2 border-gray-200 rounded-lg text-sm bg-white hover:border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all min-w-[140px]"
+                            value={nik}
+                            onChange={(e) => setNik(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Tahun Filter */}
+                    <div className="flex flex-col">
+                        <label className="text-xs font-semibold text-gray-600 mb-1.5 flex items-center gap-1">
+                            <Calendar size={12} /> Tahun
+                        </label>
+                        <select
+                            className="h-10 px-3 border-2 border-gray-200 rounded-lg text-sm font-medium bg-white hover:border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all min-w-[100px]"
+                            value={tahun}
+                            onChange={(e) => setTahun(e.target.value)}
+                        >
+                            <option value="">Semua</option>
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                            <option value="2026">2026</option>
+                            <option value="2027">2027</option>
                         </select>
                     </div>
-                )}
 
-                {/* Desa/Kel */}
-                <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Desa/Kelurahan</label>
-                    <select className="input" value={desa} onChange={(e) => setDesa(e.target.value)}>
-                        <option value="">-- Desa/Kel --</option>
-                        {desaList.map(d => <option key={d.id} value={d.desa_kel}>{d.desa_kel}</option>)}
-                    </select>
-                </div>
+                    {/* Bulan Filter */}
+                    <div className="flex flex-col">
+                        <label className="text-xs font-semibold text-gray-600 mb-1.5">Bulan</label>
+                        <select
+                            className="h-10 px-3 border-2 border-gray-200 rounded-lg text-sm font-medium bg-white hover:border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all min-w-[130px]"
+                            value={bulan}
+                            onChange={(e) => setBulan(e.target.value)}
+                        >
+                            <option value="">Semua Bulan</option>
+                            <option value="1">Januari</option>
+                            <option value="2">Februari</option>
+                            <option value="3">Maret</option>
+                            <option value="4">April</option>
+                            <option value="5">Mei</option>
+                            <option value="6">Juni</option>
+                            <option value="7">Juli</option>
+                            <option value="8">Agustus</option>
+                            <option value="9">September</option>
+                            <option value="10">Oktober</option>
+                            <option value="11">November</option>
+                            <option value="12">Desember</option>
+                        </select>
+                    </div>
 
-                {/* NIK Search */}
-                <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">NIK Balita</label>
-                    <input
-                        type="text"
-                        placeholder="Cari NIK..."
-                        className="input"
-                        value={nik}
-                        onChange={(e) => setNik(e.target.value)}
-                    />
-                </div>
-
-                {/* Tahun Filter */}
-                <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Tahun</label>
-                    <select className="input" value={tahun} onChange={(e) => setTahun(e.target.value)}>
-                        <option value="">-- Semua Tahun --</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                        <option value="2027">2027</option>
-                    </select>
-                </div>
-
-                {/* Bulan Filter */}
-                <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Bulan</label>
-                    <select className="input" value={bulan} onChange={(e) => setBulan(e.target.value)}>
-                        <option value="">-- Semua Bulan --</option>
-                        <option value="1">Januari</option>
-                        <option value="2">Februari</option>
-                        <option value="3">Maret</option>
-                        <option value="4">April</option>
-                        <option value="5">Mei</option>
-                        <option value="6">Juni</option>
-                        <option value="7">Juli</option>
-                        <option value="8">Agustus</option>
-                        <option value="9">September</option>
-                        <option value="10">Oktober</option>
-                        <option value="11">November</option>
-                        <option value="12">Desember</option>
-                    </select>
-                </div>
-
-                <div className="col-span-full">
+                    {/* Apply Button */}
                     <button
                         type="submit"
-                        className="w-full sm:w-auto px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors font-medium shadow-sm"
+                        className="h-10 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg transition-all font-bold shadow-md hover:shadow-lg"
                     >
                         Terapkan Filter
                     </button>

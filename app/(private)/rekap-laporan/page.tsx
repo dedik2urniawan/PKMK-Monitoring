@@ -30,9 +30,11 @@ export default function RekapLaporanPage() {
     // Filter state
     const [kecList, setKecList] = useState<string[]>([]);
     const [pkmList, setPkmList] = useState<{ id: string; nama: string }[]>([]);
+    const [desaList, setDesaList] = useState<{ id: string; desa_kel: string }[]>([]);
 
     const [kec, setKec] = useState("");
     const [puskesmasId, setPuskesmasId] = useState("");
+    const [desaKel, setDesaKel] = useState("");
     const [tahun, setTahun] = useState<string>(new Date().getFullYear().toString());
     const [bulan, setBulan] = useState<string>((new Date().getMonth() + 1).toString());
 
@@ -56,7 +58,11 @@ export default function RekapLaporanPage() {
                 if (userData.user.role === 'superadmin') {
                     const kecRes = await fetch("/api/ref/kecamatan", { credentials: 'include', headers: authHeaders });
                     const kecData = await kecRes.json();
-                    setKecList(kecData.items || []);
+                    // Filter out Kabupaten from kecamatan list
+                    const filteredKec = (kecData.items || []).filter((k: string) =>
+                        !k.toLowerCase().includes('kabupaten')
+                    );
+                    setKecList(filteredKec);
                 } else {
                     // For admin_puskesmas, auto-set puskesmas filter
                     setPuskesmasId(userData.user.puskesmas_id);
@@ -81,10 +87,35 @@ export default function RekapLaporanPage() {
                 headers: authHeaders
             });
             const data = await res.json();
-            setPkmList(data.items || []);
+            // Filter out Dinkes from puskesmas list (Dinkes is admin only)
+            const filteredItems = (data.items || []).filter((p: any) =>
+                !p.nama?.toLowerCase().includes('dinkes')
+            );
+            setPkmList(filteredItems);
             setPuskesmasId("");
+            setDesaKel("");
         })();
     }, [kec, user]);
+
+    // Load desa when puskesmas changes (for both superadmin and admin_puskesmas)
+    useEffect(() => {
+        const targetPuskesmasId = user?.role === 'admin_puskesmas' ? user.puskesmas_id : puskesmasId;
+        if (!targetPuskesmasId) {
+            setDesaList([]);
+            return;
+        }
+        (async () => {
+            await ensureServerSession();
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch(`/api/ref/desa?puskesmas_id=${targetPuskesmasId}`, {
+                credentials: 'include',
+                headers: authHeaders
+            });
+            const data = await res.json();
+            setDesaList(data.items || []);
+            setDesaKel("");
+        })();
+    }, [puskesmasId, user]);
 
     // Apply filter
     const applyFilter = async (e?: React.FormEvent) => {
@@ -101,6 +132,7 @@ export default function RekapLaporanPage() {
 
         const params = new URLSearchParams();
         if (puskesmasId) params.set("puskesmas_id", puskesmasId);
+        if (desaKel) params.set("desa_kel", desaKel);
         if (tahun) params.set("tahun", tahun);
         if (bulan) params.set("bulan", bulan);
 
@@ -138,6 +170,23 @@ export default function RekapLaporanPage() {
             'Underweight': item.status_gizi.underweight,
             'Severe Underweight': item.status_gizi.severe_underweight
         }));
+
+        // Add totals row
+        rows.push({
+            'No': '' as any,
+            'Puskesmas': 'JUMLAH',
+            'Jumlah Sasaran Balita': rekapData.reduce((sum, item) => sum + item.jumlah_sasaran, 0),
+            'Jumlah Balita Diberi PKMK Bulan ini': rekapData.reduce((sum, item) => sum + item.diberi_pkmk_bulan_ini, 0),
+            'PKMK Belum Selesai Bulan Ini': rekapData.reduce((sum, item) => sum + item.belum_selesai, 0),
+            'Dropout Bulan ini': rekapData.reduce((sum, item) => sum + item.dropout, 0),
+            'PKMK Selesai Sampai Bulan ini': rekapData.reduce((sum, item) => sum + item.selesai_sampai_bulan_ini, 0),
+            'Gizi Buruk': rekapData.reduce((sum, item) => sum + item.status_gizi.gizi_buruk, 0),
+            'Gizi Kurang': rekapData.reduce((sum, item) => sum + item.status_gizi.gizi_kurang, 0),
+            'Stunted': rekapData.reduce((sum, item) => sum + item.status_gizi.stunted, 0),
+            'Severe Stunted': rekapData.reduce((sum, item) => sum + item.status_gizi.severe_stunted, 0),
+            'Underweight': rekapData.reduce((sum, item) => sum + item.status_gizi.underweight, 0),
+            'Severe Underweight': rekapData.reduce((sum, item) => sum + item.status_gizi.severe_underweight, 0)
+        });
 
         const ws = XLSX.utils.json_to_sheet(rows);
         const wb = XLSX.utils.book_new();
@@ -191,9 +240,20 @@ export default function RekapLaporanPage() {
                 {user?.role === 'superadmin' && (
                     <div>
                         <label className="text-xs font-medium text-gray-700 mb-1.5 block">Puskesmas</label>
-                        <select className="input" value={puskesmasId} onChange={(e) => setPuskesmasId(e.target.value)}>
+                        <select className="input" value={puskesmasId} onChange={(e) => { setPuskesmasId(e.target.value); setDesaKel(""); }}>
                             <option value="">-- Semua Puskesmas --</option>
                             {pkmList.map(p => <option key={p.id} value={p.id}>{p.nama}</option>)}
+                        </select>
+                    </div>
+                )}
+
+                {/* Desa/Kelurahan (for both roles when puskesmas is selected) */}
+                {desaList.length > 0 && (
+                    <div>
+                        <label className="text-xs font-medium text-gray-700 mb-1.5 block">Desa/Kelurahan</label>
+                        <select className="input" value={desaKel} onChange={(e) => setDesaKel(e.target.value)}>
+                            <option value="">-- Semua Desa --</option>
+                            {desaList.map(d => <option key={d.id} value={d.desa_kel}>{d.desa_kel}</option>)}
                         </select>
                     </div>
                 )}
@@ -286,6 +346,45 @@ export default function RekapLaporanPage() {
                                     <td className="px-4 py-3 text-center border border-gray-200">{item.status_gizi.severe_underweight}</td>
                                 </tr>
                             ))}
+                            {/* Baris Jumlah - Sum semua variabel */}
+                            {rekapData.length > 0 && (
+                                <tr className="bg-gradient-to-r from-emerald-100 to-teal-100 font-bold">
+                                    <td className="px-4 py-3 text-center border border-gray-300" colSpan={2}>JUMLAH</td>
+                                    <td className="px-4 py-3 text-center border border-gray-300 text-blue-900">
+                                        {rekapData.reduce((sum, item) => sum + item.jumlah_sasaran, 0)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center border border-gray-300">
+                                        {rekapData.reduce((sum, item) => sum + item.diberi_pkmk_bulan_ini, 0)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center border border-gray-300">
+                                        {rekapData.reduce((sum, item) => sum + item.belum_selesai, 0)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center border border-gray-300">
+                                        {rekapData.reduce((sum, item) => sum + item.dropout, 0)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center border border-gray-300 text-emerald-700">
+                                        {rekapData.reduce((sum, item) => sum + item.selesai_sampai_bulan_ini, 0)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center border border-gray-300">
+                                        {rekapData.reduce((sum, item) => sum + item.status_gizi.gizi_buruk, 0)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center border border-gray-300">
+                                        {rekapData.reduce((sum, item) => sum + item.status_gizi.gizi_kurang, 0)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center border border-gray-300">
+                                        {rekapData.reduce((sum, item) => sum + item.status_gizi.stunted, 0)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center border border-gray-300">
+                                        {rekapData.reduce((sum, item) => sum + item.status_gizi.severe_stunted, 0)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center border border-gray-300">
+                                        {rekapData.reduce((sum, item) => sum + item.status_gizi.underweight, 0)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center border border-gray-300">
+                                        {rekapData.reduce((sum, item) => sum + item.status_gizi.severe_underweight, 0)}
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

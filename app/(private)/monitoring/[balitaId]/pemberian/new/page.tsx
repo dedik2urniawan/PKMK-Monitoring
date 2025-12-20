@@ -38,18 +38,29 @@ export default function NewPemberian() {
     (async () => {
       const rh = await fetch(`/api/monitoring/pemberian?kohort_id=${kohort.id}`);
       const dh = await rh.json();
-      setHistory(dh.items || []);
+      const items = dh.items || [];
+      setHistory(items);
+      // Auto-set minggu_ke to next available week
+      if (items.length > 0 && !editingId) {
+        const maxMinggu = Math.max(...items.map((h: any) => h.minggu_ke || 0));
+        const nextMinggu = Math.min(12, maxMinggu + 1);
+        setForm((f) => ({ ...f, minggu_ke: nextMinggu }));
+      }
     })();
-  }, [kohort]);
+  }, [kohort, editingId]);
+
+  // Get today's date for validation
+  const today = new Date().toISOString().split('T')[0];
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
     if (!(form.minggu_ke >= 1 && form.minggu_ke <= 12)) e.minggu_ke = "Minggu ke harus 1–12";
     if (!form.tanggal) e.tanggal = "Wajib diisi";
+    else if (form.tanggal > today) e.tanggal = "Tanggal tidak boleh melebihi hari ini";
     if (!form.jumlah_unit || Number(form.jumlah_unit) <= 0) e.jumlah_unit = "Jumlah harus > 0";
     if (!form.jenis_formulasi) e.jenis_formulasi = "Wajib diisi";
     return e;
-  }, [form]);
+  }, [form, today]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -92,8 +103,9 @@ export default function NewPemberian() {
           {errors.minggu_ke && <p className="text-xs text-red-600 mt-1">{errors.minggu_ke}</p>}
         </div>
         <div><label className="text-sm">Tanggal Pemberian PKMK*</label>
-          <input type="date" value={form.tanggal} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} className="input" required />
+          <input type="date" value={form.tanggal} max={today} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} className="input" required />
           {errors.tanggal && <p className="text-xs text-red-600 mt-1">{errors.tanggal}</p>}
+          <p className="text-xs text-gray-500 mt-1">Maksimal hari ini ({new Date(today).toLocaleDateString('id-ID')})</p>
         </div>
         <div><label className="text-sm">Jumlah Unit (ml)*</label>
           <input type="number" value={form.jumlah_unit} onChange={(e) => setForm({ ...form, jumlah_unit: e.target.value })} className="input" required />

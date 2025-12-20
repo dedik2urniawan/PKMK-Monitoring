@@ -33,6 +33,42 @@ export async function GET(request: Request) {
 
         console.log(`[Monitoring Compliance API] Period End: ${periodEndStr}, Week: ${week || 'All (Cumulative)'}, User: ${appUser.role}`);
 
+        // 0. Get ref_desa mapping (correct desa -> puskesmas relationship)
+        const { data: refDesaData, error: refDesaError } = await supabase
+            .from("ref_desa")
+            .select("id, desa_kel, puskesmas_id");
+
+        if (refDesaError) {
+            console.error("[Monitoring Compliance API] ref_desa error:", refDesaError);
+        }
+
+        // Build lookup: desa_kel (lowercase) -> puskesmas_id (from ref_desa)
+        const desaToPuskesmasMap = new Map<string, string>();
+        refDesaData?.forEach((d: any) => {
+            if (d.desa_kel && d.puskesmas_id) {
+                desaToPuskesmasMap.set(d.desa_kel.toLowerCase().trim(), d.puskesmas_id);
+            }
+        });
+
+        console.log(`[Monitoring Compliance API] ref_desa mapping loaded: ${desaToPuskesmasMap.size} entries`);
+
+        // Also fetch puskesmas names for lookup
+        const { data: puskesmasData, error: puskError } = await supabase
+            .from("ref_puskesmas")
+            .select("id, nama");
+
+        if (puskError) {
+            console.error("[Monitoring Compliance API] ref_puskesmas error:", puskError);
+        }
+        console.log(`[Monitoring Compliance API] ref_puskesmas loaded: ${puskesmasData?.length || 0} entries`);
+
+        const puskesmasNameMap = new Map<string, string>();
+        puskesmasData?.forEach((p: any) => {
+            if (p.id && p.nama) {
+                puskesmasNameMap.set(p.id, p.nama);
+            }
+        });
+
         // 1. Get total balita count (created up to selected month)
         let balitaQuery = supabase
             .from("balita")
@@ -69,6 +105,7 @@ export async function GET(request: Request) {
                 return query.lte('tanggal', periodEndStr);
             }
         };
+
 
         // Antropometri monitoring
         let antropometriQuery = supabase
@@ -223,13 +260,27 @@ export async function GET(request: Request) {
 
             if (appUser.role === 'superadmin') {
                 // Group by puskesmas, with desa children
-                if (balita.puskesmas_id) {
-                    parentKey = balita.puskesmas_id;
-                    const puskData = Array.isArray(balita.puskesmas) ? balita.puskesmas[0] : balita.puskesmas;
-                    parentName = puskData?.nama || `Puskesmas ${parentKey}`;
+                // FIX: Use ref_desa mapping to determine correct puskesmas for each desa
+                const desaKey = balita.desa_kel?.toLowerCase().trim();
+                const correctPuskesmasId = desaKey ? desaToPuskesmasMap.get(desaKey) : null;
+
+                // Use the correct puskesmas_id from ref_desa mapping if available
+                // Fall back to balita.puskesmas_id if desa not found in ref_desa
+                const effectivePuskesmasId = correctPuskesmasId || balita.puskesmas_id;
+
+                if (effectivePuskesmasId) {
+                    parentKey = effectivePuskesmasId;
+                    // Use puskesmasNameMap for correct name (especially when corrected)
+                    parentName = puskesmasNameMap.get(effectivePuskesmasId) || `Puskesmas ${parentKey}`;
+
+                    // Log mismatch for debugging
+                    if (correctPuskesmasId && correctPuskesmasId !== balita.puskesmas_id) {
+                        console.log(`[DEBUG] Desa "${balita.desa_kel}" corrected: ${balita.puskesmas_id} -> ${correctPuskesmasId}`);
+                    }
 
                     if (balita.desa_kel) {
-                        locationKey = `${parentKey}__${balita.desa_kel.toLowerCase().trim()}`;
+                        // Use the CORRECT puskesmas_id in the key (not balita.puskesmas_id)
+                        locationKey = `${effectivePuskesmasId}__${balita.desa_kel.toLowerCase().trim()}`;
                         locationName = balita.desa_kel;
                     }
                 }

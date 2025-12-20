@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, MouseEvent } from "react";
 import { LayoutDashboard, Users, PlusCircle, Activity, BarChart3, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+
 
 type NavItem = { href: string; label: string; icon?: any; children?: NavItem[] };
 
@@ -128,23 +128,10 @@ export default function SideNav() {
               {item.children && isExpanded && (
                 <div className="ml-12 mt-1.5 space-y-1 border-l border-gray-300 pl-2">
                   {item.children.map((sub) => {
-                    const comingSoon = (
-                      sub.label === "Manajemen Logistik" ||
-                      sub.label === "Rekap Logistik"
-                    );
-                    const onClick = (e: MouseEvent<HTMLAnchorElement>) => {
-                      if (!comingSoon) return;
-                      e.preventDefault();
-                      toast.info(
-                        "Fitur masih dalam pengembangan. Mohon tunggu pembaruan selanjutnya.",
-                        { description: "Tim akan menginformasikan saat fitur siap digunakan." }
-                      );
-                    };
                     return (
                       <Link
                         key={`${sub.href}:${sub.label}`}
-                        href={comingSoon ? "#" : sub.href}
-                        onClick={onClick}
+                        href={sub.href}
                         className={cn(
                           "px-3 py-2.5 rounded-md flex items-center gap-2 transition-all duration-200 ease-in-out text-sm font-medium",
                           // Inactive submenu - DARK BLACK text
@@ -157,11 +144,6 @@ export default function SideNav() {
                         {sub.icon && <sub.icon size={16} className={cn("flex-shrink-0", !isActive(sub.href) && "opacity-75")} />}
                         <span className="flex items-center gap-2 truncate flex-1">
                           {sub.label}
-                          {comingSoon && (
-                            <span className="text-[10px] leading-none rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 border border-amber-300 flex-shrink-0 font-semibold">
-                              Beta
-                            </span>
-                          )}
                         </span>
                       </Link>
                     );

@@ -93,9 +93,16 @@ export default function NewAntropometri() {
     (async () => {
       const rh = await fetch(`/api/monitoring/antropometri?kohort_id=${kohort.id}`);
       const dh = await rh.json();
-      setHistory(dh.items || []);
+      const items = dh.items || [];
+      setHistory(items);
+      // Auto-set minggu_ke to next available week
+      if (items.length > 0 && !editingId) {
+        const maxMinggu = Math.max(...items.map((h: any) => h.minggu_ke || 0));
+        const nextMinggu = Math.min(12, maxMinggu + 1);
+        setForm((f) => ({ ...f, minggu_ke: nextMinggu }));
+      }
     })();
-  }, [kohort]);
+  }, [kohort, editingId]);
 
   // util hitung usia bulan
   function calcMonths(fromISO: string, toISO: string) {
@@ -224,13 +231,17 @@ export default function NewAntropometri() {
     }
   }, [form.bb_kg, form.minggu_ke, history]);
 
+  // Get today's date for validation
+  const today = new Date().toISOString().split('T')[0];
+
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
     if (!(form.minggu_ke >= 1 && form.minggu_ke <= 12)) e.minggu_ke = "Minggu ke harus 1–12";
     if (!form.tanggal) e.tanggal = "Wajib diisi";
+    else if (form.tanggal > today) e.tanggal = "Tanggal tidak boleh melebihi hari ini";
     if (!form.cara_ukur) e.cara_ukur = "Wajib diisi";
     return e;
-  }, [form]);
+  }, [form, today]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -304,8 +315,9 @@ export default function NewAntropometri() {
           <input type="number" min={1} max={12} value={form.minggu_ke} onChange={(e) => setForm({ ...form, minggu_ke: Number(e.target.value) })} className="input" required />
           {errors.minggu_ke && <p className="text-xs text-red-600 mt-1">{errors.minggu_ke}</p>}</div>
         <div><label className="text-sm">Tanggal Pengukuran Balita*</label>
-          <input type="date" value={form.tanggal} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} className="input" required />
-          {errors.tanggal && <p className="text-xs text-red-600 mt-1">{errors.tanggal}</p>}</div>
+          <input type="date" value={form.tanggal} max={today} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} className="input" required />
+          {errors.tanggal && <p className="text-xs text-red-600 mt-1">{errors.tanggal}</p>}
+          <p className="text-xs text-gray-500 mt-1">Maksimal tanggal hari ini ({new Date(today).toLocaleDateString('id-ID')})</p></div>
         <div><label className="text-sm">Cara Ukur*</label>
           <select value={form.cara_ukur} onChange={(e) => setForm({ ...form, cara_ukur: e.target.value })} className="input" required>
             <option value="terlentang">terlentang</option>
