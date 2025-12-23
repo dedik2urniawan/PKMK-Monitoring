@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { ensureServerSession, getAuthHeaders } from "@/lib/clientSession";
-import { BarChart3, Download, Filter, CheckCircle, AlertTriangle, XCircle, ArrowDownCircle, ArrowUpCircle, History, FileSpreadsheet } from "lucide-react";
+import { BarChart3, Download, Filter, CheckCircle, AlertTriangle, XCircle, ArrowDownCircle, ArrowUpCircle, History, FileSpreadsheet, Image as ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -30,6 +30,7 @@ type TransaksiItem = {
     jumlah: number;
     keterangan: string | null;
     no_batch: string | null;
+    foto_url: string | null;
     created_at: string;
 };
 
@@ -67,6 +68,10 @@ export default function RekapLogistikPage() {
     const [historyPuskesmas, setHistoryPuskesmas] = useState("");
     const [historyTipe, setHistoryTipe] = useState("");
     const [historyLimit, setHistoryLimit] = useState("100");
+
+    // Photo viewer
+    const [viewFotoUrl, setViewFotoUrl] = useState<string | null>(null);
+    const [showFotoModal, setShowFotoModal] = useState(false);
 
     const bulanOptions = [
         { value: '1', label: 'Januari' }, { value: '2', label: 'Februari' }, { value: '3', label: 'Maret' },
@@ -347,11 +352,12 @@ export default function RekapLogistikPage() {
                                         <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 border border-gray-200">Jumlah</th>
                                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 border border-gray-200">Keterangan</th>
                                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 border border-gray-200">No. Batch</th>
+                                        <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 border border-gray-200">Foto</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {historyData.length === 0 ? (
-                                        <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">Belum ada riwayat transaksi.</td></tr>
+                                        <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-500">Belum ada riwayat transaksi.</td></tr>
                                     ) : (
                                         historyData.map((item) => (
                                             <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
@@ -369,6 +375,18 @@ export default function RekapLogistikPage() {
                                                 </td>
                                                 <td className="px-4 py-3 border border-gray-100 text-gray-600">{item.keterangan || '-'}</td>
                                                 <td className="px-4 py-3 border border-gray-100 text-gray-500 font-mono text-xs">{item.no_batch || '-'}</td>
+                                                <td className="px-4 py-3 border border-gray-100 text-center">
+                                                    {item.foto_url ? (
+                                                        <button
+                                                            onClick={() => { setViewFotoUrl(item.foto_url); setShowFotoModal(true); }}
+                                                            className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs font-medium hover:bg-blue-100"
+                                                        >
+                                                            <ImageIcon size={12} /> Lihat
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-gray-300">-</span>
+                                                    )}
+                                                </td>
                                             </tr>
                                         ))
                                     )}
@@ -377,6 +395,40 @@ export default function RekapLogistikPage() {
                         )}
                     </div>
                 </>
+            )}
+
+            {/* FOTO VIEWER MODAL */}
+            {showFotoModal && viewFotoUrl && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+                    <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)' }} onClick={() => setShowFotoModal(false)} />
+                    <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%' }}>
+                        <img
+                            src={viewFotoUrl}
+                            alt="Foto Dokumentasi"
+                            style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: '8px', boxShadow: '0 25px 50px rgba(0,0,0,0.5)' }}
+                        />
+                        <button
+                            onClick={() => setShowFotoModal(false)}
+                            style={{
+                                position: 'absolute',
+                                top: '-12px',
+                                right: '-12px',
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '50%',
+                                backgroundColor: 'white',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                            }}
+                        >
+                            <X size={20} color="#374151" />
+                        </button>
+                    </div>
+                </div>
             )}
 
             <style jsx>{`.input{width:100%;border:1px solid #d1d5db;border-radius:0.5rem;padding:0.5rem 0.75rem;min-width:120px;}`}</style>

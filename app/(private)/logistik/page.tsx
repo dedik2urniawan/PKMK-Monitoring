@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { ensureServerSession, getAuthHeaders } from "@/lib/clientSession";
-import { Package, ArrowDownCircle, ArrowUpCircle, AlertTriangle, CheckCircle, XCircle, Filter, Pencil, Trash2 } from "lucide-react";
+import { Package, ArrowDownCircle, ArrowUpCircle, AlertTriangle, CheckCircle, XCircle, Filter, Pencil, Trash2, Camera, X, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import StokDistribusiChart from "./components/StokDistribusiChart";
 import StokStatusChart from "./components/StokStatusChart";
@@ -41,6 +41,16 @@ export default function ManajemenLogistikPage() {
         jumlah: '', tanggal: new Date().toISOString().slice(0, 10),
         no_batch: '', tanggal_kadaluarsa: '', keterangan: ''
     });
+    const [fotoFile, setFotoFile] = useState<File | null>(null);
+    const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Transaction history states
+    const [transaksiList, setTransaksiList] = useState<any[]>([]);
+    const [showRiwayat, setShowRiwayat] = useState(false);
+    const [viewFotoUrl, setViewFotoUrl] = useState<string | null>(null);
+    const [showFotoModal, setShowFotoModal] = useState(false);
 
     useEffect(() => { setMounted(true); }, []);
 
@@ -74,6 +84,25 @@ export default function ManajemenLogistikPage() {
         setStokList(data.items || []);
     };
 
+    const loadTransaksi = async () => {
+        const authHeaders = await getAuthHeaders();
+        const res = await fetch("/api/logistik/transaksi?limit=50", { credentials: 'include', headers: authHeaders });
+        const data = await res.json();
+        setTransaksiList(data.items || []);
+    };
+
+    const viewFoto = (url: string) => {
+        setViewFotoUrl(url);
+        setShowFotoModal(true);
+    };
+
+    const toggleRiwayat = async () => {
+        if (!showRiwayat && transaksiList.length === 0) {
+            await loadTransaksi();
+        }
+        setShowRiwayat(!showRiwayat);
+    };
+
     const openModal = (type: 'masuk' | 'keluar') => {
         setModalType(type);
         setForm(f => ({
@@ -81,21 +110,92 @@ export default function ManajemenLogistikPage() {
             no_batch: '', tanggal_kadaluarsa: '', keterangan: '',
             tipe_transaksi: type === 'masuk' ? 'masuk_dinas' : 'keluar_pemberian'
         }));
+        setFotoFile(null);
+        setFotoPreview(null);
         setShowModal(true);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!['image/jpeg', 'image/png', 'image/webp', 'image/jpg'].includes(file.type)) {
+            toast.error('Format file tidak didukung. Gunakan JPEG, PNG, atau WebP.');
+            return;
+        }
+
+        // Validate file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error('Ukuran file terlalu besar. Maksimal 2MB.');
+            return;
+        }
+
+        setFotoFile(file);
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setFotoPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const removeFoto = () => {
+        setFotoFile(null);
+        setFotoPreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!form.jenis_pkmk_id || !form.jumlah) { toast.error("Lengkapi semua field yang wajib"); return; }
+
+        let foto_url = null;
+
+        // Upload foto jika ada
+        if (fotoFile) {
+            setUploading(true);
+            try {
+                const formData = new FormData();
+                formData.append('file', fotoFile);
+
+                const authHeaders = await getAuthHeaders();
+                const uploadRes = await fetch('/api/logistik/upload', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: authHeaders,
+                    body: formData
+                });
+
+                if (!uploadRes.ok) {
+                    const err = await uploadRes.json();
+                    toast.error(err.error || 'Gagal upload foto');
+                    setUploading(false);
+                    return;
+                }
+
+                const uploadData = await uploadRes.json();
+                foto_url = uploadData.url;
+            } catch (err) {
+                toast.error('Gagal upload foto');
+                setUploading(false);
+                return;
+            }
+        }
+
         const authHeaders = await getAuthHeaders();
         const res = await fetch("/api/logistik/transaksi", {
             method: "POST", credentials: 'include', headers: { ...authHeaders, "Content-Type": "application/json" },
-            body: JSON.stringify({ ...form, jumlah: parseInt(form.jumlah) })
+            body: JSON.stringify({ ...form, jumlah: parseInt(form.jumlah), foto_url })
         });
+        setUploading(false);
         if (res.ok) {
             toast.success(modalType === 'masuk' ? "Stok masuk berhasil dicatat" : "Stok keluar berhasil dicatat");
             setShowModal(false);
+            setFotoFile(null);
+            setFotoPreview(null);
             await loadStok();
+            if (showRiwayat) await loadTransaksi(); // Refresh riwayat jika sedang ditampilkan
         } else {
             const err = await res.json();
             toast.error(err.error || "Gagal menyimpan transaksi");
@@ -241,9 +341,82 @@ export default function ManajemenLogistikPage() {
                                     <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', display: 'block', marginBottom: '4px' }}>Keterangan</label>
                                     <input type="text" style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '8px', padding: '8px 12px', boxSizing: 'border-box' }} value={form.keterangan} onChange={(e) => setForm({ ...form, keterangan: e.target.value })} placeholder="Opsional" />
                                 </div>
+
+                                {/* Upload Foto */}
+                                <div>
+                                    <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', display: 'block', marginBottom: '4px' }}>
+                                        Foto Bukti <span style={{ color: '#9ca3af', fontWeight: '400' }}>(Opsional, max 2MB)</span>
+                                    </label>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp,image/jpg"
+                                        onChange={handleFileChange}
+                                        style={{ display: 'none' }}
+                                    />
+                                    {!fotoPreview ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            style={{
+                                                width: '100%',
+                                                padding: '16px',
+                                                border: '2px dashed #d1d5db',
+                                                borderRadius: '8px',
+                                                backgroundColor: '#f9fafb',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                color: '#6b7280'
+                                            }}
+                                        >
+                                            <Camera size={24} />
+                                            <span style={{ fontSize: '13px' }}>Klik untuk pilih foto</span>
+                                        </button>
+                                    ) : (
+                                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                                            <img
+                                                src={fotoPreview}
+                                                alt="Preview"
+                                                style={{
+                                                    width: '100%',
+                                                    maxHeight: '150px',
+                                                    objectFit: 'cover',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #d1d5db'
+                                                }}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={removeFoto}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: '4px',
+                                                    right: '4px',
+                                                    width: '24px',
+                                                    height: '24px',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: '#ef4444',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                <X size={14} color="white" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
                                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
-                                    <button type="button" onClick={() => setShowModal(false)} style={{ padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '8px', fontWeight: '500', cursor: 'pointer', backgroundColor: 'white' }}>Batal</button>
-                                    <button type="submit" style={{ padding: '8px 24px', color: 'white', borderRadius: '8px', fontWeight: '500', cursor: 'pointer', border: 'none', backgroundColor: modalType === 'masuk' ? '#059669' : '#dc2626' }}>Simpan</button>
+                                    <button type="button" onClick={() => setShowModal(false)} style={{ padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '8px', fontWeight: '500', cursor: 'pointer', backgroundColor: 'white' }} disabled={uploading}>Batal</button>
+                                    <button type="submit" disabled={uploading} style={{ padding: '8px 24px', color: 'white', borderRadius: '8px', fontWeight: '500', cursor: 'pointer', border: 'none', backgroundColor: modalType === 'masuk' ? '#059669' : '#dc2626', opacity: uploading ? 0.6 : 1 }}>
+                                        {uploading ? 'Mengupload...' : 'Simpan'}
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -377,6 +550,142 @@ export default function ManajemenLogistikPage() {
                     </table>
                 </div>
             </div>
+
+            {/* RIWAYAT TRANSAKSI SECTION */}
+            <div style={{ marginTop: '24px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+                <button
+                    onClick={toggleRiwayat}
+                    style={{
+                        width: '100%',
+                        padding: '16px 20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        backgroundColor: '#f9fafb',
+                        border: 'none',
+                        cursor: 'pointer',
+                        borderBottom: showRiwayat ? '1px solid #e5e7eb' : 'none'
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Package size={20} style={{ color: '#6b7280' }} />
+                        <span style={{ fontWeight: '600', color: '#374151' }}>Riwayat Transaksi (50 Terbaru)</span>
+                    </div>
+                    <span style={{ fontSize: '12px', color: '#9ca3af' }}>{showRiwayat ? '▲ Tutup' : '▼ Buka'}</span>
+                </button>
+
+                {showRiwayat && (
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ backgroundColor: '#f3f4f6' }}>
+                                    <th style={{ padding: '10px', textAlign: 'left', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Tanggal</th>
+                                    <th style={{ padding: '10px', textAlign: 'left', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Merk</th>
+                                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Tipe</th>
+                                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Jumlah</th>
+                                    <th style={{ padding: '10px', textAlign: 'left', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Keterangan</th>
+                                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Foto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {transaksiList.length === 0 ? (
+                                    <tr><td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: '#9ca3af' }}>Belum ada riwayat transaksi</td></tr>
+                                ) : (
+                                    transaksiList.map((tx: any) => (
+                                        <tr key={tx.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                            <td style={{ padding: '10px', color: '#374151' }}>
+                                                {new Date(tx.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                            </td>
+                                            <td style={{ padding: '10px', fontWeight: '500', color: '#374151' }}>{tx.merk}</td>
+                                            <td style={{ padding: '10px', textAlign: 'center' }}>
+                                                <span style={{
+                                                    padding: '2px 8px',
+                                                    borderRadius: '12px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '600',
+                                                    backgroundColor: tx.tipe_transaksi?.startsWith('masuk') ? '#d1fae5' : '#fee2e2',
+                                                    color: tx.tipe_transaksi?.startsWith('masuk') ? '#047857' : '#dc2626'
+                                                }}>
+                                                    {tx.tipe_transaksi?.replace('_', ' ').replace('masuk', 'Masuk').replace('keluar', 'Keluar')}
+                                                </span>
+                                            </td>
+                                            <td style={{
+                                                padding: '10px',
+                                                textAlign: 'center',
+                                                fontWeight: '600',
+                                                color: tx.jumlah > 0 ? '#047857' : '#dc2626'
+                                            }}>
+                                                {tx.jumlah > 0 ? '+' : ''}{tx.jumlah}
+                                            </td>
+                                            <td style={{ padding: '10px', color: '#6b7280', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {tx.keterangan || '-'}
+                                            </td>
+                                            <td style={{ padding: '10px', textAlign: 'center' }}>
+                                                {tx.foto_url ? (
+                                                    <button
+                                                        onClick={() => viewFoto(tx.foto_url)}
+                                                        style={{
+                                                            padding: '4px 10px',
+                                                            backgroundColor: '#eff6ff',
+                                                            color: '#2563eb',
+                                                            border: 'none',
+                                                            borderRadius: '6px',
+                                                            cursor: 'pointer',
+                                                            fontSize: '11px',
+                                                            fontWeight: '500',
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px'
+                                                        }}
+                                                    >
+                                                        <ImageIcon size={12} /> Lihat
+                                                    </button>
+                                                ) : (
+                                                    <span style={{ color: '#d1d5db', fontSize: '11px' }}>-</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* FOTO VIEWER MODAL */}
+            {mounted && showFotoModal && viewFotoUrl && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+                    <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)' }} onClick={() => setShowFotoModal(false)} />
+                    <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%' }}>
+                        <img
+                            src={viewFotoUrl}
+                            alt="Foto Dokumentasi"
+                            style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: '8px', boxShadow: '0 25px 50px rgba(0,0,0,0.5)' }}
+                        />
+                        <button
+                            onClick={() => setShowFotoModal(false)}
+                            style={{
+                                position: 'absolute',
+                                top: '-12px',
+                                right: '-12px',
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '50%',
+                                backgroundColor: 'white',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                            }}
+                        >
+                            <X size={20} color="#374151" />
+                        </button>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

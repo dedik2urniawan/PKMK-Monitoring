@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
             no_batch,
             tanggal_kadaluarsa,
             keterangan,
+            foto_url,
             created_at,
             ref_puskesmas:puskesmas_id (id, nama),
             ref_jenis_pkmk:jenis_pkmk_id (id, nama_merk, kategori_usia)
@@ -73,6 +74,7 @@ export async function GET(request: NextRequest) {
         no_batch: item.no_batch,
         tanggal_kadaluarsa: item.tanggal_kadaluarsa,
         keterangan: item.keterangan,
+        foto_url: item.foto_url,
         created_at: item.created_at
     }));
 
@@ -97,7 +99,8 @@ export async function POST(request: NextRequest) {
         tanggal,
         no_batch,
         tanggal_kadaluarsa,
-        keterangan
+        keterangan,
+        foto_url
     } = body;
 
     // Validation
@@ -126,6 +129,7 @@ export async function POST(request: NextRequest) {
             no_batch: no_batch || null,
             tanggal_kadaluarsa: tanggal_kadaluarsa || null,
             keterangan: keterangan || null,
+            foto_url: foto_url || null,
             created_by: authUser?.id || null
         });
 
