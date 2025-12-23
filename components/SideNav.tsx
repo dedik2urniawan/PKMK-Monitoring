@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, MouseEvent } from "react";
-import { LayoutDashboard, Users, PlusCircle, Activity, BarChart3, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { LayoutDashboard, Users, PlusCircle, Activity, BarChart3, ChevronLeft, ChevronRight, Search, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 
@@ -14,9 +14,19 @@ const nav: NavItem[] = [
     href: "/balita",
     label: "Daftar Balita",
     icon: Users,
-    children: [{ href: "/balita/new", label: "Tambah Balita", icon: PlusCircle }],
+    children: [
+      { href: "/balita/new", label: "Tambah Balita", icon: PlusCircle },
+      { href: "/import/balita", label: "Import Excel", icon: Upload },
+    ],
   },
-  { href: "/monitoring", label: "Monitoring PKMK", icon: Activity },
+  {
+    href: "/monitoring",
+    label: "Monitoring PKMK",
+    icon: Activity,
+    children: [
+      { href: "/import/monitoring", label: "Import Excel", icon: Upload },
+    ],
+  },
   { href: "/kohort/new", label: "Daftar Kohort Intervensi", icon: Activity },
   {
     href: "#laporan",

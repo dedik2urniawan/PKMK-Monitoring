@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data });
 }
 
-// DELETE - Remove stok record
+// DELETE - Remove stok record and its related transactions
 export async function DELETE(request: NextRequest) {
     const supabase = await createClient();
     const user = await getAppUser();
@@ -115,19 +115,37 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ error: 'ID wajib diisi' }, { status: 400 });
     }
 
-    // Check ownership for admin_puskesmas
-    if (user.role === 'admin_puskesmas') {
-        const { data: existing } = await supabase
-            .from('logistik_stok_puskesmas')
-            .select('puskesmas_id')
-            .eq('id', id)
-            .single();
+    // 1. Get the stok record to find puskesmas_id and jenis_pkmk_id
+    const { data: existing, error: fetchError } = await supabase
+        .from('logistik_stok_puskesmas')
+        .select('id, puskesmas_id, jenis_pkmk_id')
+        .eq('id', id)
+        .single();
 
-        if (existing && existing.puskesmas_id !== user.puskesmas_id) {
-            return NextResponse.json({ error: 'Tidak memiliki akses' }, { status: 403 });
-        }
+    if (fetchError || !existing) {
+        return NextResponse.json({ error: 'Stok tidak ditemukan' }, { status: 404 });
     }
 
+    // Check ownership for admin_puskesmas
+    if (user.role === 'admin_puskesmas' && existing.puskesmas_id !== user.puskesmas_id) {
+        return NextResponse.json({ error: 'Tidak memiliki akses' }, { status: 403 });
+    }
+
+    // 2. Delete all related transactions first
+    const { error: txDeleteError, count: deletedTxCount } = await supabase
+        .from('logistik_transaksi')
+        .delete()
+        .eq('puskesmas_id', existing.puskesmas_id)
+        .eq('jenis_pkmk_id', existing.jenis_pkmk_id);
+
+    if (txDeleteError) {
+        console.error('[API /logistik/stok DELETE] Transaction delete error:', txDeleteError);
+        // Continue anyway to delete stok
+    } else {
+        console.log(`[API /logistik/stok DELETE] Deleted related transactions for stok ${id}`);
+    }
+
+    // 3. Delete the stok record
     const { error } = await supabase
         .from('logistik_stok_puskesmas')
         .delete()
@@ -138,5 +156,8 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+        success: true,
+        message: 'Stok dan riwayat transaksi terkait berhasil dihapus'
+    });
 }

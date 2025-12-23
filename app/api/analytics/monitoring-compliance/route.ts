@@ -286,8 +286,19 @@ export async function GET(request: Request) {
                 }
             } else {
                 // Admin puskesmas - group by desa only
+                // Only include desa that belongs to this puskesmas according to ref_desa
                 if (balita.desa_kel) {
-                    locationKey = balita.desa_kel.toLowerCase().trim();
+                    const desaKey = balita.desa_kel.toLowerCase().trim();
+                    const correctPuskesmasForDesa = desaToPuskesmasMap.get(desaKey);
+
+                    // Skip if this desa doesn't belong to admin's puskesmas according to ref_desa
+                    if (correctPuskesmasForDesa && correctPuskesmasForDesa !== appUser.puskesmas_id) {
+                        // This desa belongs to a different puskesmas, skip it
+                        return;
+                    }
+
+                    // Only include if desa is in ref_desa for this puskesmas OR not in ref_desa at all
+                    locationKey = desaKey;
                     locationName = balita.desa_kel;
                 }
             }

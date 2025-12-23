@@ -202,13 +202,30 @@ export async function GET(request: Request) {
                 });
             });
         } else {
-            // Admin Puskesmas - Group by Desa (using desa_kel)
+            // Admin Puskesmas - Group by Desa (using ref_desa to validate desa belongs to puskesmas)
             const desaMap = new Map();
+
+            // Get list of valid desa for this puskesmas from ref_desa
+            const validDesaForPuskesmas = new Set<string>();
+            refDesaData?.forEach((d: any) => {
+                if (d.puskesmas_id === appUser.puskesmas_id && d.desa_kel) {
+                    validDesaForPuskesmas.add(d.desa_kel.toLowerCase().trim());
+                }
+            });
+
+            console.log(`[Compliance API] Valid desa for puskesmas ${appUser.puskesmas_id}: ${validDesaForPuskesmas.size}`);
 
             balitaData?.forEach((balita: any) => {
                 if (!balita.desa_kel) return;
 
                 const desaKey = balita.desa_kel.toLowerCase().trim();
+
+                // Only include desa that actually belongs to this puskesmas according to ref_desa
+                if (!validDesaForPuskesmas.has(desaKey)) {
+                    console.log(`[Compliance API] Skipping desa '${balita.desa_kel}' - not in ref_desa for this puskesmas`);
+                    return;
+                }
+
                 if (!desaMap.has(desaKey)) {
                     desaMap.set(desaKey, {
                         id: desaKey,
@@ -229,6 +246,10 @@ export async function GET(request: Request) {
                 if (!balita || !balita.desa_kel) return;
 
                 const desaKey = balita.desa_kel.toLowerCase().trim();
+
+                // Only count if desa is valid for this puskesmas
+                if (!validDesaForPuskesmas.has(desaKey)) return;
+
                 if (desaMap.has(desaKey)) {
                     const desa = desaMap.get(desaKey);
                     if (desa.balitaIds.has(kohort.balita_id)) {

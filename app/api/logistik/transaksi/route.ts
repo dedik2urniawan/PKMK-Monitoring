@@ -169,3 +169,82 @@ export async function POST(request: NextRequest) {
         new_stock: newStokValue
     });
 }
+
+// DELETE - Delete transaction and reverse stock change
+export async function DELETE(request: NextRequest) {
+    const supabase = await createClient();
+    const user = await getAppUser();
+
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+        return NextResponse.json({ error: 'ID transaksi wajib diisi' }, { status: 400 });
+    }
+
+    // 1. Get the transaction to be deleted
+    const { data: transaksi, error: fetchError } = await supabase
+        .from('logistik_transaksi')
+        .select('id, puskesmas_id, jenis_pkmk_id, jumlah')
+        .eq('id', id)
+        .single();
+
+    if (fetchError || !transaksi) {
+        return NextResponse.json({ error: 'Transaksi tidak ditemukan' }, { status: 404 });
+    }
+
+    // Check ownership for admin_puskesmas
+    if (user.role === 'admin_puskesmas' && transaksi.puskesmas_id !== user.puskesmas_id) {
+        return NextResponse.json({ error: 'Tidak memiliki akses' }, { status: 403 });
+    }
+
+    // 2. Reverse the stock change
+    const { data: currentStock } = await supabase
+        .from('logistik_stok_puskesmas')
+        .select('stok_tersedia')
+        .eq('puskesmas_id', transaksi.puskesmas_id)
+        .eq('jenis_pkmk_id', transaksi.jenis_pkmk_id)
+        .single();
+
+    const currentStokValue = currentStock?.stok_tersedia || 0;
+    // Reverse: if original was +60 (masuk), we subtract 60; if was -40 (keluar), we add 40
+    const reversedStokValue = Math.max(0, currentStokValue - transaksi.jumlah);
+
+    // Update stock
+    const { error: updateError } = await supabase
+        .from('logistik_stok_puskesmas')
+        .update({
+            stok_tersedia: reversedStokValue,
+            updated_at: new Date().toISOString()
+        })
+        .eq('puskesmas_id', transaksi.puskesmas_id)
+        .eq('jenis_pkmk_id', transaksi.jenis_pkmk_id);
+
+    if (updateError) {
+        console.error('[API /logistik/transaksi DELETE] Stock update error:', updateError);
+        // Continue to delete transaction anyway
+    }
+
+    // 3. Delete the transaction
+    const { error: deleteError } = await supabase
+        .from('logistik_transaksi')
+        .delete()
+        .eq('id', id);
+
+    if (deleteError) {
+        console.error('[API /logistik/transaksi DELETE] Delete error:', deleteError);
+        return NextResponse.json({ error: deleteError.message }, { status: 500 });
+    }
+
+    console.log(`[API /logistik/transaksi DELETE] Deleted transaksi ${id}, reversed stock from ${currentStokValue} to ${reversedStokValue}`);
+
+    return NextResponse.json({
+        success: true,
+        message: 'Transaksi berhasil dihapus dan stok telah disesuaikan',
+        new_stock: reversedStokValue
+    });
+}
