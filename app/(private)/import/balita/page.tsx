@@ -82,7 +82,15 @@ export default function ImportBalitaPage() {
             let status: ImportRow["status"] = "valid";
 
             // Check required fields
-            if (!row.nik) errors.push("NIK wajib diisi");
+            if (!row.nik) {
+                errors.push("NIK wajib diisi");
+            } else {
+                // Validate NIK is exactly 16 digits
+                const nikStr = String(row.nik).trim();
+                if (!/^\d{16}$/.test(nikStr)) {
+                    errors.push("NIK harus 16 digit angka");
+                }
+            }
             if (!row.nama_balita) errors.push("nama_balita wajib diisi");
             if (!row.jk || !["L", "P", "l", "p"].includes(row.jk)) {
                 errors.push("jk harus L atau P");
@@ -207,7 +215,7 @@ export default function ImportBalitaPage() {
                 <h3 className="font-semibold text-gray-800 mb-3">📋 Petunjuk Import</h3>
                 <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside">
                     <li>
-                        <strong>NIK</strong> harus unik (tidak boleh sama dengan data yang sudah ada)
+                        <strong>NIK</strong> harus unik, wajib diisi, dan harus <strong>16 digit angka</strong>
                     </li>
                     <li>
                         <strong>jk</strong> (jenis kelamin): isi dengan L (laki-laki) atau P (perempuan)

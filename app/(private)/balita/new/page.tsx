@@ -194,8 +194,17 @@ export default function NewBalitaPage() {
       {msg && <div className="mb-4 text-sm p-3 rounded bg-blue-50">{msg}</div>}
       {loadErr && <div className="mb-4 text-sm p-3 rounded bg-red-50 text-red-700">{loadErr}</div>}
       <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><label className="text-sm">NIK</label>
-          <input value={values.nik ?? ""} onChange={(e) => set("nik", e.target.value)} className="input" /></div>
+        <div><label className="text-sm">NIK* <span className="text-xs text-gray-500">(16 digit)</span></label>
+          <input
+            value={values.nik ?? ""}
+            onChange={(e) => set("nik", e.target.value.replace(/\D/g, "").slice(0, 16))}
+            placeholder="Contoh: 3507241234567890"
+            pattern="[0-9]{16}"
+            minLength={16}
+            maxLength={16}
+            required
+            className="input"
+          /></div>
         <div><label className="text-sm">Nama Balita*</label>
           <input value={values.nama_balita} onChange={(e) => set("nama_balita", e.target.value)} required className="input" /></div>
         <div><label className="text-sm">JK*</label>

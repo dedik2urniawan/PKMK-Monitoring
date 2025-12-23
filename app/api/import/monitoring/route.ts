@@ -88,10 +88,13 @@ export async function POST(request: NextRequest) {
                 const { data: balita } = await balitaQuery.maybeSingle();
 
                 if (!balita) {
-                    errors.push({ row: rowNum, error: "NIK tidak ditemukan di database" });
+                    console.log(`[Import Monitoring] Row ${rowNum}: NIK ${nik} NOT FOUND for puskesmas ${effectivePuskesmasId}`);
+                    errors.push({ row: rowNum, error: `NIK "${nik}" tidak ditemukan di database puskesmas ini` });
                     failed++;
                     continue;
                 }
+
+                console.log(`[Import Monitoring] Row ${rowNum}: Found balita ${balita.id} for NIK ${nik}`);
 
                 // Get kohort for balita
                 const { data: kohort } = await supabase
@@ -103,7 +106,8 @@ export async function POST(request: NextRequest) {
                     .maybeSingle();
 
                 if (!kohort) {
-                    errors.push({ row: rowNum, error: "Balita belum memiliki kohort" });
+                    console.log(`[Import Monitoring] Row ${rowNum}: Balita ${balita.id} has NO KOHORT`);
+                    errors.push({ row: rowNum, error: `Balita NIK "${nik}" belum didaftarkan ke Kohort. Silakan daftarkan kohort terlebih dahulu.` });
                     failed++;
                     continue;
                 }
