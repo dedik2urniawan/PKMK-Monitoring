@@ -28,6 +28,8 @@ export default function Header() {
     };
 
     const handleLogout = async () => {
+        // Clear session storage agar welcome modal muncul lagi saat login berikutnya
+        sessionStorage.removeItem("pkmk_welcome_shown");
         await supabase.auth.signOut();
         toast.success("Logout berhasil");
         router.push("/login");

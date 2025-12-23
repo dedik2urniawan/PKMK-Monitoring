@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Users, Activity, TrendingUp, Plus, FileText, List, ClipboardList } from "lucide-react";
 import AnalyticsSection from "./components/AnalyticsSection";
+import WelcomeModal from "./components/WelcomeModal";
 
 export default async function Dashboard() {
   const supabase = await createClient();
@@ -62,6 +63,9 @@ export default async function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Welcome Modal */}
+      <WelcomeModal />
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-[var(--foreground)]">Dashboard</h1>
