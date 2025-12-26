@@ -47,20 +47,27 @@ function LoginForm() {
     }
     try {
       const session = data.session || (await supabase.auth.getSession()).data.session;
+      const user = data.user || session?.user;
+
       if (session?.access_token && session.refresh_token) {
-        // Save to the key that Supabase client is configured to read from
-        // This must match the storageKey in lib/supabase/client.ts
+        // CRITICAL: Save complete session with user data
+        // Supabase client needs 'user' to be populated to consider session valid
         const sessionData = {
           access_token: session.access_token,
           refresh_token: session.refresh_token,
-          expires_in: session.expires_in,
-          expires_at: session.expires_at,
+          expires_in: session.expires_in || 3600,
+          expires_at: session.expires_at || (Date.now() / 1000 + 3600),
           token_type: session.token_type || 'bearer',
-          user: session.user,
+          user: user || session.user,  // Ensure user is always populated
         };
+
+        console.log('[Login] Saving session with user:', user?.email);
         localStorage.setItem('supabase.auth.token', JSON.stringify(sessionData));
 
-        // Also keep old keys for backward compatibility with API calls
+        // Also save to default Supabase key for compatibility
+        localStorage.setItem('sb-triswnewxcgaoawopeov-auth-token', JSON.stringify(sessionData));
+
+        // Keep old keys for backward compatibility with API calls
         localStorage.setItem('sb_access_token', session.access_token);
         localStorage.setItem('sb_refresh_token', session.refresh_token);
 
