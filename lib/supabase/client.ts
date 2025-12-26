@@ -13,31 +13,11 @@ export function getSupabase() {
       throw new Error('Supabase env (URL/ANON_KEY) tidak ditemukan');
     }
 
-    // Use localStorage for session storage to avoid httpOnly cookie issues in production
-    _client = createBrowserClient(url, key, {
-      auth: {
-        persistSession: true,
-        storageKey: 'supabase.auth.token',
-        storage: {
-          getItem: (key: string) => {
-            if (typeof window === 'undefined') return null;
-            return window.localStorage.getItem(key);
-          },
-          setItem: (key: string, value: string) => {
-            if (typeof window === 'undefined') return;
-            window.localStorage.setItem(key, value);
-          },
-          removeItem: (key: string) => {
-            if (typeof window === 'undefined') return;
-            window.localStorage.removeItem(key);
-          },
-        },
-      },
-    });
+    // Use default Supabase storage (automatically uses localStorage)
+    _client = createBrowserClient(url, key);
   }
   return _client;
 }
 
 // Backwards-compatible default export for existing imports
 export const supabase = typeof window !== 'undefined' ? getSupabase() : ({} as any);
-

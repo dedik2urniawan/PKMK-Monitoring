@@ -45,32 +45,19 @@ function LoginForm() {
       setErr(error.message);
       return;
     }
-    try {
-      const session = data.session || (await supabase.auth.getSession()).data.session;
-      const user = data.user || session?.user;
 
-      if (session?.access_token && session.refresh_token) {
-        // CRITICAL: Save complete session with user data
-        // Supabase client needs 'user' to be populated to consider session valid
-        const sessionData = {
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-          expires_in: session.expires_in || 3600,
-          expires_at: session.expires_at || (Date.now() / 1000 + 3600),
-          token_type: session.token_type || 'bearer',
-          user: user || session.user,  // Ensure user is always populated
-        };
+    // Supabase automatically persists the session to localStorage
+    // Just verify session exists and redirect
+    const session = data.session;
+    if (session) {
+      console.log('[Login] Login successful for:', data.user?.email);
 
-        console.log('[Login] Saving session with user:', user?.email);
-        localStorage.setItem('supabase.auth.token', JSON.stringify(sessionData));
+      // Keep backup keys for API Authorization headers
+      localStorage.setItem('sb_access_token', session.access_token);
+      localStorage.setItem('sb_refresh_token', session.refresh_token);
 
-        // Also save to default Supabase key for compatibility
-        localStorage.setItem('sb-triswnewxcgaoawopeov-auth-token', JSON.stringify(sessionData));
-
-        // Keep old keys for backward compatibility with API calls
-        localStorage.setItem('sb_access_token', session.access_token);
-        localStorage.setItem('sb_refresh_token', session.refresh_token);
-
+      // Try to sync session cookies with server (optional, for SSR)
+      try {
         await fetch("/api/auth/session", {
           method: "POST",
           headers: {
@@ -83,11 +70,12 @@ function LoginForm() {
             access_token: session.access_token,
             refresh_token: session.refresh_token,
           }),
-        }).catch(e => console.error("Sync error:", e));
+        });
+      } catch (e) {
+        console.warn("Session sync error (non-critical):", e);
       }
-    } catch (e) {
-      console.error("Session handling error:", e);
     }
+
     const target = searchParams.get("redirectedFrom") || "/dashboard";
     if (typeof window !== "undefined") window.location.assign(target);
     else router.replace(target);
