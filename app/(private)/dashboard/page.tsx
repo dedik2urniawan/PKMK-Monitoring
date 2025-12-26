@@ -1,21 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAppUser } from "@/lib/appUser";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Users, Activity, TrendingUp, Plus, FileText, List, ClipboardList, Calendar, Zap } from "lucide-react";
 import AnalyticsSection from "./components/AnalyticsSection";
 import WelcomeModal from "./components/WelcomeModal";
 
 export default async function Dashboard() {
+  // Get supabase for data queries (no auth check - handled client-side)
   const supabase = await createClient();
   const appUser = await getAppUser();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
 
   // Fetch statistics
   let balitaQuery = supabase.from("balita").select("id", { head: true, count: "exact" });
