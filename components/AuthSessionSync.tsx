@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { getSupabase } from "@/lib/supabase/client";
 
 export default function AuthSessionSync() {
+  const router = useRouter();
+  const pathname = usePathname();
   const checkedRef = useRef(false);
 
   useEffect(() => {
@@ -12,25 +15,29 @@ export default function AuthSessionSync() {
     async function checkSession() {
       try {
         const supabase = getSupabase();
+
+        // Check session from Supabase (reads from localStorage automatically)
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
           console.error('[AuthSessionSync] Session error:', error.message);
         }
 
-        if (session) {
-          console.log('[AuthSessionSync] Session valid for:', session.user?.email);
-        } else {
-          // DON'T redirect - just log. Let the page handle its own auth.
-          console.log('[AuthSessionSync] No session found (not redirecting)');
+        if (!session) {
+          console.log('[AuthSessionSync] No session found, redirecting to login');
+          router.replace('/login?redirectedFrom=' + encodeURIComponent(pathname));
+          return;
         }
+
+        console.log('[AuthSessionSync] Session valid for:', session.user?.email);
       } catch (err) {
         console.error('[AuthSessionSync] Error:', err);
       }
     }
 
-    checkSession();
-  }, []);
+    // Small delay to ensure Supabase client has initialized
+    setTimeout(checkSession, 100);
+  }, [router, pathname]);
 
   return null;
 }
