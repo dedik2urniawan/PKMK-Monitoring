@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { getAuthHeaders } from "@/lib/clientSession";
 import FilterSection from "./FilterSection";
 import ComplianceScorecard from "./ComplianceScorecard";
 import ComplianceDrilldownChart from "./ComplianceDrilldownChart";
@@ -41,7 +42,8 @@ export default function AnalyticsSection() {
     const fetchComplianceData = async () => {
         setComplianceLoading(true);
         try {
-            const response = await fetch(`/api/analytics/compliance?year=${selectedYear}&month=${selectedMonth}`);
+            const headers = await getAuthHeaders();
+            const response = await fetch(`/api/analytics/compliance?year=${selectedYear}&month=${selectedMonth}`, { headers });
             if (response.ok) {
                 const data = await response.json();
                 setComplianceData(data);
@@ -56,7 +58,8 @@ export default function AnalyticsSection() {
     const fetchNutritionData = async () => {
         setNutritionLoading(true);
         try {
-            const response = await fetch(`/api/analytics/nutrition?year=${selectedYear}&month=${selectedMonth}`);
+            const headers = await getAuthHeaders();
+            const response = await fetch(`/api/analytics/nutrition?year=${selectedYear}&month=${selectedMonth}`, { headers });
             if (response.ok) {
                 const data = await response.json();
                 setNutritionData(data);
@@ -71,7 +74,8 @@ export default function AnalyticsSection() {
     const fetchRedFlagData = async () => {
         setRedFlagLoading(true);
         try {
-            const response = await fetch(`/api/analytics/redflag?year=${selectedYear}&month=${selectedMonth}`);
+            const headers = await getAuthHeaders();
+            const response = await fetch(`/api/analytics/redflag?year=${selectedYear}&month=${selectedMonth}`, { headers });
             if (response.ok) {
                 const data = await response.json();
                 setRedFlagData(data);
@@ -86,7 +90,8 @@ export default function AnalyticsSection() {
     const fetchKepatuhanData = async () => {
         setKepatuhanLoading(true);
         try {
-            const response = await fetch(`/api/analytics/kepatuhan?year=${selectedYear}&month=${selectedMonth}`);
+            const headers = await getAuthHeaders();
+            const response = await fetch(`/api/analytics/kepatuhan?year=${selectedYear}&month=${selectedMonth}`, { headers });
             if (response.ok) {
                 const data = await response.json();
                 setKepatuhanData(data);
@@ -101,7 +106,8 @@ export default function AnalyticsSection() {
     const fetchDosageData = async () => {
         setDosageLoading(true);
         try {
-            const response = await fetch(`/api/analytics/dosage?year=${selectedYear}&month=${selectedMonth}`);
+            const headers = await getAuthHeaders();
+            const response = await fetch(`/api/analytics/dosage?year=${selectedYear}&month=${selectedMonth}`, { headers });
             if (response.ok) {
                 const data = await response.json();
                 setDosageData(data);
@@ -117,7 +123,8 @@ export default function AnalyticsSection() {
         setMonitoringComplianceLoading(true);
         try {
             const weekQuery = selectedWeek !== "all" ? `&week=${selectedWeek}` : "";
-            const response = await fetch(`/api/analytics/monitoring-compliance?year=${selectedYear}&month=${selectedMonth}${weekQuery}`);
+            const headers = await getAuthHeaders();
+            const response = await fetch(`/api/analytics/monitoring-compliance?year=${selectedYear}&month=${selectedMonth}${weekQuery}`, { headers });
             if (response.ok) {
                 const data = await response.json();
                 setMonitoringComplianceData(data);
