@@ -2,8 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import SideNav from "@/components/SideNav";
 import Header from "@/components/Header";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import IdleGuard from "@/components/IdleGuard";
 import AuthSessionSync from "@/components/AuthSessionSync";
 
@@ -12,12 +10,10 @@ export const revalidate = 0;
 export const runtime = "nodejs";
 
 export default async function PrivateLayout({ children }: { children: React.ReactNode }) {
-  // Auth gate for all /(private) pages
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  // Auth is handled by:
+  // 1. Middleware - for full page navigation with cookies
+  // 2. AuthSessionSync - for client-side protection with localStorage
+
 
   return (
     <div className="grid grid-cols-[auto_1fr] min-h-screen max-h-screen overflow-hidden">

@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(req: NextRequest) {
-  // Response yang bisa dimodifikasi cookie-nya
   const res = NextResponse.next({
     request: { headers: req.headers },
   });
 
-  // Client Supabase (server) dengan cookie helper
+  // Create Supabase client to refresh session tokens in cookies
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -32,54 +31,18 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  // PENTING: Refresh session untuk memperbarui token yang expired
-  // Ini akan otomatis set cookie baru jika token di-refresh
-  const { data: { user }, error } = await supabase.auth.getUser();
+  // Refresh session if exists (updates cookies if token was refreshed)
+  // This is passive - we don't block based on auth here
+  await supabase.auth.getUser();
 
-  const { pathname } = req.nextUrl;
-
-  // Skip untuk static files dan API routes
-  if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
-    pathname.includes('.') // static files like .ico, .png, etc.
-  ) {
-    return res;
-  }
-
-  // Semua routes di bawah /(private) harus terproteksi
-  const isProtected =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/balita") ||
-    pathname.startsWith("/kohort") ||
-    pathname.startsWith("/monitoring") ||
-    pathname.startsWith("/logistik") ||
-    pathname.startsWith("/import") ||
-    pathname.startsWith("/riwayat") ||
-    pathname.startsWith("/rekap-laporan");
-
-  // Jika route protected dan tidak ada user, redirect ke login
-  if (isProtected && !user) {
-    console.log('[Middleware] No user found, redirecting to login from:', pathname);
-    const url = req.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirectedFrom", pathname);
-    return NextResponse.redirect(url);
-  }
-
+  // Auth protection is now handled client-side by AuthSessionSync
+  // This middleware only handles cookie refresh for compatibility
   return res;
 }
 
 export const config = {
   matcher: [
-    // Match all protected routes
-    "/dashboard/:path*",
-    "/balita/:path*",
-    "/kohort/:path*",
-    "/monitoring/:path*",
-    "/logistik/:path*",
-    "/import/:path*",
-    "/riwayat/:path*",
-    "/rekap-laporan/:path*",
+    // Match all routes except static files
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

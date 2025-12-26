@@ -13,33 +13,24 @@ export function getSupabase() {
       throw new Error('Supabase env (URL/ANON_KEY) tidak ditemukan');
     }
 
-    // Minimal cookie handlers to read server-set cookies
+    // Use localStorage for session storage to avoid httpOnly cookie issues in production
     _client = createBrowserClient(url, key, {
-      cookies: {
-        get(name: string) {
-          const cookies = document.cookie.split(';');
-          for (const cookie of cookies) {
-            const [cookieName, ...cookieValue] = cookie.split('=');
-            if (cookieName.trim() === name) {
-              return cookieValue.join('=').trim();
-            }
-          }
-          return null;
-        },
-        set(name: string, value: string, options: any) {
-          let cookie = `${name}=${value}`;
-          if (options?.maxAge) cookie += `; Max-Age=${options.maxAge}`;
-          if (options?.path) cookie += `; Path=${options.path}`;
-          if (options?.domain) cookie += `; Domain=${options.domain}`;
-          if (options?.sameSite) cookie += `; SameSite=${options.sameSite}`;
-          if (options?.secure) cookie += `; Secure`;
-          document.cookie = cookie;
-        },
-        remove(name: string, options: any) {
-          let cookie = `${name}=; Max-Age=0`;
-          if (options?.path) cookie += `; Path=${options.path}`;
-          if (options?.domain) cookie += `; Domain=${options.domain}`;
-          document.cookie = cookie;
+      auth: {
+        persistSession: true,
+        storageKey: 'supabase.auth.token',
+        storage: {
+          getItem: (key: string) => {
+            if (typeof window === 'undefined') return null;
+            return window.localStorage.getItem(key);
+          },
+          setItem: (key: string, value: string) => {
+            if (typeof window === 'undefined') return;
+            window.localStorage.setItem(key, value);
+          },
+          removeItem: (key: string) => {
+            if (typeof window === 'undefined') return;
+            window.localStorage.removeItem(key);
+          },
         },
       },
     });
@@ -49,3 +40,4 @@ export function getSupabase() {
 
 // Backwards-compatible default export for existing imports
 export const supabase = typeof window !== 'undefined' ? getSupabase() : ({} as any);
+
