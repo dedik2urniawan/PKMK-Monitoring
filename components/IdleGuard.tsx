@@ -19,7 +19,9 @@ export default function IdleGuard({ ms, warnMs }: { ms?: number; warnMs?: number
 
   async function doLogout() {
     try {
-      // Clear session storage agar welcome modal muncul lagi saat login berikutnya
+      // Clear session tokens from localStorage
+      localStorage.removeItem('sb_access_token');
+      localStorage.removeItem('sb_refresh_token');
       sessionStorage.removeItem("pkmk_welcome_shown");
       const supabase = getSupabase();
       await supabase.auth.signOut();

@@ -27,6 +27,9 @@ export default function Header() {
     };
 
     const handleLogout = async () => {
+        // Clear session tokens from localStorage
+        localStorage.removeItem('sb_access_token');
+        localStorage.removeItem('sb_refresh_token');
         sessionStorage.removeItem("pkmk_welcome_shown");
         await supabase.auth.signOut();
         toast.success("Logout berhasil");
