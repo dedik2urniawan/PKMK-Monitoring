@@ -13,57 +13,55 @@ export async function middleware(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return req.cookies.get(name)?.value;
+        getAll() {
+          return req.cookies.getAll();
         },
-        set(name: string, value: string, options) {
-          res.cookies.set({
-            name,
-            value,
-            ...options,
-            path: '/',
-            sameSite: 'lax',
-            secure: process.env.NODE_ENV === 'production',
-          });
-        },
-        remove(name: string, options) {
-          res.cookies.set({
-            name,
-            value: "",
-            ...options,
-            path: '/',
-            maxAge: 0,
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            res.cookies.set({
+              name,
+              value,
+              ...options,
+              path: '/',
+              sameSite: 'lax',
+              secure: process.env.NODE_ENV === 'production',
+              httpOnly: true,
+            });
           });
         },
       },
     }
   );
 
-  // Trigger refresh token jika perlu; cookie akan di-set di res
-  await supabase.auth.getUser();
+  // PENTING: Refresh session untuk memperbarui token yang expired
+  // Ini akan otomatis set cookie baru jika token di-refresh
+  const { data: { user }, error } = await supabase.auth.getUser();
 
   const { pathname } = req.nextUrl;
+
+  // Skip untuk static files dan API routes
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.includes('.') // static files like .ico, .png, etc.
+  ) {
+    return res;
+  }
+
+  // Semua routes di bawah /(private) harus terproteksi
   const isProtected =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/balita") ||
     pathname.startsWith("/kohort") ||
-    pathname.startsWith("/monitoring");
+    pathname.startsWith("/monitoring") ||
+    pathname.startsWith("/logistik") ||
+    pathname.startsWith("/import") ||
+    pathname.startsWith("/riwayat") ||
+    pathname.startsWith("/rekap-laporan");
 
-  const isNavigation =
-    req.headers.get("sec-fetch-mode") === "navigate" ||
-    req.headers.get("sec-fetch-dest") === "document";
-
-  const hasAuthCookie = req.cookies
-    .getAll()
-    .some(
-      (c) =>
-        c.name.startsWith("sb-") &&
-        (c.name.includes("access-token") ||
-          c.name.includes("auth-token") ||
-          c.name.includes("refresh-token"))
-    );
-
-  if (isProtected && !hasAuthCookie && isNavigation) {
+  // Jika route protected dan tidak ada user, redirect ke login
+  if (isProtected && !user) {
+    console.log('[Middleware] No user found, redirecting to login from:', pathname);
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirectedFrom", pathname);
@@ -75,9 +73,14 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    // Match all protected routes
     "/dashboard/:path*",
     "/balita/:path*",
     "/kohort/:path*",
     "/monitoring/:path*",
+    "/logistik/:path*",
+    "/import/:path*",
+    "/riwayat/:path*",
+    "/rekap-laporan/:path*",
   ],
 };
