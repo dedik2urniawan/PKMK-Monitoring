@@ -93,34 +93,34 @@ export function AntropometriTable({ data }: { data: AntropometriItem[] }) {
                                         </span>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <div className="flex items-center gap-2 justify-center">
+                                        <div className="flex items-center gap-1.5 justify-center">
                                             <button
                                                 onClick={() => setSelectedBalita(item)}
                                                 title="Lihat Detail"
-                                                className="p-2 bg-gray-600 hover:bg-gray-700 text-white text-xs font-medium rounded-lg transition-colors"
+                                                className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-700 text-slate-600 hover:text-white transition-all duration-200 hover:scale-110 hover:shadow-lg"
                                             >
-                                                <Eye size={16} />
+                                                <Eye size={16} strokeWidth={2.5} />
                                             </button>
                                             <Link
                                                 href={`/monitoring/${item.balita_id}/antropometri/new`}
-                                                title="Antropometri"
-                                                className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors inline-block"
+                                                title="Input Antropometri"
+                                                className="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-100 hover:bg-emerald-600 text-emerald-600 hover:text-white transition-all duration-200 hover:scale-110 hover:shadow-lg"
                                             >
-                                                <Activity size={16} />
+                                                <Activity size={16} strokeWidth={2.5} />
                                             </Link>
                                             <Link
                                                 href={`/monitoring/${item.balita_id}/konsumsi/new`}
-                                                title="Konsumsi PKMK"
-                                                className="p-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors inline-block"
+                                                title="Input Konsumsi"
+                                                className="w-9 h-9 flex items-center justify-center rounded-full bg-amber-100 hover:bg-amber-500 text-amber-600 hover:text-white transition-all duration-200 hover:scale-110 hover:shadow-lg"
                                             >
-                                                <Coffee size={16} />
+                                                <Coffee size={16} strokeWidth={2.5} />
                                             </Link>
                                             <Link
                                                 href={`/monitoring/${item.balita_id}/pemberian/new`}
-                                                title="Pemberian PKMK"
-                                                className="p-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded-lg transition-colors inline-block"
+                                                title="Input Pemberian"
+                                                className="w-9 h-9 flex items-center justify-center rounded-full bg-purple-100 hover:bg-purple-600 text-purple-600 hover:text-white transition-all duration-200 hover:scale-110 hover:shadow-lg"
                                             >
-                                                <Pill size={16} />
+                                                <Pill size={16} strokeWidth={2.5} />
                                             </Link>
                                         </div>
                                     </td>

@@ -211,10 +211,73 @@ export default function BalitaActionsNew({ balita, onDeleted, onUpdated }: Balit
                                     <span style={{ fontSize: '12px', color: '#3b82f6', fontWeight: '600' }}>Nama Orang Tua</span>
                                     <p style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937', margin: '4px 0 0 0' }}>{balita.nama_ortu || '-'}</p>
                                 </div>
-                                {balita.keterangan_redflag && (
-                                    <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
-                                        <span style={{ fontSize: '12px', color: '#dc2626', fontWeight: '600' }}>Keterangan Red Flag</span>
-                                        <p style={{ fontSize: '13px', color: '#7f1d1d', margin: '4px 0 0 0' }}>{balita.keterangan_redflag}</p>
+
+                                {/* Detailed Red Flag Section */}
+                                {balita.redflag_any && (
+                                    <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                            <AlertTriangle size={18} style={{ color: '#dc2626' }} />
+                                            <span style={{ fontSize: '14px', color: '#dc2626', fontWeight: '700' }}>Detail Red Flag</span>
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #fecaca' }}>
+                                                <span style={{ fontSize: '12px', color: '#7f1d1d' }}>BB tidak adekuat</span>
+                                                <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '9999px', backgroundColor: balita.bb_tidak_adekuat === 'ya' ? '#dc2626' : '#22c55e', color: 'white' }}>
+                                                    {balita.bb_tidak_adekuat === 'ya' ? 'Ya' : 'Tidak'}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #fecaca' }}>
+                                                <span style={{ fontSize: '12px', color: '#7f1d1d' }}>Murmur/Edema</span>
+                                                <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '9999px', backgroundColor: balita.murmur_edema === 'ya' ? '#dc2626' : '#22c55e', color: 'white' }}>
+                                                    {balita.murmur_edema === 'ya' ? 'Ya' : 'Tidak'}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #fecaca' }}>
+                                                <span style={{ fontSize: '12px', color: '#7f1d1d' }}>Delayed Development</span>
+                                                <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '9999px', backgroundColor: balita.delayed_development === 'ya' ? '#dc2626' : '#22c55e', color: 'white' }}>
+                                                    {balita.delayed_development === 'ya' ? 'Ya' : 'Tidak'}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #fecaca' }}>
+                                                <span style={{ fontSize: '12px', color: '#7f1d1d' }}>Wajah Dismorfik</span>
+                                                <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '9999px', backgroundColor: balita.wajah_dismorfik === 'ya' ? '#dc2626' : '#22c55e', color: 'white' }}>
+                                                    {balita.wajah_dismorfik === 'ya' ? 'Ya' : 'Tidak'}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #fecaca' }}>
+                                                <span style={{ fontSize: '12px', color: '#7f1d1d' }}>Organomegali/LN</span>
+                                                <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '9999px', backgroundColor: balita.organomegali_limfadenopati === 'ya' ? '#dc2626' : '#22c55e', color: 'white' }}>
+                                                    {balita.organomegali_limfadenopati === 'ya' ? 'Ya' : 'Tidak'}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #fecaca' }}>
+                                                <span style={{ fontSize: '12px', color: '#7f1d1d' }}>ISPA/Cystitis</span>
+                                                <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '9999px', backgroundColor: balita.ispa_cystitis === 'ya' ? '#dc2626' : '#22c55e', color: 'white' }}>
+                                                    {balita.ispa_cystitis === 'ya' ? 'Ya' : 'Tidak'}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #fecaca' }}>
+                                                <span style={{ fontSize: '12px', color: '#7f1d1d' }}>Muntah/Diare</span>
+                                                <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '9999px', backgroundColor: balita.muntah_diare_berulang === 'ya' ? '#dc2626' : '#22c55e', color: 'white' }}>
+                                                    {balita.muntah_diare_berulang === 'ya' ? 'Ya' : 'Tidak'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {balita.diagnosa_penyakit_penyerta && (
+                                            <div style={{ padding: '10px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #fecaca', marginBottom: '8px' }}>
+                                                <span style={{ fontSize: '11px', color: '#dc2626', fontWeight: '600' }}>Diagnosa Penyakit Penyerta</span>
+                                                <p style={{ fontSize: '13px', color: '#7f1d1d', margin: '4px 0 0 0' }}>{balita.diagnosa_penyakit_penyerta}</p>
+                                            </div>
+                                        )}
+
+                                        {balita.keterangan_redflag && (
+                                            <div style={{ padding: '10px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #fecaca' }}>
+                                                <span style={{ fontSize: '11px', color: '#dc2626', fontWeight: '600' }}>Keterangan Red Flag</span>
+                                                <p style={{ fontSize: '13px', color: '#7f1d1d', margin: '4px 0 0 0' }}>{balita.keterangan_redflag}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

@@ -81,27 +81,27 @@ export function PemberianTable({ data }: { data: PemberianItem[] }) {
                                 </span>
                             </td>
                             <td className="px-4 py-3 border border-gray-200">
-                                <div className="flex items-center gap-2 justify-center">
+                                <div className="flex items-center gap-1.5 justify-center">
                                     <Link
                                         href={`/monitoring/${item.balita_id}/antropometri/new`}
-                                        title="Antropometri"
-                                        className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors inline-block"
+                                        title="Input Antropometri"
+                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-100 hover:bg-emerald-600 text-emerald-600 hover:text-white transition-all duration-200 hover:scale-110"
                                     >
-                                        <Activity size={14} />
+                                        <Activity size={14} strokeWidth={2.5} />
                                     </Link>
                                     <Link
                                         href={`/monitoring/${item.balita_id}/konsumsi/new`}
-                                        title="Konsumsi PKMK"
-                                        className="p-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors inline-block"
+                                        title="Input Konsumsi"
+                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 hover:bg-amber-500 text-amber-600 hover:text-white transition-all duration-200 hover:scale-110"
                                     >
-                                        <Coffee size={14} />
+                                        <Coffee size={14} strokeWidth={2.5} />
                                     </Link>
                                     <Link
                                         href={`/monitoring/${item.balita_id}/pemberian/new`}
-                                        title="Pemberian PKMK"
-                                        className="p-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded-lg transition-colors inline-block"
+                                        title="Input Pemberian"
+                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-purple-100 hover:bg-purple-600 text-purple-600 hover:text-white transition-all duration-200 hover:scale-110"
                                     >
-                                        <Pill size={14} />
+                                        <Pill size={14} strokeWidth={2.5} />
                                     </Link>
                                 </div>
                             </td>

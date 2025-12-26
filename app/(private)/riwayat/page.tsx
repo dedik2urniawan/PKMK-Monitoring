@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { ensureServerSession, getAuthHeaders } from "@/lib/clientSession";
-import { Filter, Download, Activity, Coffee, Pill, User, MapPin, Calendar, Loader2 } from "lucide-react";
 import { AntropometriTable } from "./components/AntropometriTable";
 import { KonsumsiTable } from "./components/KonsumsiTable";
 import { PemberianTable } from "./components/PemberianTable";
@@ -50,7 +50,6 @@ export default function RiwayatIntervensiPage() {
                 if (userData.user.role === 'superadmin') {
                     const kecRes = await fetch("/api/ref/kecamatan", { credentials: 'include', headers: authHeaders });
                     const kecData = await kecRes.json();
-                    // Filter out Kabupaten from kecamatan list
                     const filteredKec = (kecData.items || []).filter((k: string) =>
                         !k.toLowerCase().includes('kabupaten')
                     );
@@ -58,7 +57,6 @@ export default function RiwayatIntervensiPage() {
                 } else {
                     // For admin_puskesmas, auto-set puskesmas filter
                     setPuskesmasId(userData.user.puskesmas_id);
-                    // Fetch puskesmas info to get kecamatan
                     const pkmRes = await fetch(`/api/ref/puskesmas?id=${userData.user.puskesmas_id}`, {
                         credentials: 'include',
                         headers: authHeaders
@@ -135,7 +133,6 @@ export default function RiwayatIntervensiPage() {
         if (bulan) params.set("bulan", bulan);
 
         try {
-            // Fetch selected reports
             if (selectedReports.includes("antropometri")) {
                 const res = await fetch(`/api/riwayat/antropometri?${params}`, { credentials: 'include', headers: authHeaders });
                 const data = await res.json();
@@ -162,7 +159,6 @@ export default function RiwayatIntervensiPage() {
     const downloadExcel = () => {
         const wb = XLSX.utils.book_new();
 
-        // Add Antropometri sheet
         if (selectedReports.includes('antropometri') && antropometriData.length > 0) {
             const antropometriRows = antropometriData.map((item, idx) => {
                 const row: any = {
@@ -177,7 +173,6 @@ export default function RiwayatIntervensiPage() {
                     'Tanggal Pengukuran Awal': item.tanggal_pengukuran_awal
                 };
 
-                // Add week data
                 for (let week = 1; week <= 12; week++) {
                     const weekData = item.weeks[week];
                     if (weekData) {
@@ -201,7 +196,6 @@ export default function RiwayatIntervensiPage() {
             XLSX.utils.book_append_sheet(wb, ws, 'Antropometri');
         }
 
-        // Add Konsumsi sheet
         if (selectedReports.includes('konsumsi') && konsumsiData.length > 0) {
             const konsumsiRows = konsumsiData.map((item, idx) => {
                 const row: any = {
@@ -216,7 +210,6 @@ export default function RiwayatIntervensiPage() {
                     'Tanggal Konsumsi Awal': item.tanggal_konsumsi_awal
                 };
 
-                // Add week data
                 for (let week = 0; week <= 12; week++) {
                     const weekData = item.weeks[week];
                     if (weekData) {
@@ -234,7 +227,6 @@ export default function RiwayatIntervensiPage() {
             XLSX.utils.book_append_sheet(wb, ws, 'Konsumsi');
         }
 
-        // Add Pemberian sheet
         if (selectedReports.includes('pemberian') && pemberianData.length > 0) {
             const pemberianRows = pemberianData.map((item, idx) => {
                 const row: any = {
@@ -250,7 +242,6 @@ export default function RiwayatIntervensiPage() {
                     'Dosis Awal (ml)': item.weeks[0]?.jumlah_dosis_ml || '-'
                 };
 
-                // Add week data
                 for (let week = 1; week <= 12; week++) {
                     const weekData = item.weeks[week];
                     row[`Dosis Week ${week} (ml)`] = weekData?.jumlah_dosis_ml || '-';
@@ -264,269 +255,282 @@ export default function RiwayatIntervensiPage() {
             XLSX.utils.book_append_sheet(wb, ws, 'Pemberian');
         }
 
-        // Download file
         const filename = `Riwayat_Intervensi_${new Date().toISOString().slice(0, 10)}.xlsx`;
         XLSX.writeFile(wb, filename);
     };
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-96">
-                <Loader2 className="animate-spin h-8 w-8 text-emerald-600" />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+                <div style={{ width: 40, height: 40, border: '4px solid #10b981', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                <style jsx>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
             </div>
         );
     }
 
-    return (
-        <div className="max-w-full mx-auto p-4">
-            <h1 className="text-3xl font-bold mb-6 text-gray-900">Daftar Riwayat Intervensi</h1>
+    const reportTypes = [
+        { key: 'antropometri', label: 'Status Gizi', subtitle: 'Laporan Antropometri', icon: '📊', color: '#3b82f6', bgColor: '#dbeafe' },
+        { key: 'konsumsi', label: 'Konsumsi PKMK', subtitle: 'Catatan Makan Harian', icon: '🍽️', color: '#f59e0b', bgColor: '#fef3c7' },
+        { key: 'pemberian', label: 'Pemberian PKMK', subtitle: 'Log Distribusi Makanan', icon: '📦', color: '#8b5cf6', bgColor: '#ede9fe' },
+    ];
 
-            {/* Filter Section - Improved Professional UI */}
-            <form onSubmit={applyFilter} className="bg-white p-5 rounded-xl border-2 border-emerald-100 shadow-md mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
-                        <Filter size={16} className="text-white" />
-                    </div>
-                    <h3 className="text-base font-bold text-gray-800">Filter Data Balita</h3>
+    return (
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 16px' }}>
+            {/* Breadcrumbs */}
+            <nav style={{ display: 'flex', gap: 8, fontSize: 14, marginBottom: 20 }}>
+                <Link href="/dashboard" style={{ color: '#61897c', fontWeight: 500, textDecoration: 'none' }}>Home</Link>
+                <span style={{ color: '#d1d5db' }}>/</span>
+                <Link href="/rekap-laporan" style={{ color: '#61897c', fontWeight: 500, textDecoration: 'none' }}>Laporan</Link>
+                <span style={{ color: '#d1d5db' }}>/</span>
+                <span style={{ color: '#111816', fontWeight: 600 }}>Riwayat Intervensi</span>
+            </nav>
+
+            {/* Page Heading */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, marginBottom: 24 }}>
+                <div style={{ maxWidth: 600 }}>
+                    <h1 style={{ fontSize: 32, fontWeight: 900, color: '#111816', margin: 0, letterSpacing: '-0.02em' }}>
+                        📋 Daftar Riwayat Intervensi
+                    </h1>
+                    <p style={{ color: '#61897c', fontSize: 15, marginTop: 8 }}>
+                        Lihat dan unduh riwayat lengkap intervensi 12 minggu per balita di Kabupaten Malang.
+                    </p>
+                </div>
+                <button
+                    onClick={downloadExcel}
+                    disabled={dataLoading}
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: 8, height: 48, padding: '0 24px',
+                        background: 'linear-gradient(to right, #10b981, #14b8a6)', color: 'white',
+                        borderRadius: 12, border: 'none', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(16,185,129,0.25)',
+                        opacity: dataLoading ? 0.6 : 1
+                    }}
+                >
+                    📥 Download Excel
+                </button>
+            </div>
+
+            {/* Filter Card - Stitch Style */}
+            <form onSubmit={applyFilter} style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', padding: 24, marginBottom: 24 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #f0f4f3', paddingBottom: 16, marginBottom: 20 }}>
+                    <span style={{ fontSize: 20 }}>🔍</span>
+                    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111816', margin: 0 }}>Filter Data</h2>
                 </div>
 
-                <div className="flex flex-wrap items-end gap-4">
-                    {/* Kecamatan (Superadmin only) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }} className="filter-grid-4">
+                    {/* Kecamatan */}
                     {user?.role === 'superadmin' && (
-                        <div className="flex flex-col">
-                            <label className="text-xs font-semibold text-gray-600 mb-1.5 flex items-center gap-1">
-                                <MapPin size={12} /> Kecamatan
-                            </label>
-                            <select
-                                className="h-10 px-3 border-2 border-gray-200 rounded-lg text-sm font-medium bg-white hover:border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all min-w-[160px]"
-                                value={kec}
-                                onChange={(e) => setKec(e.target.value)}
-                            >
-                                <option value="">-- Kecamatan --</option>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <label style={{ fontSize: 14, fontWeight: 600, color: '#111816' }}>Kecamatan</label>
+                            <select value={kec} onChange={(e) => setKec(e.target.value)} style={{ width: '100%', height: 44, borderRadius: 8, border: '1px solid #dbe6e2', background: 'white', padding: '0 12px', fontSize: 14 }}>
+                                <option value="">Semua Kecamatan</option>
                                 {kecList.map(k => <option key={k} value={k}>{k}</option>)}
                             </select>
                         </div>
                     )}
 
-                    {/* Puskesmas (Superadmin only) */}
+                    {/* Puskesmas */}
                     {user?.role === 'superadmin' && (
-                        <div className="flex flex-col">
-                            <label className="text-xs font-semibold text-gray-600 mb-1.5">Puskesmas</label>
-                            <select
-                                className="h-10 px-3 border-2 border-gray-200 rounded-lg text-sm font-medium bg-white hover:border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all min-w-[160px]"
-                                value={puskesmasId}
-                                onChange={(e) => setPuskesmasId(e.target.value)}
-                            >
-                                <option value="">-- Puskesmas --</option>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <label style={{ fontSize: 14, fontWeight: 600, color: '#111816' }}>Puskesmas</label>
+                            <select value={puskesmasId} onChange={(e) => setPuskesmasId(e.target.value)} disabled={!kec} style={{ width: '100%', height: 44, borderRadius: 8, border: '1px solid #dbe6e2', background: !kec ? '#f9fafb' : 'white', padding: '0 12px', fontSize: 14 }}>
+                                <option value="">{kec ? 'Semua Puskesmas' : 'Pilih Kecamatan Dulu'}</option>
                                 {pkmList.map(p => <option key={p.id} value={p.id}>{p.nama}</option>)}
                             </select>
                         </div>
                     )}
 
-                    {/* Desa/Kel */}
-                    <div className="flex flex-col">
-                        <label className="text-xs font-semibold text-gray-600 mb-1.5">Desa/Kelurahan</label>
-                        <select
-                            className="h-10 px-3 border-2 border-gray-200 rounded-lg text-sm font-medium bg-white hover:border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all min-w-[160px]"
-                            value={desa}
-                            onChange={(e) => setDesa(e.target.value)}
-                        >
-                            <option value="">-- Desa/Kel --</option>
+                    {/* Desa */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <label style={{ fontSize: 14, fontWeight: 600, color: '#111816' }}>Desa/Kelurahan</label>
+                        <select value={desa} onChange={(e) => setDesa(e.target.value)} disabled={!puskesmasId} style={{ width: '100%', height: 44, borderRadius: 8, border: '1px solid #dbe6e2', background: !puskesmasId ? '#f9fafb' : 'white', padding: '0 12px', fontSize: 14 }}>
+                            <option value="">{puskesmasId ? 'Semua Desa' : 'Pilih Puskesmas Dulu'}</option>
                             {desaList.map(d => <option key={d.id} value={d.desa_kel}>{d.desa_kel}</option>)}
                         </select>
                     </div>
 
-                    {/* NIK Search */}
-                    <div className="flex flex-col">
-                        <label className="text-xs font-semibold text-gray-600 mb-1.5 flex items-center gap-1">
-                            <User size={12} /> NIK Balita
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="Cari NIK..."
-                            className="h-10 px-3 border-2 border-gray-200 rounded-lg text-sm bg-white hover:border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all min-w-[140px]"
-                            value={nik}
-                            onChange={(e) => setNik(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Tahun Filter */}
-                    <div className="flex flex-col">
-                        <label className="text-xs font-semibold text-gray-600 mb-1.5 flex items-center gap-1">
-                            <Calendar size={12} /> Tahun
-                        </label>
-                        <select
-                            className="h-10 px-3 border-2 border-gray-200 rounded-lg text-sm font-medium bg-white hover:border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all min-w-[100px]"
-                            value={tahun}
-                            onChange={(e) => setTahun(e.target.value)}
-                        >
+                    {/* Tahun */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <label style={{ fontSize: 14, fontWeight: 600, color: '#111816' }}>Tahun</label>
+                        <select value={tahun} onChange={(e) => setTahun(e.target.value)} style={{ width: '100%', height: 44, borderRadius: 8, border: '1px solid #dbe6e2', background: 'white', padding: '0 12px', fontSize: 14 }}>
                             <option value="">Semua</option>
                             <option value="2024">2024</option>
                             <option value="2025">2025</option>
                             <option value="2026">2026</option>
-                            <option value="2027">2027</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 16, alignItems: 'flex-end' }} className="filter-grid-3">
+                    {/* Bulan */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <label style={{ fontSize: 14, fontWeight: 600, color: '#111816' }}>Bulan Mulai</label>
+                        <select value={bulan} onChange={(e) => setBulan(e.target.value)} style={{ width: '100%', height: 44, borderRadius: 8, border: '1px solid #dbe6e2', background: 'white', padding: '0 12px', fontSize: 14 }}>
+                            <option value="">Semua Bulan</option>
+                            {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].map((m, i) => (
+                                <option key={i + 1} value={String(i + 1)}>{m}</option>
+                            ))}
                         </select>
                     </div>
 
-                    {/* Bulan Filter */}
-                    <div className="flex flex-col">
-                        <label className="text-xs font-semibold text-gray-600 mb-1.5">Bulan</label>
-                        <select
-                            className="h-10 px-3 border-2 border-gray-200 rounded-lg text-sm font-medium bg-white hover:border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all min-w-[130px]"
-                            value={bulan}
-                            onChange={(e) => setBulan(e.target.value)}
-                        >
-                            <option value="">Semua Bulan</option>
-                            <option value="1">Januari</option>
-                            <option value="2">Februari</option>
-                            <option value="3">Maret</option>
-                            <option value="4">April</option>
-                            <option value="5">Mei</option>
-                            <option value="6">Juni</option>
-                            <option value="7">Juli</option>
-                            <option value="8">Agustus</option>
-                            <option value="9">September</option>
-                            <option value="10">Oktober</option>
-                            <option value="11">November</option>
-                            <option value="12">Desember</option>
-                        </select>
+                    {/* NIK Search */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <label style={{ fontSize: 14, fontWeight: 600, color: '#111816' }}>Cari Balita</label>
+                        <input
+                            type="text"
+                            value={nik}
+                            onChange={(e) => setNik(e.target.value)}
+                            placeholder="Masukkan NIK atau Nama..."
+                            style={{ width: '100%', height: 44, borderRadius: 8, border: '1px solid #dbe6e2', background: '#f8faf9', padding: '0 12px', fontSize: 14 }}
+                        />
                     </div>
 
                     {/* Apply Button */}
-                    <button
-                        type="submit"
-                        className="h-10 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg transition-all font-bold shadow-md hover:shadow-lg"
-                    >
-                        Terapkan Filter
+                    <button type="submit" style={{ height: 44, padding: '0 24px', background: '#10b981', color: 'white', borderRadius: 8, border: 'none', fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        ✓ Terapkan Filter
                     </button>
                 </div>
             </form>
 
-            {/* Report Type Selection */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6">
-                <h3 className="text-sm font-bold text-gray-700 mb-3">Pilih Jenis Laporan</h3>
-                <div className="space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                        <input
-                            type="checkbox"
-                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 rounded"
-                            checked={selectedReports.includes('antropometri')}
-                            onChange={(e) => toggleReport('antropometri', e.target.checked)}
-                        />
-                        <Activity size={18} className="text-emerald-600" />
-                        <span className="text-sm font-medium text-gray-700">Report Status Gizi (Antropometri)</span>
-                    </label>
-
-                    <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                        <input
-                            type="checkbox"
-                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 rounded"
-                            checked={selectedReports.includes('konsumsi')}
-                            onChange={(e) => toggleReport('konsumsi', e.target.checked)}
-                        />
-                        <Coffee size={18} className="text-emerald-600" />
-                        <span className="text-sm font-medium text-gray-700">Report Konsumsi PKMK</span>
-                    </label>
-
-                    <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                        <input
-                            type="checkbox"
-                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 rounded"
-                            checked={selectedReports.includes('pemberian')}
-                            onChange={(e) => toggleReport('pemberian', e.target.checked)}
-                        />
-                        <Pill size={18} className="text-emerald-600" />
-                        <span className="text-sm font-medium text-gray-700">Report Pemberian PKMK</span>
-                    </label>
+            {/* Report Type Selection - Stitch Style */}
+            <div style={{ marginBottom: 24 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111816', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                    📊 Pilih Jenis Laporan
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }} className="report-grid">
+                    {reportTypes.map(report => {
+                        const isSelected = selectedReports.includes(report.key);
+                        return (
+                            <label
+                                key={report.key}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: 16, padding: 16, borderRadius: 12, cursor: 'pointer',
+                                    border: isSelected ? `2px solid ${report.color}` : '1px solid #dbe6e2',
+                                    background: isSelected ? report.bgColor : 'white',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={(e) => toggleReport(report.key, e.target.checked)}
+                                    style={{ width: 20, height: 20, accentColor: report.color }}
+                                />
+                                <div style={{ width: 40, height: 40, borderRadius: 999, background: report.bgColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                                    {report.icon}
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: 700, color: '#111816' }}>{report.label}</div>
+                                    <div style={{ fontSize: 12, color: '#61897c' }}>{report.subtitle}</div>
+                                </div>
+                            </label>
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* Download Excel Button */}
-            {selectedReports.length > 0 && (
-                <div className="mb-6">
-                    <button
-                        onClick={downloadExcel}
-                        disabled={dataLoading}
-                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 text-white rounded-lg transition-all font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Download size={18} />
-                        Download Excel
-                    </button>
-                </div>
-            )}
-
             {/* Report Tables */}
             {dataLoading ? (
-                <div className="flex items-center justify-center py-16">
-                    <Loader2 className="animate-spin h-8 w-8 text-emerald-600 mr-3" />
-                    <span className="text-gray-600">Memuat data...</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 64, background: 'white', borderRadius: 16 }}>
+                    <div style={{ width: 32, height: 32, border: '3px solid #10b981', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', marginRight: 12 }} />
+                    <span style={{ color: '#6b7280' }}>Memuat data...</span>
                 </div>
             ) : (
-                <div className="space-y-8">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                     {selectedReports.includes('antropometri') && (
-                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                            <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                <Activity className="text-emerald-600" />
-                                Report Status Gizi (Antropometri)
-                            </h2>
+                        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid #f0f4f3', background: '#fafbfc' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    <div style={{ width: 32, height: 32, borderRadius: 999, background: '#dbeafe', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📊</div>
+                                    <div>
+                                        <h3 style={{ fontWeight: 700, color: '#111816', margin: 0 }}>Riwayat Status Gizi (Antropometri)</h3>
+                                        <p style={{ fontSize: 12, color: '#61897c', margin: 0 }}>Menampilkan BB/TB per minggu</p>
+                                    </div>
+                                </div>
+                                <span style={{ padding: '4px 12px', background: '#dbeafe', color: '#1d4ed8', fontSize: 12, fontWeight: 700, borderRadius: 999 }}>
+                                    {antropometriData.length} Data
+                                </span>
+                            </div>
                             {antropometriData.length === 0 ? (
-                                <div className="text-gray-500 text-sm py-8 text-center">
-                                    Tidak ada data. Silakan terapkan filter.
+                                <div style={{ padding: 48, textAlign: 'center', color: '#9ca3af' }}>
+                                    <p style={{ fontSize: 14 }}>Tidak ada data. Silakan terapkan filter.</p>
                                 </div>
                             ) : (
-                                <>
-                                    <div className="text-gray-600 text-sm mb-4">
-                                        {antropometriData.length} data ditemukan
-                                    </div>
+                                <div style={{ padding: 24 }}>
                                     <AntropometriTable data={antropometriData} />
-                                </>
+                                </div>
                             )}
                         </div>
                     )}
 
                     {selectedReports.includes('konsumsi') && (
-                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                            <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                <Coffee className="text-emerald-600" />
-                                Report Konsumsi PKMK
-                            </h2>
+                        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid #f0f4f3', background: '#fafbfc' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    <div style={{ width: 32, height: 32, borderRadius: 999, background: '#fef3c7', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🍽️</div>
+                                    <div>
+                                        <h3 style={{ fontWeight: 700, color: '#111816', margin: 0 }}>Report Konsumsi PKMK</h3>
+                                        <p style={{ fontSize: 12, color: '#61897c', margin: 0 }}>Catatan makan harian</p>
+                                    </div>
+                                </div>
+                                <span style={{ padding: '4px 12px', background: '#fef3c7', color: '#b45309', fontSize: 12, fontWeight: 700, borderRadius: 999 }}>
+                                    {konsumsiData.length} Data
+                                </span>
+                            </div>
                             {konsumsiData.length === 0 ? (
-                                <div className="text-gray-500 text-sm py-8 text-center">
-                                    Tidak ada data. Silakan terapkan filter.
+                                <div style={{ padding: 48, textAlign: 'center', color: '#9ca3af' }}>
+                                    <p style={{ fontSize: 14 }}>Tidak ada data. Silakan terapkan filter.</p>
                                 </div>
                             ) : (
-                                <>
-                                    <div className="text-gray-600 text-sm mb-4">
-                                        {konsumsiData.length} data ditemukan
-                                    </div>
+                                <div style={{ padding: 24 }}>
                                     <KonsumsiTable data={konsumsiData} />
-                                </>
+                                </div>
                             )}
                         </div>
                     )}
 
                     {selectedReports.includes('pemberian') && (
-                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                            <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                <Pill className="text-emerald-600" />
-                                Report Pemberian PKMK
-                            </h2>
+                        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid #f0f4f3', background: '#fafbfc' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    <div style={{ width: 32, height: 32, borderRadius: 999, background: '#ede9fe', color: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📦</div>
+                                    <div>
+                                        <h3 style={{ fontWeight: 700, color: '#111816', margin: 0 }}>Report Pemberian PKMK</h3>
+                                        <p style={{ fontSize: 12, color: '#61897c', margin: 0 }}>Log distribusi makanan</p>
+                                    </div>
+                                </div>
+                                <span style={{ padding: '4px 12px', background: '#ede9fe', color: '#7c3aed', fontSize: 12, fontWeight: 700, borderRadius: 999 }}>
+                                    {pemberianData.length} Data
+                                </span>
+                            </div>
                             {pemberianData.length === 0 ? (
-                                <div className="text-gray-500 text-sm py-8 text-center">
-                                    Tidak ada data. Silakan terapkan filter.
+                                <div style={{ padding: 48, textAlign: 'center', color: '#9ca3af' }}>
+                                    <p style={{ fontSize: 14 }}>Tidak ada data. Silakan terapkan filter.</p>
                                 </div>
                             ) : (
-                                <>
-                                    <div className="text-gray-600 text-sm mb-4">
-                                        {pemberianData.length} data ditemukan
-                                    </div>
+                                <div style={{ padding: 24 }}>
                                     <PemberianTable data={pemberianData} />
-                                </>
+                                </div>
                             )}
                         </div>
                     )}
                 </div>
             )}
+
+            <style jsx>{`
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                @media (max-width: 1024px) {
+                    .filter-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+                    .filter-grid-3 { grid-template-columns: 1fr !important; }
+                    .report-grid { grid-template-columns: 1fr !important; }
+                }
+                @media (max-width: 640px) {
+                    .filter-grid-4 { grid-template-columns: 1fr !important; }
+                }
+            `}</style>
         </div>
     );
 }

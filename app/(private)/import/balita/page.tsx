@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileSpreadsheet, ArrowLeft } from "lucide-react";
+import { FileSpreadsheet, ArrowLeft, Upload, X, Download, Rocket, CheckCircle, Flag, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ensureServerSession, getAuthHeaders } from "@/lib/clientSession";
@@ -152,9 +152,30 @@ export default function ImportBalitaPage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full" />
-            </div>
+            <>
+                <style jsx>{`
+                    .loading-container {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 100vh;
+                    }
+                    .spinner {
+                        width: 40px;
+                        height: 40px;
+                        border: 4px solid #e2e8f0;
+                        border-top-color: #14b8a6;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                    }
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+                `}</style>
+                <div className="loading-container">
+                    <div className="spinner" />
+                </div>
+            </>
         );
     }
 
@@ -163,111 +184,320 @@ export default function ImportBalitaPage() {
         (user?.role === "superadmin" && filter.puskesmasId && filter.desaKel);
 
     return (
-        <div className="max-w-5xl mx-auto p-6 space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Link
-                    href="/balita"
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                    <ArrowLeft size={24} />
-                </Link>
-                <div className="flex items-center gap-3">
-                    <FileSpreadsheet className="text-emerald-600" size={32} />
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-800">Import Data Balita</h1>
-                        <p className="text-sm text-gray-600">
-                            Upload file Excel untuk import data balita secara massal
-                        </p>
+        <>
+            <style jsx>{`
+                .page-container {
+                    max-width: 1024px;
+                    margin: 0 auto;
+                    padding: 32px;
+                }
+                .page-header {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    margin-bottom: 24px;
+                }
+                @media (min-width: 768px) {
+                    .page-header {
+                        flex-direction: row;
+                        align-items: center;
+                    }
+                }
+                .back-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 44px;
+                    height: 44px;
+                    background: white;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    color: #64748b;
+                    transition: all 0.2s;
+                }
+                .back-btn:hover {
+                    border-color: #14b8a6;
+                    color: #14b8a6;
+                }
+                .header-content {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                }
+                .header-icon {
+                    width: 56px;
+                    height: 56px;
+                    background: #d1fae5;
+                    border-radius: 16px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #059669;
+                }
+                .page-title {
+                    font-size: 24px;
+                    font-weight: 700;
+                    color: #0f172a;
+                    letter-spacing: -0.025em;
+                }
+                .page-subtitle {
+                    color: #64748b;
+                    font-size: 14px;
+                    margin-top: 2px;
+                }
+                .section-card {
+                    background: white;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 16px;
+                    padding: 24px;
+                    margin-bottom: 24px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                }
+                .section-card.instructions {
+                    background: #f8fafc;
+                }
+                .section-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding-bottom: 16px;
+                    margin-bottom: 24px;
+                    border-bottom: 1px solid #f1f5f9;
+                }
+                .step-badge {
+                    width: 32px;
+                    height: 32px;
+                    background: #14b8a6;
+                    color: white;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 14px;
+                    font-weight: 700;
+                }
+                .section-card.instructions .step-badge {
+                    background: #cbd5e1;
+                    color: #475569;
+                }
+                .section-title {
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #0f172a;
+                }
+                .warning-alert {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 12px;
+                    padding: 16px;
+                    background: #fffbeb;
+                    border: 1px solid #fef3c7;
+                    border-radius: 12px;
+                    margin-top: 20px;
+                }
+                .warning-alert-icon {
+                    color: #d97706;
+                    flex-shrink: 0;
+                    margin-top: 2px;
+                }
+                .warning-alert-text {
+                    font-size: 14px;
+                    color: #92400e;
+                    font-weight: 500;
+                    line-height: 1.5;
+                }
+                .instructions-grid {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    gap: 32px;
+                }
+                @media (min-width: 768px) {
+                    .instructions-grid {
+                        grid-template-columns: 1fr 1fr;
+                    }
+                }
+                .instruction-title {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: #0f172a;
+                    margin-bottom: 12px;
+                }
+                .instruction-title-icon {
+                    color: #14b8a6;
+                }
+                .instruction-title-icon.red {
+                    color: #ef4444;
+                }
+                .instruction-list {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+                .instruction-item {
+                    display: flex;
+                    gap: 10px;
+                    font-size: 14px;
+                    color: #475569;
+                    margin-bottom: 8px;
+                    line-height: 1.5;
+                }
+                .instruction-bullet {
+                    width: 6px;
+                    height: 6px;
+                    background: #94a3b8;
+                    border-radius: 50%;
+                    flex-shrink: 0;
+                    margin-top: 7px;
+                }
+                .instruction-item strong {
+                    color: #0f172a;
+                }
+                .redflag-note {
+                    font-size: 12px;
+                    color: #64748b;
+                    margin-bottom: 12px;
+                }
+                .redflag-tags {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 8px;
+                }
+                .redflag-tag {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 12px;
+                    background: white;
+                    border-radius: 6px;
+                    font-size: 13px;
+                    color: #475569;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                }
+                .redflag-dot {
+                    width: 6px;
+                    height: 6px;
+                    background: #ef4444;
+                    border-radius: 50%;
+                }
+            `}</style>
+
+            <div className="page-container">
+                {/* Page Header */}
+                <div className="page-header">
+                    <Link href="/balita" className="back-btn">
+                        <ArrowLeft size={20} />
+                    </Link>
+                    <div className="header-content">
+                        <div className="header-icon">
+                            <FileSpreadsheet size={28} />
+                        </div>
+                        <div>
+                            <h1 className="page-title">Import Data Balita</h1>
+                            <p className="page-subtitle">Upload file Excel untuk import data balita secara massal</p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Location Filter */}
-            <div className="bg-white rounded-xl border p-6 space-y-4">
-                <h2 className="font-semibold text-gray-800">1. Pilih Lokasi Tujuan Import</h2>
-                <LocationFilter
-                    user={user}
-                    onFilterChange={setFilter}
-                    requiredDesa={user?.role === "superadmin"}
-                />
-                {user?.role === "superadmin" && !canImport && (
-                    <p className="text-sm text-amber-600">
-                        ⚠️ Superadmin wajib memilih Puskesmas dan Desa sebelum import
-                    </p>
-                )}
-            </div>
+                {/* Step 1: Location Filter */}
+                <section className="section-card">
+                    <div className="section-header">
+                        <span className="step-badge">1</span>
+                        <h2 className="section-title">Pilih Lokasi Tujuan Import</h2>
+                    </div>
+                    <LocationFilter
+                        user={user}
+                        onFilterChange={setFilter}
+                        requiredDesa={user?.role === "superadmin"}
+                    />
+                    {user?.role === "superadmin" && !canImport && (
+                        <div className="warning-alert">
+                            <AlertTriangle size={20} className="warning-alert-icon" />
+                            <p className="warning-alert-text">
+                                ⚠️ Perhatian: Superadmin wajib memilih Puskesmas dan Desa sebelum melanjutkan proses upload data.
+                            </p>
+                        </div>
+                    )}
+                </section>
 
-            {/* Excel Importer */}
-            <div className="bg-white rounded-xl border p-6 space-y-4">
-                <h2 className="font-semibold text-gray-800">2. Upload File Excel</h2>
-                <ExcelImporter
-                    templateColumns={BALITA_COLUMNS}
-                    onValidate={validateRows}
-                    onImport={handleImport}
-                    templateName="Import_Balita"
-                    disabled={!canImport}
-                />
-            </div>
+                {/* Step 2: Excel Importer */}
+                <section className="section-card">
+                    <div className="section-header">
+                        <span className="step-badge">2</span>
+                        <h2 className="section-title">Upload File Excel</h2>
+                    </div>
+                    <ExcelImporter
+                        templateColumns={BALITA_COLUMNS}
+                        onValidate={validateRows}
+                        onImport={handleImport}
+                        templateName="Import_Balita"
+                        disabled={!canImport}
+                    />
+                </section>
 
-            {/* Instructions */}
-            <div className="bg-gray-50 rounded-xl border p-6">
-                <h3 className="font-semibold text-gray-800 mb-3">📋 Petunjuk Import</h3>
-                <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside">
-                    <li>
-                        <strong>NIK</strong> harus unik, wajib diisi, dan harus <strong>16 digit angka</strong>
-                    </li>
-                    <li>
-                        <strong>jk</strong> (jenis kelamin): isi dengan L (laki-laki) atau P (perempuan)
-                    </li>
-                    <li>
-                        <strong>tgl_lahir</strong>: format YYYY-MM-DD (contoh: 2023-05-15)
-                    </li>
-                    <li>
-                        Data yang duplikat (NIK sudah ada) akan otomatis di-skip
-                    </li>
-                    <li>
-                        <strong>Puskesmas</strong>, <strong>Kecamatan</strong>, dan <strong>Desa</strong> akan diisi otomatis dari filter yang dipilih
-                    </li>
-                </ul>
-
-                <h4 className="font-semibold text-gray-800 mt-4 mb-2">🚩 Petunjuk Pengisian Redflag</h4>
-                <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside">
-                    <li>
-                        Kolom redflag bersifat <strong>opsional</strong> (boleh dikosongkan)
-                    </li>
-                    <li>
-                        Nilai yang valid: <strong>Ya</strong> atau <strong>Tidak</strong> (tidak case-sensitive)
-                    </li>
-                    <li>
-                        <strong>bb_tidak_adekuat</strong>: BB tidak naik/turun dalam 2 bulan terakhir
-                    </li>
-                    <li>
-                        <strong>murmur_edema</strong>: Terdengar murmur jantung atau ada edema
-                    </li>
-                    <li>
-                        <strong>delayed_development</strong>: Keterlambatan perkembangan
-                    </li>
-                    <li>
-                        <strong>wajah_dismorfik</strong>: Wajah dismorfik/kelainan wajah
-                    </li>
-                    <li>
-                        <strong>organomegali_limfadenopati</strong>: Pembesaran organ/kelenjar getah bening
-                    </li>
-                    <li>
-                        <strong>ispa_cystitis</strong>: ISPA berulang atau infeksi saluran kemih
-                    </li>
-                    <li>
-                        <strong>muntah_diare_berulang</strong>: Muntah/diare berulang
-                    </li>
-                    <li>
-                        <strong>diagnosa_penyakit_penyerta</strong>: Diagnosa penyakit penyerta (teks bebas)
-                    </li>
-                    <li>
-                        <strong>keterangan_redflag</strong>: Keterangan tambahan redflag (teks bebas)
-                    </li>
-                </ul>
+                {/* Step 3: Instructions */}
+                <section className="section-card instructions">
+                    <div className="section-header">
+                        <span className="step-badge">3</span>
+                        <h2 className="section-title">Petunjuk Pengisian</h2>
+                    </div>
+                    <div className="instructions-grid">
+                        {/* Required Fields */}
+                        <div>
+                            <h4 className="instruction-title">
+                                <CheckCircle size={16} className="instruction-title-icon" />
+                                Kolom Wajib Diisi
+                            </h4>
+                            <ul className="instruction-list">
+                                <li className="instruction-item">
+                                    <span className="instruction-bullet" />
+                                    <span><strong>NIK:</strong> Nomor Induk Kependudukan (16 digit)</span>
+                                </li>
+                                <li className="instruction-item">
+                                    <span className="instruction-bullet" />
+                                    <span><strong>nama_balita:</strong> Nama lengkap sesuai KK</span>
+                                </li>
+                                <li className="instruction-item">
+                                    <span className="instruction-bullet" />
+                                    <span><strong>jk:</strong> Jenis Kelamin (L atau P)</span>
+                                </li>
+                                <li className="instruction-item">
+                                    <span className="instruction-bullet" />
+                                    <span><strong>tgl_lahir:</strong> Format YYYY-MM-DD</span>
+                                </li>
+                            </ul>
+                        </div>
+                        {/* Red Flag Options */}
+                        <div>
+                            <h4 className="instruction-title">
+                                <Flag size={16} className="instruction-title-icon red" />
+                                Red Flag (Opsional)
+                            </h4>
+                            <p className="redflag-note">Isi dengan "Ya" atau "Tidak" untuk kolom berikut:</p>
+                            <div className="redflag-tags">
+                                <div className="redflag-tag">
+                                    <span className="redflag-dot" />
+                                    BB tidak adekuat
+                                </div>
+                                <div className="redflag-tag">
+                                    <span className="redflag-dot" />
+                                    Murmur/Edema
+                                </div>
+                                <div className="redflag-tag">
+                                    <span className="redflag-dot" />
+                                    Delayed Dev.
+                                </div>
+                                <div className="redflag-tag">
+                                    <span className="redflag-dot" />
+                                    Wajah Dismorfik
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
-        </div>
+        </>
     );
 }

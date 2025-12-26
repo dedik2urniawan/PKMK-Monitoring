@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, MouseEvent } from "react";
-import { LayoutDashboard, Users, PlusCircle, Activity, BarChart3, ChevronLeft, ChevronRight, Search, Upload } from "lucide-react";
+import { useEffect, useState } from "react";
+import { LayoutDashboard, Users, PlusCircle, Activity, BarChart3, ChevronLeft, ChevronRight, Search, Upload, FileText, Package, LogOut, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
-
+import Image from "next/image";
 
 type NavItem = { href: string; label: string; icon?: any; children?: NavItem[] };
 
@@ -15,6 +15,7 @@ const nav: NavItem[] = [
     label: "Daftar Balita",
     icon: Users,
     children: [
+      { href: "/balita", label: "Data Balita", icon: Users },
       { href: "/balita/new", label: "Tambah Balita", icon: PlusCircle },
       { href: "/import/balita", label: "Import Excel", icon: Upload },
     ],
@@ -24,31 +25,38 @@ const nav: NavItem[] = [
     label: "Monitoring PKMK",
     icon: Activity,
     children: [
+      { href: "/monitoring", label: "Monitoring PKMK", icon: Activity },
       { href: "/import/monitoring", label: "Import Excel", icon: Upload },
     ],
   },
-  { href: "/kohort/new", label: "Daftar Kohort Intervensi", icon: Activity },
+  { href: "/kohort/new", label: "Daftar Kohort Intervensi", icon: ClipboardList },
   {
     href: "#laporan",
     label: "Laporan Tatalaksana",
-    icon: BarChart3,
+    icon: FileText,
     children: [
       { href: "/riwayat", label: "Daftar Riwayat Intervensi", icon: Activity },
       { href: "/rekap-laporan", label: "Rekap Laporan", icon: BarChart3 },
     ],
   },
-  { href: "/logistik", label: "Manajemen Logistik", icon: BarChart3 },
+  { href: "/logistik", label: "Manajemen Logistik", icon: Package },
   { href: "/logistik/rekap", label: "Rekap Logistik", icon: BarChart3 },
 ];
 
 export default function SideNav() {
   const pathname = usePathname();
   const [isExpanded, setIsExpanded] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard" || pathname === "/";
     return href !== "#laporan" && pathname?.startsWith(href);
+  };
+
+  const toggleMenu = (label: string) => {
+    setExpandedMenus(prev =>
+      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
+    );
   };
 
   // Auto-collapse on mobile
@@ -64,106 +72,307 @@ export default function SideNav() {
   }, []);
 
   return (
-    <div className={cn(
-      "h-full transition-all duration-300",
-      isExpanded ? "w-64" : "w-20"
-    )}>
-      {/* Toggle Button */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="absolute -right-3 top-6 w-7 h-7 rounded-full bg-white shadow-lg border-2 border-emerald-500 flex items-center justify-center hover:scale-110 hover:shadow-xl transition-all duration-200 z-10"
-        aria-label={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
-      >
-        <ChevronLeft
-          className={cn(
-            "h-4 w-4 text-emerald-600 transition-transform duration-200",
-            !isExpanded && "rotate-180"
+    <>
+      <style jsx>{`
+        .sidebar {
+          width: ${isExpanded ? '256px' : '80px'};
+          flex-shrink: 0;
+          background: white;
+          border-right: 1px solid #dce5e4;
+          display: flex;
+          flex-direction: column;
+          transition: width 0.3s ease;
+          position: relative;
+          height: 100%;
+        }
+        .sidebar-header {
+          height: 80px;
+          display: flex;
+          align-items: center;
+          padding: 0 ${isExpanded ? '24px' : '16px'};
+          border-bottom: 1px solid #dce5e4;
+          gap: 12px;
+        }
+        .logo-icon {
+          width: 40px;
+          height: 40px;
+          background: rgba(20, 184, 166, 0.1);
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .sidebar-nav {
+          flex: 1;
+          overflow-y: auto;
+          padding: 24px 12px;
+        }
+        .nav-section-title {
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #638884;
+          padding: 16px 12px 8px;
+        }
+        .nav-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 500;
+          color: #111817;
+          text-decoration: none;
+          transition: all 0.2s;
+          cursor: pointer;
+          margin-bottom: 4px;
+        }
+        .nav-item:hover {
+          background: #f6f8f8;
+        }
+        .nav-item.active {
+          background: rgba(20, 184, 166, 0.1);
+          color: #14b8a6;
+          border-left: 4px solid #14b8a6;
+          font-weight: 600;
+        }
+        .nav-item.active .nav-icon {
+          color: #14b8a6;
+        }
+        .nav-icon {
+          width: 20px;
+          height: 20px;
+          color: #638884;
+          flex-shrink: 0;
+        }
+        .nav-item.active .nav-icon {
+          color: #14b8a6;
+        }
+        .nav-arrow {
+          margin-left: auto;
+          width: 16px;
+          height: 16px;
+          color: #638884;
+          transition: transform 0.2s;
+        }
+        .nav-arrow.expanded {
+          transform: rotate(180deg);
+        }
+        .submenu {
+          display: flex;
+          flex-direction: column;
+          padding-left: 44px;
+          margin-top: 4px;
+          gap: 2px;
+        }
+        .submenu-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 12px;
+          font-size: 13px;
+          color: #638884;
+          text-decoration: none;
+          border-radius: 8px;
+          transition: all 0.2s;
+        }
+        .submenu-item:hover {
+          color: #14b8a6;
+          background: rgba(20, 184, 166, 0.05);
+        }
+        .submenu-item.active {
+          color: #14b8a6;
+          font-weight: 500;
+        }
+        .submenu-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: currentColor;
+        }
+        .sidebar-footer {
+          padding: 16px;
+          border-top: 1px solid #dce5e4;
+        }
+        .logout-btn {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 500;
+          color: #ef4444;
+          width: 100%;
+          background: none;
+          border: none;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .logout-btn:hover {
+          background: rgba(239, 68, 68, 0.05);
+        }
+        .toggle-btn {
+          position: absolute;
+          right: -12px;
+          top: 32px;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: white;
+          border: 2px solid #14b8a6;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          z-index: 10;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          transition: transform 0.2s;
+        }
+        .toggle-btn:hover {
+          transform: scale(1.1);
+        }
+        .collapsed-nav {
+          justify-content: center;
+        }
+      `}</style>
+
+      <aside className="sidebar">
+        {/* Toggle Button */}
+        <button
+          className="toggle-btn"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? (
+            <ChevronLeft size={14} color="#14b8a6" />
+          ) : (
+            <ChevronRight size={14} color="#14b8a6" />
           )}
-        />
-      </button>
+        </button>
 
-      <nav className={cn("flex flex-col p-4 text-sm transition-all duration-300")}>
-        {/* Search Bar - Only show when expanded */}
-        {isExpanded && (
-          <div className="mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Cari menu"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-white/60 border border-gray-300 text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:border-emerald-500 transition-all"
-              />
-            </div>
+        {/* Header */}
+        <div className="sidebar-header">
+          <div className="logo-icon">
+            <Image src="/tindik-anting-logo.png" alt="PKMK" width={28} height={28} />
           </div>
-        )}
-
-        {/* Header Section */}
-        <div className={cn(
-          "px-2 pb-3 text-[11px] uppercase tracking-wider font-semibold transition-all",
-          isExpanded ? "text-gray-500" : "text-center text-gray-600"
-        )}>
-          {isExpanded ? "Menu Utama" : "≡"}
+          {isExpanded && (
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#111817' }}>Sistem PKMK</div>
+              <div style={{ fontSize: '12px', color: '#638884' }}>Kab. Malang</div>
+            </div>
+          )}
         </div>
 
-        {/* Main Navigation */}
-        <div className="space-y-2">
-          {nav.map((item) => (
-            <div key={item.label}>
-              <Link
-                href={item.href === "#laporan" ? "#" : item.href}
-                className={cn(
-                  "px-3 py-3 rounded-lg flex items-center gap-3 transition-all duration-200 ease-in-out font-medium",
-                  !isExpanded && "justify-center",
-                  // Inactive state - DARK BLACK text with elegant hover
-                  !isActive(item.href) && "text-gray-900 hover:bg-white/60",
-                  // Active state - DARK BLACK BOLD with emerald accent
-                  isActive(item.href) && "text-gray-900 font-extrabold bg-emerald-100 border-l-4 border-emerald-500 shadow-sm"
-                )}
-                style={{ color: '#111827' }}
-              >
-                {item.icon && <item.icon size={20} className={cn("flex-shrink-0", !isActive(item.href) && "opacity-75")} />}
-                {isExpanded && (
-                  <>
-                    <span className="truncate flex-1">{item.label}</span>
-                    {item.children && (
-                      <ChevronRight size={16} className="flex-shrink-0 opacity-80" />
-                    )}
-                  </>
-                )}
-              </Link>
+        {/* Navigation */}
+        <nav className="sidebar-nav">
+          {isExpanded && <div className="nav-section-title">Menu Utama</div>}
 
-              {/* Sub-menu items */}
-              {item.children && isExpanded && (
-                <div className="ml-12 mt-1.5 space-y-1 border-l border-gray-300 pl-2">
-                  {item.children.map((sub) => {
-                    return (
-                      <Link
-                        key={`${sub.href}:${sub.label}`}
-                        href={sub.href}
-                        className={cn(
-                          "px-3 py-2.5 rounded-md flex items-center gap-2 transition-all duration-200 ease-in-out text-sm font-medium",
-                          // Inactive submenu - DARK BLACK text
-                          !isActive(sub.href) && "text-gray-900 hover:bg-white/50",
-                          // Active submenu - DARK BLACK BOLD with emerald accent
-                          isActive(sub.href) && "text-gray-900 font-bold bg-emerald-50 border-l-2 border-emerald-500"
-                        )}
-                        style={{ color: '#111827' }}
-                      >
-                        {sub.icon && <sub.icon size={16} className={cn("flex-shrink-0", !isActive(sub.href) && "opacity-75")} />}
-                        <span className="flex items-center gap-2 truncate flex-1">
+          {nav.slice(0, 4).map((item) => (
+            <div key={item.label}>
+              {item.children ? (
+                <>
+                  <div
+                    className={cn("nav-item", isActive(item.href) && "active", !isExpanded && "collapsed-nav")}
+                    onClick={() => isExpanded && toggleMenu(item.label)}
+                  >
+                    {item.icon && <item.icon className="nav-icon" />}
+                    {isExpanded && (
+                      <>
+                        <span style={{ flex: 1 }}>{item.label}</span>
+                        <ChevronRight
+                          className={cn("nav-arrow", expandedMenus.includes(item.label) && "expanded")}
+                          style={{ transform: expandedMenus.includes(item.label) ? 'rotate(90deg)' : 'none' }}
+                        />
+                      </>
+                    )}
+                  </div>
+                  {isExpanded && expandedMenus.includes(item.label) && (
+                    <div className="submenu">
+                      {item.children.map((sub) => (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className={cn("submenu-item", isActive(sub.href) && "active")}
+                        >
+                          <span className="submenu-dot" />
                           {sub.label}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link
+                  href={item.href}
+                  className={cn("nav-item", isActive(item.href) && "active", !isExpanded && "collapsed-nav")}
+                >
+                  {item.icon && <item.icon className="nav-icon" />}
+                  {isExpanded && <span>{item.label}</span>}
+                </Link>
               )}
             </div>
           ))}
+
+          {isExpanded && <div className="nav-section-title">Laporan & Aset</div>}
+
+          {nav.slice(4).map((item) => (
+            <div key={item.label}>
+              {item.children ? (
+                <>
+                  <div
+                    className={cn("nav-item", !isExpanded && "collapsed-nav")}
+                    onClick={() => isExpanded && toggleMenu(item.label)}
+                  >
+                    {item.icon && <item.icon className="nav-icon" />}
+                    {isExpanded && (
+                      <>
+                        <span style={{ flex: 1 }}>{item.label}</span>
+                        <ChevronRight
+                          className={cn("nav-arrow")}
+                          style={{ transform: expandedMenus.includes(item.label) ? 'rotate(90deg)' : 'none' }}
+                        />
+                      </>
+                    )}
+                  </div>
+                  {isExpanded && expandedMenus.includes(item.label) && (
+                    <div className="submenu">
+                      {item.children.map((sub) => (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className={cn("submenu-item", isActive(sub.href) && "active")}
+                        >
+                          <span className="submenu-dot" />
+                          {sub.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link
+                  href={item.href}
+                  className={cn("nav-item", isActive(item.href) && "active", !isExpanded && "collapsed-nav")}
+                >
+                  {item.icon && <item.icon className="nav-icon" />}
+                  {isExpanded && <span>{item.label}</span>}
+                </Link>
+              )}
+            </div>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className="sidebar-footer">
+          <Link href="/logout" className="logout-btn">
+            <LogOut size={20} />
+            {isExpanded && <span>Keluar</span>}
+          </Link>
         </div>
-      </nav>
-    </div>
+      </aside>
+    </>
   );
 }

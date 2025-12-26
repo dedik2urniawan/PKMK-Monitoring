@@ -107,24 +107,24 @@ export function KonsumsiTable({ data }: { data: KonsumsiItem[] }) {
                                     <div className="col-span-1 flex items-center gap-1 justify-center ml-2" onClick={(e) => e.stopPropagation()}>
                                         <Link
                                             href={`/monitoring/${item.balita_id}/antropometri/new`}
-                                            title="Antropometri"
-                                            className="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded transition-colors inline-block"
+                                            title="Input Antropometri"
+                                            className="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-100 hover:bg-emerald-600 text-emerald-600 hover:text-white transition-all duration-200 hover:scale-110"
                                         >
-                                            <Activity size={14} />
+                                            <Activity size={14} strokeWidth={2.5} />
                                         </Link>
                                         <Link
                                             href={`/monitoring/${item.balita_id}/konsumsi/new`}
-                                            title="Konsumsi"
-                                            className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors inline-block"
+                                            title="Input Konsumsi"
+                                            className="w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 hover:bg-amber-500 text-amber-600 hover:text-white transition-all duration-200 hover:scale-110"
                                         >
-                                            <Coffee size={14} />
+                                            <Coffee size={14} strokeWidth={2.5} />
                                         </Link>
                                         <Link
                                             href={`/monitoring/${item.balita_id}/pemberian/new`}
-                                            title="Pemberian"
-                                            className="p-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors inline-block"
+                                            title="Input Pemberian"
+                                            className="w-8 h-8 flex items-center justify-center rounded-full bg-purple-100 hover:bg-purple-600 text-purple-600 hover:text-white transition-all duration-200 hover:scale-110"
                                         >
-                                            <Pill size={14} />
+                                            <Pill size={14} strokeWidth={2.5} />
                                         </Link>
                                     </div>
                                 </div>

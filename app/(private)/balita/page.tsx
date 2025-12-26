@@ -3,14 +3,7 @@
 import { useEffect, useState } from "react";
 import { ensureServerSession, getAuthHeaders } from "@/lib/clientSession";
 import BalitaActionsNew from "@/components/BalitaActionsNew";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Download, Filter, Search, Users } from "lucide-react";
 
 type Balita = {
   id: string;
@@ -49,7 +42,16 @@ type Desa = { id: string; desa_kel: string };
 function formatTanggal(s: string | null): string {
   if (!s) return "-";
   const d = new Date(s);
-  return isNaN(d.getTime()) ? s : d.toLocaleDateString("id-ID");
+  return isNaN(d.getTime()) ? s : d.toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function getInitials(name: string | null): string {
+  if (!name) return "?";
+  const parts = name.split(" ").filter(p => p.length > 0);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
 }
 
 export default function BalitaList() {
@@ -72,12 +74,8 @@ export default function BalitaList() {
   function exportCsv() {
     if (!items.length) { alert('Tidak ada data untuk diekspor.'); return; }
     const headers = compact
-      ? [
-        'nik', 'nama_balita', 'jk', 'tgl_lahir', 'kec', 'desa_kel', 'redflag_any'
-      ]
-      : [
-        'nik', 'nama_balita', 'jk', 'tgl_lahir', 'bb_lahir_kg', 'tb_lahir_cm', 'nama_ortu', 'kab_kota', 'kec', 'desa_kel', 'posyandu', 'rt', 'rw', 'alamat', 'puskesmas_id', 'sumber_data', 'created_at', 'bb_tidak_adekuat', 'murmur_edema', 'delayed_development', 'wajah_dismorfik', 'organomegali_limfadenopati', 'ispa_cystitis', 'muntah_diare_berulang', 'diagnosa_penyakit_penyerta', 'keterangan_redflag', 'redflag_any'
-      ];
+      ? ['nik', 'nama_balita', 'jk', 'tgl_lahir', 'kec', 'desa_kel', 'redflag_any']
+      : ['nik', 'nama_balita', 'jk', 'tgl_lahir', 'bb_lahir_kg', 'tb_lahir_cm', 'nama_ortu', 'kab_kota', 'kec', 'desa_kel', 'posyandu', 'rt', 'rw', 'alamat', 'puskesmas_id', 'sumber_data', 'created_at', 'bb_tidak_adekuat', 'murmur_edema', 'delayed_development', 'wajah_dismorfik', 'organomegali_limfadenopati', 'ispa_cystitis', 'muntah_diare_berulang', 'diagnosa_penyakit_penyerta', 'keterangan_redflag', 'redflag_any'];
     const rows = items.map((d) => headers.map((h) => {
       const v = (d as any)[h];
       if (v == null) return '';
@@ -149,7 +147,6 @@ export default function BalitaList() {
   async function onSubmit(e?: React.FormEvent) {
     if (e) {
       e.preventDefault();
-      // Reset ke halaman 1 ketika filter disubmit
       if (page !== 1) setPage(1);
       setPageInput("1");
     }
@@ -179,241 +176,628 @@ export default function BalitaList() {
   }, [page]);
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold mb-4">Data Balita</h1>
-      <div className="mb-3 text-sm flex items-center gap-4">
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" checked={compact} onChange={(e) => setCompact(e.target.checked)} />
-          <span>Tampilan ringkas</span>
-        </label>
-        <button type="button" onClick={exportCsv} className="px-3 py-1.5 rounded border border-[var(--border)] bg-white hover:bg-gray-50">Export CSV</button>
-      </div>
-
-      <form onSubmit={onSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 max-w-5xl">
-        <select className="input" value={kec} onChange={(e) => setKec(e.target.value)}>
-          <option value="">-- Kecamatan --</option>
-          {kecList.map((k) => (
-            <option key={k} value={k}>{k}</option>
-          ))}
-        </select>
-        <select className="input" value={puskesmasId} onChange={(e) => setPuskesmasId(e.target.value)}>
-          <option value="">-- Puskesmas --</option>
-          {pkmList.map((p) => (
-            <option key={p.id} value={p.id}>{p.nama}</option>
-          ))}
-        </select>
-        <select className="input" value={desa} onChange={(e) => setDesa(e.target.value)}>
-          <option value="">-- Desa/Kel --</option>
-          {desaList.map((d) => (
-            <option key={d.id} value={d.desa_kel}>{d.desa_kel}</option>
-          ))}
-        </select>
-        <input className="input" placeholder="NIK" value={nik} onChange={(e) => setNik(e.target.value)} />
-        <div className="sm:col-span-2">
-          <button className="px-4 py-2 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white rounded">Filter</button>
-        </div>
-      </form>
-
-      <div className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface)]">
-        <Table>
-          <TableHeader className="bg-[var(--background)]">
-            {compact ? (
-              <TableRow>
-                <TableHead>NIK</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead>JK</TableHead>
-                <TableHead>Tgl Lahir</TableHead>
-                <TableHead>Kec</TableHead>
-                <TableHead>Desa/Kel</TableHead>
-                <TableHead>Redflag?</TableHead>
-                <TableHead>Aksi</TableHead>
-              </TableRow>
-            ) : (
-              <TableRow>
-                <TableHead>NIK</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead>JK</TableHead>
-                <TableHead>Tgl Lahir</TableHead>
-                <TableHead>BB Lahir (kg)</TableHead>
-                <TableHead>TB Lahir (cm)</TableHead>
-                <TableHead>Nama Ortu</TableHead>
-                <TableHead>Kab/Kota</TableHead>
-                <TableHead>Kec</TableHead>
-                <TableHead>Desa/Kel</TableHead>
-                <TableHead>Posyandu</TableHead>
-                <TableHead>RT</TableHead>
-                <TableHead>RW</TableHead>
-                <TableHead>Alamat</TableHead>
-                <TableHead>Puskesmas ID</TableHead>
-                <TableHead>Sumber</TableHead>
-                <TableHead>Dibuat</TableHead>
-                <TableHead>BB tidak adekuat</TableHead>
-                <TableHead>Murmur/Edema</TableHead>
-                <TableHead>Delayed dev.</TableHead>
-                <TableHead>Wajah dismorfik</TableHead>
-                <TableHead>Organomegali/LN</TableHead>
-                <TableHead>ISPA/Cystitis</TableHead>
-                <TableHead>Muntah/Diare</TableHead>
-                <TableHead>Dx Penyerta</TableHead>
-                <TableHead>Ket. Redflag</TableHead>
-                <TableHead>Redflag?</TableHead>
-                <TableHead>Aksi</TableHead>
-              </TableRow>
-            )}
-          </TableHeader>
-          <TableBody>
-            {items.map((d) => (
-              <TableRow key={d.id}>
-                {compact ? (
-                  <>
-                    <TableCell>{d.nik ?? "-"}</TableCell>
-                    <TableCell>{d.nama_balita ?? "-"}</TableCell>
-                    <TableCell>{d.jk ?? "-"}</TableCell>
-                    <TableCell>{formatTanggal(d.tgl_lahir)}</TableCell>
-                    <TableCell>{d.kec ?? "-"}</TableCell>
-                    <TableCell>{d.desa_kel ?? "-"}</TableCell>
-                    <TableCell>
-                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium border ${d.redflag_any ? 'bg-red-50 text-red-700 border-red-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-                        {d.redflag_any ? 'Ya' : 'Tidak'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <BalitaActionsNew
-                        balita={d}
-                        onDeleted={() => setItems((prev) => prev.filter((x) => x.id !== d.id))}
-                        onUpdated={() => onSubmit()}
-                      />
-                    </TableCell>
-                  </>
-                ) : (
-                  <>
-                    <TableCell>{d.nik ?? "-"}</TableCell>
-                    <TableCell>{d.nama_balita ?? "-"}</TableCell>
-                    <TableCell>{d.jk ?? "-"}</TableCell>
-                    <TableCell>{formatTanggal(d.tgl_lahir)}</TableCell>
-                    <TableCell>{d.bb_lahir_kg ?? "-"}</TableCell>
-                    <TableCell>{d.tb_lahir_cm ?? "-"}</TableCell>
-                    <TableCell>{d.nama_ortu ?? "-"}</TableCell>
-                    <TableCell>{d.kab_kota ?? "-"}</TableCell>
-                    <TableCell>{d.kec ?? "-"}</TableCell>
-                    <TableCell>{d.desa_kel ?? "-"}</TableCell>
-                    <TableCell>{d.posyandu ?? "-"}</TableCell>
-                    <TableCell>{d.rt ?? "-"}</TableCell>
-                    <TableCell>{d.rw ?? "-"}</TableCell>
-                    <TableCell>{d.alamat ?? "-"}</TableCell>
-                    <TableCell>{d.puskesmas_id ?? "-"}</TableCell>
-                    <TableCell>{d.sumber_data ?? "-"}</TableCell>
-                    <TableCell>{d.created_at ? new Date(d.created_at).toLocaleDateString('id-ID') : '-'}</TableCell>
-                    <TableCell>{d.bb_tidak_adekuat ?? "-"}</TableCell>
-                    <TableCell>{d.murmur_edema ?? "-"}</TableCell>
-                    <TableCell>{d.delayed_development ?? "-"}</TableCell>
-                    <TableCell>{d.wajah_dismorfik ?? "-"}</TableCell>
-                    <TableCell>{d.organomegali_limfadenopati ?? "-"}</TableCell>
-                    <TableCell>{d.ispa_cystitis ?? "-"}</TableCell>
-                    <TableCell>{d.muntah_diare_berulang ?? "-"}</TableCell>
-                    <TableCell>{d.diagnosa_penyakit_penyerta ?? "-"}</TableCell>
-                    <TableCell>{d.keterangan_redflag ?? "-"}</TableCell>
-                    <TableCell>
-                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium border ${d.redflag_any ? 'bg-red-50 text-red-700 border-red-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-                        {d.redflag_any ? 'Ya' : 'Tidak'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <BalitaActionsNew
-                        balita={d}
-                        onDeleted={() => setItems((prev) => prev.filter((x) => x.id !== d.id))}
-                        onUpdated={() => onSubmit()}
-                      />
-                    </TableCell>
-                  </>
-                )}
-              </TableRow>
-            ))}
-            {items.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={compact ? 8 : 27} className="text-center text-[var(--muted-foreground)]">Tidak ada data.</TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-3 text-sm">
-        <div>
-          Menampilkan {items.length} dari {total} data
-        </div>
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2">
-            <span>Rows per page</span>
-            <select
-              className="h-8 rounded-md border border-[var(--border)] bg-white px-2"
-              value={limit}
-              onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-          </label>
-          <button
-            className="px-2 py-1 border rounded disabled:opacity-50"
-            onClick={() => setPage(1)}
-            disabled={page <= 1}
-          >
-            First
-          </button>
-          <button
-            className="px-2 py-1 border rounded disabled:opacity-50"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-          >
-            Prev
-          </button>
-          <span className="inline-flex items-center gap-2">
-            Hal
-            <input
-              type="number"
-              min={1}
-              max={pages}
-              value={pageInput}
-              onChange={(e) => setPageInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const n = Math.max(1, Math.min(pages, Number(pageInput) || 1));
-                  setPage(n);
-                }
-              }}
-              className="w-16 h-8 rounded-md border border-[var(--border)] bg-white px-2 text-center"
-            />
-            / {pages}
-            <button
-              type="button"
-              className="px-2 py-1 border rounded"
-              onClick={() => { const n = Math.max(1, Math.min(pages, Number(pageInput) || 1)); setPage(n); }}
-            >
-              Go
-            </button>
-          </span>
-          <button
-            className="px-2 py-1 border rounded disabled:opacity-50"
-            onClick={() => setPage((p) => Math.min(pages, p + 1))}
-            disabled={page >= pages}
-          >
-            Next
-          </button>
-          <button
-            className="px-2 py-1 border rounded disabled:opacity-50"
-            onClick={() => setPage(pages)}
-            disabled={page >= pages}
-          >
-            Last
-          </button>
-        </div>
-      </div>
+    <>
       <style jsx>{`
-        .input{width:100%;border:1px solid #d1d5db;border-radius:.5rem;padding:.5rem .75rem;}
+        .page-container {
+          max-width: 1440px;
+          margin: 0 auto;
+          padding: 32px;
+        }
+        .page-header {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          margin-bottom: 32px;
+        }
+        @media (min-width: 768px) {
+          .page-header {
+            flex-direction: row;
+            align-items: flex-end;
+            justify-content: space-between;
+          }
+        }
+        .page-title {
+          font-size: 32px;
+          font-weight: 800;
+          color: #0f172a;
+          letter-spacing: -0.025em;
+        }
+        .page-subtitle {
+          color: #638884;
+          font-size: 16px;
+          margin-top: 4px;
+        }
+        .header-actions {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+        .checkbox-label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          user-select: none;
+        }
+        .checkbox-label input {
+          width: 16px;
+          height: 16px;
+          accent-color: #14b8a6;
+        }
+        .checkbox-label span {
+          font-size: 14px;
+          font-weight: 500;
+          color: #374151;
+        }
+        .btn-export {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 16px;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 700;
+          color: #374151;
+          cursor: pointer;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+          transition: all 0.2s;
+        }
+        .btn-export:hover {
+          background: #f8fafc;
+        }
+        .filter-section {
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 20px;
+          margin-bottom: 24px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .filter-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        @media (min-width: 768px) {
+          .filter-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        @media (min-width: 1024px) {
+          .filter-grid {
+            grid-template-columns: repeat(5, 1fr);
+          }
+        }
+        .filter-group {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .filter-label {
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #64748b;
+        }
+        .filter-select {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          font-size: 14px;
+          color: #374151;
+          background: white;
+          cursor: pointer;
+        }
+        .filter-select:focus {
+          outline: none;
+          border-color: #14b8a6;
+          box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+        }
+        .filter-input-wrapper {
+          position: relative;
+        }
+        .filter-input-icon {
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #94a3b8;
+        }
+        .filter-input {
+          width: 100%;
+          padding: 10px 12px 10px 40px;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          font-size: 14px;
+          color: #374151;
+        }
+        .filter-input:focus {
+          outline: none;
+          border-color: #14b8a6;
+          box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+        }
+        .filter-input::placeholder {
+          color: #94a3b8;
+        }
+        .btn-filter {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          width: 100%;
+          padding: 10px 16px;
+          background: #14b8a6;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .btn-filter:hover {
+          background: #0d9488;
+        }
+        .table-section {
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .table-wrapper {
+          overflow-x: auto;
+        }
+        .data-table {
+          width: 100%;
+          border-collapse: collapse;
+          text-align: left;
+        }
+        .data-table thead {
+          background: #f8fafc;
+          border-bottom: 1px solid #e2e8f0;
+        }
+        .data-table th {
+          padding: 16px 24px;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #64748b;
+        }
+        .data-table tbody tr {
+          border-bottom: 1px solid #f1f5f9;
+          transition: background 0.15s;
+        }
+        .data-table tbody tr:hover {
+          background: rgba(20, 184, 166, 0.03);
+        }
+        .data-table td {
+          padding: 12px 24px;
+          font-size: 14px;
+          color: #475569;
+        }
+        .cell-nik {
+          font-family: ui-monospace, monospace;
+          font-size: 13px;
+        }
+        .cell-name {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: 9999px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+        .avatar.male {
+          background: #dbeafe;
+          color: #1d4ed8;
+        }
+        .avatar.female {
+          background: #fce7f3;
+          color: #be185d;
+        }
+        .name-text {
+          font-weight: 600;
+          color: #0f172a;
+        }
+        .badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 10px;
+          border-radius: 9999px;
+          font-size: 12px;
+          font-weight: 500;
+        }
+        .badge.red {
+          background: #fef2f2;
+          color: #991b1b;
+        }
+        .badge.green {
+          background: #f0fdf4;
+          color: #166534;
+        }
+        .actions-cell {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 4px;
+          opacity: 0.6;
+        }
+        .data-table tbody tr:hover .actions-cell {
+          opacity: 1;
+        }
+        .empty-state {
+          padding: 48px 24px;
+          text-align: center;
+          color: #64748b;
+        }
+        .pagination-footer {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          padding: 16px 24px;
+          border-top: 1px solid #e2e8f0;
+          background: white;
+        }
+        @media (min-width: 768px) {
+          .pagination-footer {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+          }
+        }
+        .pagination-info {
+          font-size: 14px;
+          color: #64748b;
+        }
+        .pagination-info strong {
+          color: #0f172a;
+          font-weight: 600;
+        }
+        .pagination-controls {
+          display: flex;
+          align-items: center;
+          gap: 24px;
+        }
+        .rows-per-page {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 14px;
+          color: #64748b;
+        }
+        .rows-per-page select {
+          padding: 6px 10px;
+          border: 1px solid #e2e8f0;
+          border-radius: 6px;
+          font-size: 14px;
+          background: #f8fafc;
+        }
+        .page-nav {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .page-btn {
+          padding: 8px;
+          border: none;
+          background: none;
+          border-radius: 6px;
+          color: #64748b;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .page-btn:hover:not(:disabled) {
+          background: rgba(20, 184, 166, 0.1);
+          color: #14b8a6;
+        }
+        .page-btn:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+        .page-input-group {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin: 0 8px;
+        }
+        .page-input {
+          width: 48px;
+          padding: 6px;
+          text-align: center;
+          border: 1px solid #e2e8f0;
+          border-radius: 6px;
+          font-size: 14px;
+        }
+        .page-input:focus {
+          outline: none;
+          border-color: #14b8a6;
+        }
+        .page-total {
+          font-size: 14px;
+          color: #64748b;
+        }
       `}</style>
-    </div>
+
+      <div className="page-container">
+        {/* Page Header */}
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Data Balita</h1>
+            <p className="page-subtitle">Daftar lengkap balita terdaftar dalam program PKMK Kabupaten Malang</p>
+          </div>
+          <div className="header-actions">
+            <label className="checkbox-label">
+              <input type="checkbox" checked={compact} onChange={(e) => setCompact(e.target.checked)} />
+              <span>Tampilan ringkas</span>
+            </label>
+            <button type="button" onClick={exportCsv} className="btn-export">
+              <Download size={16} />
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Section */}
+        <form onSubmit={onSubmit} className="filter-section">
+          <div className="filter-grid">
+            <div className="filter-group">
+              <label className="filter-label">Kecamatan</label>
+              <select className="filter-select" value={kec} onChange={(e) => setKec(e.target.value)}>
+                <option value="">Semua Kecamatan</option>
+                {kecList.map((k) => (
+                  <option key={k} value={k}>{k}</option>
+                ))}
+              </select>
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">Puskesmas</label>
+              <select className="filter-select" value={puskesmasId} onChange={(e) => setPuskesmasId(e.target.value)}>
+                <option value="">Semua Puskesmas</option>
+                {pkmList.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nama}</option>
+                ))}
+              </select>
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">Desa/Kel</label>
+              <select className="filter-select" value={desa} onChange={(e) => setDesa(e.target.value)}>
+                <option value="">Semua Desa</option>
+                {desaList.map((d) => (
+                  <option key={d.id} value={d.desa_kel}>{d.desa_kel}</option>
+                ))}
+              </select>
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">Pencarian</label>
+              <div className="filter-input-wrapper">
+                <Search size={16} className="filter-input-icon" />
+                <input
+                  className="filter-input"
+                  placeholder="Cari NIK atau Nama..."
+                  value={nik}
+                  onChange={(e) => setNik(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="filter-group" style={{ justifyContent: 'flex-end' }}>
+              <button type="submit" className="btn-filter">
+                <Filter size={16} />
+                Filter Data
+              </button>
+            </div>
+          </div>
+        </form>
+
+        {/* Data Table Section */}
+        <section className="table-section">
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                {compact ? (
+                  <tr>
+                    <th>NIK</th>
+                    <th>Nama Balita</th>
+                    <th>JK</th>
+                    <th>Tgl Lahir</th>
+                    <th>Kecamatan</th>
+                    <th>Desa/Kel</th>
+                    <th style={{ textAlign: 'center' }}>Redflag?</th>
+                    <th style={{ textAlign: 'right' }}>Aksi</th>
+                  </tr>
+                ) : (
+                  <tr>
+                    <th>NIK</th>
+                    <th>Nama</th>
+                    <th>JK</th>
+                    <th>Tgl Lahir</th>
+                    <th>BB (kg)</th>
+                    <th>TB (cm)</th>
+                    <th>Ortu</th>
+                    <th>Kec</th>
+                    <th>Desa</th>
+                    <th>Posyandu</th>
+                    <th>Alamat</th>
+                    <th>Sumber</th>
+                    <th style={{ textAlign: 'center' }}>Redflag?</th>
+                    <th style={{ textAlign: 'right' }}>Aksi</th>
+                  </tr>
+                )}
+              </thead>
+              <tbody>
+                {items.map((d) => (
+                  <tr key={d.id}>
+                    {compact ? (
+                      <>
+                        <td className="cell-nik">{d.nik ?? "-"}</td>
+                        <td>
+                          <div className="cell-name">
+                            <div className={`avatar ${d.jk === 'P' ? 'female' : 'male'}`}>
+                              {getInitials(d.nama_balita)}
+                            </div>
+                            <span className="name-text">{d.nama_balita ?? "-"}</span>
+                          </div>
+                        </td>
+                        <td>{d.jk ?? "-"}</td>
+                        <td>{formatTanggal(d.tgl_lahir)}</td>
+                        <td>{d.kec ?? "-"}</td>
+                        <td>{d.desa_kel ?? "-"}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          <span className={`badge ${d.redflag_any ? 'red' : 'green'}`}>
+                            {d.redflag_any ? 'Ya' : 'Tidak'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="actions-cell">
+                            <BalitaActionsNew
+                              balita={d}
+                              onDeleted={() => setItems((prev) => prev.filter((x) => x.id !== d.id))}
+                              onUpdated={() => onSubmit()}
+                            />
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="cell-nik">{d.nik ?? "-"}</td>
+                        <td>
+                          <div className="cell-name">
+                            <div className={`avatar ${d.jk === 'P' ? 'female' : 'male'}`}>
+                              {getInitials(d.nama_balita)}
+                            </div>
+                            <span className="name-text">{d.nama_balita ?? "-"}</span>
+                          </div>
+                        </td>
+                        <td>{d.jk ?? "-"}</td>
+                        <td>{formatTanggal(d.tgl_lahir)}</td>
+                        <td>{d.bb_lahir_kg ?? "-"}</td>
+                        <td>{d.tb_lahir_cm ?? "-"}</td>
+                        <td>{d.nama_ortu ?? "-"}</td>
+                        <td>{d.kec ?? "-"}</td>
+                        <td>{d.desa_kel ?? "-"}</td>
+                        <td>{d.posyandu ?? "-"}</td>
+                        <td>{d.alamat ?? "-"}</td>
+                        <td>{d.sumber_data ?? "-"}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          <span className={`badge ${d.redflag_any ? 'red' : 'green'}`}>
+                            {d.redflag_any ? 'Ya' : 'Tidak'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="actions-cell">
+                            <BalitaActionsNew
+                              balita={d}
+                              onDeleted={() => setItems((prev) => prev.filter((x) => x.id !== d.id))}
+                              onUpdated={() => onSubmit()}
+                            />
+                          </div>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+                {items.length === 0 && (
+                  <tr>
+                    <td colSpan={compact ? 8 : 14} className="empty-state">
+                      <Users size={48} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
+                      <p>Tidak ada data balita.</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Footer */}
+          <div className="pagination-footer">
+            <div className="pagination-info">
+              Menampilkan <strong>{items.length}</strong> dari <strong>{total.toLocaleString()}</strong> data
+            </div>
+            <div className="pagination-controls">
+              <div className="rows-per-page">
+                <span>Rows per page:</span>
+                <select
+                  value={limit}
+                  onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+              <div className="page-nav">
+                <button
+                  type="button"
+                  className="page-btn"
+                  onClick={() => setPage(1)}
+                  disabled={page <= 1}
+                  title="First"
+                >
+                  ⏮
+                </button>
+                <button
+                  type="button"
+                  className="page-btn"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  title="Previous"
+                >
+                  ◀
+                </button>
+                <div className="page-input-group">
+                  <input
+                    type="number"
+                    min={1}
+                    max={pages}
+                    value={pageInput}
+                    onChange={(e) => setPageInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const n = Math.max(1, Math.min(pages, Number(pageInput) || 1));
+                        setPage(n);
+                      }
+                    }}
+                    className="page-input"
+                  />
+                  <span className="page-total">of {pages}</span>
+                </div>
+                <button
+                  type="button"
+                  className="page-btn"
+                  onClick={() => setPage((p) => Math.min(pages, p + 1))}
+                  disabled={page >= pages}
+                  title="Next"
+                >
+                  ▶
+                </button>
+                <button
+                  type="button"
+                  className="page-btn"
+                  onClick={() => setPage(pages)}
+                  disabled={page >= pages}
+                  title="Last"
+                >
+                  ⏭
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </>
   );
 }
-
