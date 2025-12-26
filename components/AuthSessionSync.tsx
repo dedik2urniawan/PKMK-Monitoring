@@ -1,11 +1,8 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import { getSupabase } from "@/lib/supabase/client";
 
 export default function AuthSessionSync() {
-  const router = useRouter();
-  const pathname = usePathname();
   const checkedRef = useRef(false);
 
   useEffect(() => {
@@ -13,31 +10,25 @@ export default function AuthSessionSync() {
     checkedRef.current = true;
 
     async function checkSession() {
-      // Wait longer for Supabase to fully initialize and restore session from localStorage
-      await new Promise(resolve => setTimeout(resolve, 500));
-
       try {
         const supabase = getSupabase();
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
 
-        if (error) {
-          console.error('[AuthSessionSync] Session error:', error.message);
+        if (session) {
+          console.log('[AuthSessionSync] Session active for:', session.user?.email);
+        } else {
+          console.warn('[AuthSessionSync] No session found - user may not be authenticated');
+          // Don't redirect - let the user see the page
+          // They won't be able to fetch data anyway (API will return 401)
         }
-
-        if (!session) {
-          console.log('[AuthSessionSync] No session found, redirecting to login');
-          router.replace('/login?redirectedFrom=' + encodeURIComponent(pathname));
-          return;
-        }
-
-        console.log('[AuthSessionSync] Session valid for:', session.user?.email);
       } catch (err) {
-        console.error('[AuthSessionSync] Error:', err);
+        console.error('[AuthSessionSync] Error checking session:', err);
       }
     }
 
+    // Check session but don't block UI
     checkSession();
-  }, [router, pathname]);
+  }, []);
 
   return null;
 }
