@@ -26,9 +26,16 @@ export async function GET(req: NextRequest) {
   const page = Number(req.nextUrl.searchParams.get("page") || "1");
   const limit = Math.max(1, Number(req.nextUrl.searchParams.get("limit") || "10"));
 
+  // DEBUG: Log ALL received headers
+  const allHeaders: Record<string, string> = {};
+  req.headers.forEach((value, key) => {
+    allHeaders[key] = key.toLowerCase().includes('auth') ? value.slice(0, 30) + '...' : value.slice(0, 50);
+  });
+  console.log('[monitoring/balita] ALL headers:', JSON.stringify(allHeaders, null, 2));
+
   // DIRECT: Read Authorization header from request
   const authHeader = req.headers.get('authorization');
-  console.log('[monitoring/balita] Auth header present:', !!authHeader);
+  console.log('[monitoring/balita] Auth header present:', !!authHeader, 'length:', authHeader?.length || 0);
 
   let appUser: { role: string; puskesmas_id: string | null } | null = null;
 
