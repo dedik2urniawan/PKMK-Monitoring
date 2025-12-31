@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Users, Activity, TrendingUp, Plus, FileText, List, ClipboardList, Calendar, Zap } from "lucide-react";
 import AnalyticsSection from "./components/AnalyticsSection";
 import WelcomeModal from "./components/WelcomeModal";
+import UserInfoBadge from "@/components/UserInfoBadge";
 
 export default async function Dashboard() {
   // Get supabase for data queries (no auth check - handled client-side)
@@ -326,9 +327,7 @@ export default async function Dashboard() {
           <div>
             <h1 className="page-title">Dashboard</h1>
             <p className="page-subtitle">
-              {puskesmasName
-                ? `Puskesmas ${puskesmasName}`
-                : 'Ringkasan data pemantauan dan intervensi gizi.'}
+              <UserInfoBadge fallbackText="Ringkasan data pemantauan dan intervensi gizi." />
             </p>
           </div>
           <div className="date-badge">

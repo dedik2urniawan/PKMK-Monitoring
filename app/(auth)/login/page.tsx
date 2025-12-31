@@ -250,14 +250,17 @@ function LoginForm() {
         }
         .password-toggle {
           position: absolute;
-          right: 0.75rem;
+          right: 20px;
           top: 50%;
           transform: translateY(-50%);
           color: #94a3b8;
           cursor: pointer;
           background: none;
           border: none;
-          padding: 0;
+          padding: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .password-toggle:hover {
           color: #64748b;

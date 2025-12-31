@@ -713,6 +713,10 @@ export default function NewAntropometri() {
                 <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', background: '#f9fafb' }}>TB</th>
                 <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', background: '#f9fafb' }}>ZS BBU</th>
                 <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', background: '#f9fafb' }}>KLAS BBU</th>
+                <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', background: '#f9fafb' }}>ZS TBU</th>
+                <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', background: '#f9fafb' }}>KLAS TBU</th>
+                <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', background: '#f9fafb' }}>ZS BBTB</th>
+                <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', background: '#f9fafb' }}>KLAS BBTB</th>
                 <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', background: '#f9fafb' }}>Δ BB</th>
                 <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'right', background: '#f9fafb' }}>AKSI</th>
               </tr>
@@ -735,19 +739,47 @@ export default function NewAntropometri() {
                         }}>{h.klas_bbu}</span>
                       ) : '-'}
                     </td>
+                    {/* ZS TBU */}
+                    <td style={{ padding: '16px', fontSize: 14, fontWeight: 600, color: '#6366f1' }}>{h.zs_tbu != null ? `${Number(h.zs_tbu).toFixed(1)} SD` : '-'}</td>
+                    {/* KLAS TBU */}
+                    <td style={{ padding: '16px' }}>
+                      {h.klas_tbu ? (
+                        <span style={{
+                          display: 'inline-block', padding: '4px 10px', borderRadius: 9999, fontSize: 12, fontWeight: 500,
+                          background: h.klas_tbu.includes('Normal') ? '#dcfce7' : h.klas_tbu.includes('Sangat') || h.klas_tbu.includes('Severe') ? '#fee2e2' : '#fef9c3',
+                          color: h.klas_tbu.includes('Normal') ? '#166534' : h.klas_tbu.includes('Sangat') || h.klas_tbu.includes('Severe') ? '#991b1b' : '#854d0e'
+                        }}>{h.klas_tbu}</span>
+                      ) : '-'}
+                    </td>
+                    {/* ZS BBTB */}
+                    <td style={{ padding: '16px', fontSize: 14, fontWeight: 600, color: '#f59e0b' }}>{h.zs_bbtb != null ? `${Number(h.zs_bbtb).toFixed(1)} SD` : '-'}</td>
+                    {/* KLAS BBTB */}
+                    <td style={{ padding: '16px' }}>
+                      {h.klas_bbtb ? (
+                        <span style={{
+                          display: 'inline-block', padding: '4px 10px', borderRadius: 9999, fontSize: 12, fontWeight: 500,
+                          background: h.klas_bbtb.includes('Normal') ? '#dcfce7' : h.klas_bbtb.includes('Sangat') || h.klas_bbtb.includes('Severe') ? '#fee2e2' : '#fef9c3',
+                          color: h.klas_bbtb.includes('Normal') ? '#166534' : h.klas_bbtb.includes('Sangat') || h.klas_bbtb.includes('Severe') ? '#991b1b' : '#854d0e'
+                        }}>{h.klas_bbtb}</span>
+                      ) : '-'}
+                    </td>
                     <td style={{ padding: '16px', fontSize: 14, fontWeight: 600, color: h.delta_bb_kg > 0 ? '#16a34a' : h.delta_bb_kg < 0 ? '#dc2626' : '#6b7280' }}>
                       {h.delta_bb_kg != null ? `${h.delta_bb_kg > 0 ? '+' : ''}${(h.delta_bb_kg * 1000).toFixed(0)} gr` : '-'}
                     </td>
                     <td style={{ padding: '16px', textAlign: 'right' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
-                        {hasMedis(h) && (
-                          <button
-                            type="button"
-                            onClick={() => { setDetailItem(h); setDetailOpen(true); }}
-                            title="Lihat detail medis"
-                            style={{ width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#dbeafe', color: '#3b82f6', border: 'none', cursor: 'pointer', fontSize: 14 }}
-                          >🩺</button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => { setDetailItem(h); setDetailOpen(true); }}
+                          title={hasMedis(h) ? "Lihat detail medis" : "Tidak ada data medis"}
+                          style={{
+                            width: 32, height: 32, borderRadius: 6,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: hasMedis(h) ? '#dbeafe' : '#f3f4f6',
+                            color: hasMedis(h) ? '#3b82f6' : '#9ca3af',
+                            border: 'none', cursor: 'pointer', fontSize: 14
+                          }}
+                        >🩺</button>
                         <button
                           type="button"
                           onClick={() => {
@@ -793,7 +825,7 @@ export default function NewAntropometri() {
               ))}
               {history.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>Belum ada data antropometri.</td>
+                  <td colSpan={12} style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>Belum ada data antropometri.</td>
                 </tr>
               )}
             </tbody>
@@ -803,66 +835,104 @@ export default function NewAntropometri() {
 
       {/* Modal Detail Medis Lanjutan */}
       {detailOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => { setDetailOpen(false); setDetailItem(null); }} />
-          <div className="relative z-10 w-full max-w-3xl rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-lg p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold">Detail Medis Lanjutan</h3>
-              <button className="px-3 py-1.5 rounded border" onClick={() => { setDetailOpen(false); setDetailItem(null); }}>Tutup</button>
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 20
+        }}>
+          {/* Backdrop */}
+          <div
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)' }}
+            onClick={() => { setDetailOpen(false); setDetailItem(null); }}
+          />
+          {/* Modal Content */}
+          <div style={{
+            position: 'relative',
+            zIndex: 10,
+            width: '100%',
+            maxWidth: 800,
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            borderRadius: 16,
+            background: 'white',
+            border: '1px solid #e5e7eb',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+            padding: 24
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, borderBottom: '1px solid #e5e7eb', paddingBottom: 16 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111518', margin: 0 }}>🩺 Detail Medis Lanjutan</h3>
+              <button
+                style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer', fontWeight: 500 }}
+                onClick={() => { setDetailOpen(false); setDetailItem(null); }}
+              >Tutup</button>
             </div>
             {detailItem ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div>
-                  <div className="text-[var(--muted-foreground)]">Kenaikan berat tidak adekuat</div>
-                  <div className="font-medium">{detailItem.bb_tidak_adekuat ?? '-'}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, fontSize: 14 }}>
+                {/* Redflag Section */}
+                <div style={{ gridColumn: 'span 2', marginBottom: 8 }}>
+                  <h4 style={{ fontSize: 14, fontWeight: 600, color: '#dc2626', marginBottom: 12 }}>🚨 Pemeriksaan Red Flag</h4>
                 </div>
                 <div>
-                  <div className="text-[var(--muted-foreground)]">Murmur/edema</div>
-                  <div className="font-medium">{detailItem.murmur_edema ?? '-'}</div>
+                  <div style={{ color: '#6b7280', marginBottom: 4 }}>Kenaikan berat tidak adekuat</div>
+                  <div style={{ fontWeight: 500, color: detailItem.bb_tidak_adekuat?.toLowerCase() === 'ya' ? '#dc2626' : '#111518' }}>{detailItem.bb_tidak_adekuat || '-'}</div>
                 </div>
                 <div>
-                  <div className="text-[var(--muted-foreground)]">Keterlambatan perkembangan</div>
-                  <div className="font-medium">{detailItem.delayed_development ?? '-'}</div>
+                  <div style={{ color: '#6b7280', marginBottom: 4 }}>Murmur/edema</div>
+                  <div style={{ fontWeight: 500, color: detailItem.murmur_edema?.toLowerCase() === 'ya' ? '#dc2626' : '#111518' }}>{detailItem.murmur_edema || '-'}</div>
                 </div>
                 <div>
-                  <div className="text-[var(--muted-foreground)]">Wajah dismorfik</div>
-                  <div className="font-medium">{detailItem.wajah_dismorfik ?? '-'}</div>
+                  <div style={{ color: '#6b7280', marginBottom: 4 }}>Keterlambatan perkembangan</div>
+                  <div style={{ fontWeight: 500, color: detailItem.delayed_development?.toLowerCase() === 'ya' ? '#dc2626' : '#111518' }}>{detailItem.delayed_development || '-'}</div>
                 </div>
                 <div>
-                  <div className="text-[var(--muted-foreground)]">Organomegali/limfadenopati</div>
-                  <div className="font-medium">{detailItem.organomegali_limfadenopati ?? '-'}</div>
+                  <div style={{ color: '#6b7280', marginBottom: 4 }}>Wajah dismorfik</div>
+                  <div style={{ fontWeight: 500, color: detailItem.wajah_dismorfik?.toLowerCase() === 'ya' ? '#dc2626' : '#111518' }}>{detailItem.wajah_dismorfik || '-'}</div>
                 </div>
                 <div>
-                  <div className="text-[var(--muted-foreground)]">ISPA/cystitis berulang/berat</div>
-                  <div className="font-medium">{detailItem.ispa_cystitis ?? '-'}</div>
+                  <div style={{ color: '#6b7280', marginBottom: 4 }}>Organomegali/limfadenopati</div>
+                  <div style={{ fontWeight: 500, color: detailItem.organomegali_limfadenopati?.toLowerCase() === 'ya' ? '#dc2626' : '#111518' }}>{detailItem.organomegali_limfadenopati || '-'}</div>
                 </div>
                 <div>
-                  <div className="text-[var(--muted-foreground)]">Muntah/diare berulang</div>
-                  <div className="font-medium">{detailItem.muntah_diare_berulang ?? '-'}</div>
+                  <div style={{ color: '#6b7280', marginBottom: 4 }}>ISPA/cystitis berulang/berat</div>
+                  <div style={{ fontWeight: 500, color: detailItem.ispa_cystitis?.toLowerCase() === 'ya' ? '#dc2626' : '#111518' }}>{detailItem.ispa_cystitis || '-'}</div>
                 </div>
-                <div className="md:col-span-2">
-                  <div className="text-[var(--muted-foreground)]">Diagnosa Penyakit</div>
-                  <div className="font-medium">{detailItem.diagnosa_penyakit_penyerta ?? '-'}</div>
+                <div>
+                  <div style={{ color: '#6b7280', marginBottom: 4 }}>Muntah/diare berulang</div>
+                  <div style={{ fontWeight: 500, color: detailItem.muntah_diare_berulang?.toLowerCase() === 'ya' ? '#dc2626' : '#111518' }}>{detailItem.muntah_diare_berulang || '-'}</div>
                 </div>
-                <div className="md:col-span-2">
-                  <div className="text-[var(--muted-foreground)]">Subjective</div>
-                  <div className="font-medium whitespace-pre-wrap">{detailItem.subjective ?? '-'}</div>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <div style={{ color: '#6b7280', marginBottom: 4 }}>Diagnosa Penyakit Penyerta</div>
+                  <div style={{ fontWeight: 500, color: '#111518' }}>{detailItem.diagnosa_penyakit_penyerta || '-'}</div>
                 </div>
-                <div className="md:col-span-2">
-                  <div className="text-[var(--muted-foreground)]">Objective</div>
-                  <div className="font-medium whitespace-pre-wrap">{detailItem.objective ?? '-'}</div>
+
+                {/* SOAP Section */}
+                <div style={{ gridColumn: 'span 2', marginTop: 16, marginBottom: 8, borderTop: '1px solid #e5e7eb', paddingTop: 16 }}>
+                  <h4 style={{ fontSize: 14, fontWeight: 600, color: '#3b82f6', marginBottom: 12 }}>📋 Catatan SOAP</h4>
                 </div>
-                <div className="md:col-span-2">
-                  <div className="text-[var(--muted-foreground)]">Assesment</div>
-                  <div className="font-medium whitespace-pre-wrap">{detailItem.assesment ?? '-'}</div>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <div style={{ color: '#6b7280', marginBottom: 4 }}>Subjective</div>
+                  <div style={{ fontWeight: 500, color: '#111518', whiteSpace: 'pre-wrap', background: '#f9fafb', padding: 12, borderRadius: 8 }}>{detailItem.subjective || '-'}</div>
                 </div>
-                <div className="md:col-span-2">
-                  <div className="text-[var(--muted-foreground)]">Plan</div>
-                  <div className="font-medium whitespace-pre-wrap">{detailItem.plan ?? '-'}</div>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <div style={{ color: '#6b7280', marginBottom: 4 }}>Objective</div>
+                  <div style={{ fontWeight: 500, color: '#111518', whiteSpace: 'pre-wrap', background: '#f9fafb', padding: 12, borderRadius: 8 }}>{detailItem.objective || '-'}</div>
+                </div>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <div style={{ color: '#6b7280', marginBottom: 4 }}>Assesment</div>
+                  <div style={{ fontWeight: 500, color: '#111518', whiteSpace: 'pre-wrap', background: '#f9fafb', padding: 12, borderRadius: 8 }}>{detailItem.assesment || '-'}</div>
+                </div>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <div style={{ color: '#6b7280', marginBottom: 4 }}>Plan</div>
+                  <div style={{ fontWeight: 500, color: '#111518', whiteSpace: 'pre-wrap', background: '#f9fafb', padding: 12, borderRadius: 8 }}>{detailItem.plan || '-'}</div>
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-[var(--muted-foreground)]">Tidak ada data.</div>
+              <div style={{ fontSize: 14, color: '#6b7280', textAlign: 'center', padding: 24 }}>Tidak ada data medis.</div>
             )}
           </div>
         </div>

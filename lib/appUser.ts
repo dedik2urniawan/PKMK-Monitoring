@@ -83,7 +83,8 @@ export async function getAppUser(): Promise<AppUser | null> {
       userEmail = auth.user.email || null;
       console.log('[getAppUser] Got user from cookie:', { userId, userEmail });
     } else {
-      console.error('[getAppUser] auth.getUser (cookie) error:', authErr?.message);
+      // Expected on SSR when using localStorage-based auth - not a real error
+      console.log('[getAppUser] No session from cookie (expected with localStorage auth)');
     }
   }
 
