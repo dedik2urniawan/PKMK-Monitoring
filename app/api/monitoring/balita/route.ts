@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getAppUser } from "@/lib/appUser";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+// Helper to decode JWT payload
+function decodeJWT(token: string): any {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1];
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = Buffer.from(base64, 'base64').toString('utf8');
+    return JSON.parse(jsonPayload);
+  } catch { return null; }
+}
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -15,8 +26,34 @@ export async function GET(req: NextRequest) {
   const page = Number(req.nextUrl.searchParams.get("page") || "1");
   const limit = Math.max(1, Number(req.nextUrl.searchParams.get("limit") || "10"));
 
-  // Get user info for role-based filtering
-  const appUser = await getAppUser();
+  // DIRECT: Read Authorization header from request
+  const authHeader = req.headers.get('authorization');
+  console.log('[monitoring/balita] Auth header present:', !!authHeader);
+
+  let appUser: { role: string; puskesmas_id: string | null } | null = null;
+
+  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+    const jwt = authHeader.slice(7).trim();
+    const decoded = decodeJWT(jwt);
+
+    if (decoded && decoded.exp > Math.floor(Date.now() / 1000)) {
+      const userId = decoded.sub;
+      const userEmail = decoded.email;
+      console.log('[monitoring/balita] JWT decoded:', { userId, userEmail });
+
+      // Lookup in app_users
+      const { data } = await supabase
+        .from('app_users')
+        .select('role, puskesmas_id')
+        .or(`id.eq.${userId},email.eq.${userEmail}`)
+        .maybeSingle();
+
+      if (data) {
+        appUser = { role: data.role, puskesmas_id: data.puskesmas_id };
+      }
+    }
+  }
+
   console.log('[monitoring/balita] User:', { role: appUser?.role, puskesmas_id: appUser?.puskesmas_id });
 
   // Base query builder
