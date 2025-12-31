@@ -26,13 +26,19 @@ export default function NewKohort() {
       try {
         await ensureServerSession();
         const authHeaders = await getAuthHeaders();
+
+        // Fetch kecamatan with auth
         const res = await fetch("/api/ref/kecamatan", { credentials: 'include', headers: authHeaders });
         const data = await res.json();
         setKecList(data.items || []);
-      } catch { }
-      const r = await fetch("/api/monitoring/balita", { credentials: 'include' });
-      const d = await r.json();
-      setBalita(d.items || []);
+
+        // Fetch balita with auth (FIXED - was missing authHeaders!)
+        const r = await fetch("/api/monitoring/balita", { credentials: 'include', headers: authHeaders });
+        const d = await r.json();
+        setBalita(d.items || []);
+      } catch (e) {
+        console.error('[kohort/new] Error fetching initial data:', e);
+      }
       setLoading(false);
     })();
   }, []);
