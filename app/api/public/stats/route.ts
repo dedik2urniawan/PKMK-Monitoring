@@ -90,6 +90,75 @@ export async function GET() {
 
         const uniquePuskesmas = new Set(activePuskesmas?.map((b: any) => b.puskesmas_id) || []).size;
 
+        // 7. NEW: Nutrition status distribution from latest antropometri
+        const { data: latestAntropometri } = await supabase
+            .from("monitoring_antropometri")
+            .select("balita_id, status_gizi_bbu")
+            .order("tanggal", { ascending: false });
+
+        // Get latest status per balita
+        const latestStatusByBalita = new Map<string, string>();
+        latestAntropometri?.forEach((m: any) => {
+            if (!latestStatusByBalita.has(m.balita_id)) {
+                latestStatusByBalita.set(m.balita_id, m.status_gizi_bbu || 'unknown');
+            }
+        });
+
+        const nutritionStatus = {
+            normal: 0,
+            kurang: 0,
+            buruk: 0,
+            lebih: 0,
+            unknown: 0
+        };
+
+        latestStatusByBalita.forEach((status) => {
+            const s = status.toLowerCase();
+            if (s.includes('normal')) nutritionStatus.normal++;
+            else if (s.includes('kurang')) nutritionStatus.kurang++;
+            else if (s.includes('buruk') || s.includes('sangat')) nutritionStatus.buruk++;
+            else if (s.includes('lebih') || s.includes('obesitas')) nutritionStatus.lebih++;
+            else nutritionStatus.unknown++;
+        });
+
+        // 8. NEW: Red flag count (balita with severe status)
+        const redFlagCount = nutritionStatus.buruk + nutritionStatus.kurang;
+
+        // 9. NEW: Top 5 kecamatan with most balita
+        const { data: kecamatanData } = await supabase
+            .from("balita")
+            .select("kecamatan_id, ref_kecamatan(nama)")
+            .not("kecamatan_id", "is", null);
+
+        const kecamatanCount = new Map<string, { name: string; count: number }>();
+        kecamatanData?.forEach((b: any) => {
+            const id = b.kecamatan_id;
+            const name = b.ref_kecamatan?.nama || 'Unknown';
+            if (kecamatanCount.has(id)) {
+                kecamatanCount.get(id)!.count++;
+            } else {
+                kecamatanCount.set(id, { name, count: 1 });
+            }
+        });
+
+        const topKecamatan = Array.from(kecamatanCount.values())
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+
+        // 10. NEW: Recent activity (last 5 monitoring entries)
+        const { data: recentActivity } = await supabase
+            .from("monitoring_antropometri")
+            .select("tanggal, balita:balita_id(nama), berat_badan, tinggi_badan")
+            .order("tanggal", { ascending: false })
+            .limit(5);
+
+        const recentActivityFormatted = recentActivity?.map((a: any) => ({
+            date: a.tanggal,
+            name: a.balita?.nama?.substring(0, 15) || 'Balita',
+            bb: a.berat_badan,
+            tb: a.tinggi_badan
+        })) || [];
+
         // Response with CORS headers for iframe embed
         const response = NextResponse.json({
             totalBalita: totalBalita || 0,
@@ -106,6 +175,11 @@ export async function GET() {
                 percentage: Math.round((m.count / maxCount) * 100)
             })),
             puskesmasAktif: uniquePuskesmas,
+            // NEW METRICS
+            nutritionStatus,
+            redFlagCount,
+            topKecamatan,
+            recentActivity: recentActivityFormatted,
             periode: {
                 bulan: now.toLocaleDateString('id-ID', { month: 'long' }),
                 tahun: currentYear
@@ -127,3 +201,4 @@ export async function GET() {
         );
     }
 }
+

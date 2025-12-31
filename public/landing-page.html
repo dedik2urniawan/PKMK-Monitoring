@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8" />
   <title>PKMK Monitoring | Dashboard Gizi & Data Analytics</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
 
   <style>
     :root {
@@ -25,8 +27,13 @@
       --radius: 16px;
     }
 
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
       margin: 0;
@@ -34,14 +41,22 @@
       background-color: var(--bg-body);
       color: var(--text-main);
       background-image: radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.1) 0px, transparent 50%),
-                        radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%);
+        radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%);
       background-attachment: fixed;
       -webkit-font-smoothing: antialiased;
       padding-bottom: 50px;
     }
 
-    section, div[id] { scroll-margin-top: 40px; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    section,
+    div[id] {
+      scroll-margin-top: 40px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
 
     /* HEADER */
     header {
@@ -74,10 +89,24 @@
       box-shadow: var(--shadow-md);
     }
 
-    .brand-text h1 { font-size: 18px; font-weight: 700; margin: 0; color: var(--text-main); }
-    .brand-text span { font-size: 12px; color: var(--text-muted); font-weight: 500; display: block; }
+    .brand-text h1 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-main);
+    }
 
-    nav { display: flex; gap: 8px; }
+    .brand-text span {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      display: block;
+    }
+
+    nav {
+      display: flex;
+      gap: 8px;
+    }
 
     .nav-scroll {
       text-decoration: none;
@@ -106,7 +135,7 @@
       font-weight: 500;
       transition: all 0.2s;
     }
-    
+
     .btn-login:hover {
       background: var(--primary-dark);
       transform: translateY(-1px);
@@ -144,7 +173,10 @@
       max-width: 90%;
     }
 
-    .cta-group { display: flex; gap: 12px; }
+    .cta-group {
+      display: flex;
+      gap: 12px;
+    }
 
     .btn {
       display: inline-flex;
@@ -183,14 +215,16 @@
     }
 
     /* DASHBOARD CARD */
-    .hero-visual { position: relative; }
+    .hero-visual {
+      position: relative;
+    }
 
     .dashboard-card {
       background: white;
       border-radius: 16px;
       padding: 24px;
       box-shadow: var(--shadow-lg);
-      border: 1px solid rgba(255,255,255,0.6);
+      border: 1px solid rgba(255, 255, 255, 0.6);
       position: relative;
       z-index: 2;
     }
@@ -203,9 +237,33 @@
       padding-bottom: 12px;
     }
 
-    .dash-title { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
-    .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .dash-title {
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
 
     .stats-row {
       display: grid;
@@ -219,12 +277,33 @@
       padding: 12px;
       border-radius: 10px;
     }
-    .stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
-    .stat-val { font-size: 20px; font-weight: 700; color: var(--text-main); }
-    .stat-trend { font-size: 10px; color: var(--accent); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .stat-trend {
+      font-size: 10px;
+      color: var(--accent);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
 
     /* DYNAMIC CHART */
-    .chart-container { margin-top: 10px; }
+    .chart-container {
+      margin-top: 10px;
+    }
+
     .bar-group {
       display: flex;
       align-items: flex-end;
@@ -232,6 +311,7 @@
       height: 80px;
       padding-top: 10px;
     }
+
     .bar {
       flex: 1;
       background: var(--border);
@@ -239,6 +319,7 @@
       position: relative;
       overflow: hidden;
     }
+
     .bar-fill {
       position: absolute;
       bottom: 0;
@@ -248,8 +329,14 @@
       border-radius: 4px;
       transition: height 0.6s ease-out;
     }
-    .bar:nth-child(2) .bar-fill { background: var(--secondary); }
-    .bar:nth-child(4) .bar-fill { background: var(--accent); }
+
+    .bar:nth-child(2) .bar-fill {
+      background: var(--secondary);
+    }
+
+    .bar:nth-child(4) .bar-fill {
+      background: var(--accent);
+    }
 
     .bar-labels {
       display: flex;
@@ -274,7 +361,18 @@
       z-index: 3;
       animation: float 3s ease-in-out infinite;
     }
-    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
+    }
 
     /* SECTIONS */
     .section-title {
@@ -282,8 +380,18 @@
       margin-top: 60px;
       margin-bottom: 40px;
     }
-    .section-title h3 { font-size: 28px; font-weight: 800; margin: 0 0 10px; }
-    .section-title p { color: var(--text-muted); margin: 0; font-size: 14px; }
+
+    .section-title h3 {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 0 10px;
+    }
+
+    .section-title p {
+      color: var(--text-muted);
+      margin: 0;
+      font-size: 14px;
+    }
 
     .grid-cards {
       display: grid;
@@ -321,8 +429,17 @@
       font-size: 24px;
     }
 
-    .card h4 { margin: 0 0 8px; font-size: 16px; }
-    .card p { margin: 0; font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+    .card h4 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
 
     footer {
       text-align: center;
@@ -334,24 +451,57 @@
     }
 
     /* LOADING STATE */
-    .loading { opacity: 0.6; animation: shimmer 1.5s infinite; }
-    @keyframes shimmer { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.3; } }
+    .loading {
+      opacity: 0.6;
+      animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+
+      0%,
+      100% {
+        opacity: 0.6;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
 
     /* RESPONSIVE */
     @media (max-width: 768px) {
-      .hero { grid-template-columns: 1fr; text-align: center; gap: 30px; }
-      .hero-content h2 { font-size: 32px; }
-      .cta-group { justify-content: center; }
-      nav { display: none; }
-      .hero-visual { padding: 0 10px; }
-      .float-badge { display: none; }
+      .hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 30px;
+      }
+
+      .hero-content h2 {
+        font-size: 32px;
+      }
+
+      .cta-group {
+        justify-content: center;
+      }
+
+      nav {
+        display: none;
+      }
+
+      .hero-visual {
+        padding: 0 10px;
+      }
+
+      .float-badge {
+        display: none;
+      }
     }
   </style>
 </head>
 
 <body>
   <div class="container">
-    
+
     <header>
       <div class="brand">
         <div class="logo-icon">P</div>
@@ -363,17 +513,18 @@
       <nav>
         <a href="#fitur" class="nav-scroll">Fitur</a>
         <a href="#analytics" class="nav-scroll">Analytics</a>
-        <a href="https://pkmk-monitoring-2asq.vercel.app/login" target="_blank" class="btn-login">Login App</a>
+        <a href="https://pkmk-malangkab.app/login" target="_blank" class="btn-login">Login App</a>
       </nav>
     </header>
 
     <section class="hero">
       <div class="hero-content">
         <h2>Pantau Outcome Gizi Balita Secara <span class="highlight">Real-Time</span></h2>
-        <p>Solusi digital lengkap untuk pencatatan, pemantauan kepatuhan, dan analisis Pangan Olahan untuk Keperluan Medis Khusus (PKMK) di Kabupaten Malang.</p>
-        
+        <p>Solusi digital lengkap untuk pencatatan, pemantauan kepatuhan, dan analisis Pangan Olahan untuk Keperluan
+          Medis Khusus (PKMK) di Kabupaten Malang.</p>
+
         <div class="cta-group">
-          <a href="https://pkmk-monitoring-2asq.vercel.app/login" target="_blank" class="btn btn-primary">
+          <a href="https://pkmk-malangkab.app/login" target="_blank" class="btn btn-primary">
             🚀 Buka Dashboard
           </a>
           <a href="#analytics" class="btn btn-outline nav-scroll">
@@ -385,8 +536,10 @@
       <div class="hero-visual">
         <div class="dashboard-card">
           <div class="dash-header">
-            <div class="dash-title"><span class="dot"></span> Data Monitoring <span id="periode-label" style="font-weight:400; color: var(--text-muted); font-size: 12px;"></span></div>
-            <div style="font-size:10px; color:#94a3b8; background:#f1f5f9; padding:4px 8px; border-radius:4px;">Live Data</div>
+            <div class="dash-title"><span class="dot"></span> Data Monitoring <span id="periode-label"
+                style="font-weight:400; color: var(--text-muted); font-size: 12px;"></span></div>
+            <div style="font-size:10px; color:#94a3b8; background:#f1f5f9; padding:4px 8px; border-radius:4px;">Live
+              Data</div>
           </div>
 
           <div class="stats-row">
@@ -405,11 +558,21 @@
           <div style="font-size:12px; font-weight:600; margin-bottom:8px;">Trend Monitoring Antropometri (5 Bulan)</div>
           <div class="chart-container">
             <div class="bar-group" id="chart-bars">
-              <div class="bar"><div class="bar-fill" style="height: 20%"></div></div>
-              <div class="bar"><div class="bar-fill" style="height: 40%"></div></div>
-              <div class="bar"><div class="bar-fill" style="height: 30%"></div></div>
-              <div class="bar"><div class="bar-fill" style="height: 60%"></div></div>
-              <div class="bar"><div class="bar-fill" style="height: 50%"></div></div>
+              <div class="bar">
+                <div class="bar-fill" style="height: 20%"></div>
+              </div>
+              <div class="bar">
+                <div class="bar-fill" style="height: 40%"></div>
+              </div>
+              <div class="bar">
+                <div class="bar-fill" style="height: 30%"></div>
+              </div>
+              <div class="bar">
+                <div class="bar-fill" style="height: 60%"></div>
+              </div>
+              <div class="bar">
+                <div class="bar-fill" style="height: 50%"></div>
+              </div>
             </div>
             <div class="bar-labels" id="chart-labels">
               <span>-</span><span>-</span><span>-</span><span>-</span><span>-</span>
@@ -436,7 +599,8 @@
       <div class="card">
         <div class="card-icon">📝</div>
         <h4>Pencatatan Digital</h4>
-        <p>Input data balita, monitoring antropometri (TB/BB/Z-Score), dan pemberian PKMK dengan formulir terstandarisasi.</p>
+        <p>Input data balita, monitoring antropometri (TB/BB/Z-Score), dan pemberian PKMK dengan formulir
+          terstandarisasi.</p>
       </div>
 
       <div class="card">
@@ -448,7 +612,8 @@
       <div class="card">
         <div class="card-icon" style="color:var(--accent); background:rgba(16,185,129,0.1)">🔔</div>
         <h4>Monitoring Kepatuhan</h4>
-        <p>Pantau kepatuhan per minggu, konsumsi PKMK, dan identifikasi balita dengan red flag untuk intervensi cepat.</p>
+        <p>Pantau kepatuhan per minggu, konsumsi PKMK, dan identifikasi balita dengan red flag untuk intervensi cepat.
+        </p>
       </div>
 
       <div class="card">
@@ -466,7 +631,8 @@
       <div class="card">
         <div class="card-icon" style="color:#8b5cf6; background:rgba(139,92,246,0.1)">📥</div>
         <h4>Import Excel</h4>
-        <p>Upload data balita dan monitoring secara massal via template Excel dengan validasi otomatis dan Z-Score calculation.</p>
+        <p>Upload data balita dan monitoring secara massal via template Excel dengan validasi otomatis dan Z-Score
+          calculation.</p>
       </div>
     </div>
 
@@ -475,19 +641,77 @@
       <p>Pengambilan keputusan berbasis bukti untuk intervensi gizi yang efektif.</p>
     </div>
 
+    <!-- NEW: Live Statistics Section -->
+    <div id="live-stats" class="section-title" style="margin-top: 20px;">
+      <h3>📊 Statistik Real-Time</h3>
+      <p>Data langsung dari sistem monitoring PKMK Kabupaten Malang</p>
+    </div>
+
+    <div class="grid-cards" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 30px;">
+      <!-- Nutrition Status Normal -->
+      <div class="card" style="border-top: 4px solid #10b981; text-align: center;">
+        <div style="font-size: 32px; margin-bottom: 8px;">✅</div>
+        <div style="font-size: 28px; font-weight: 800; color: #10b981;" id="status-normal">-</div>
+        <div style="font-size: 12px; color: var(--text-muted);">Gizi Normal</div>
+      </div>
+      <!-- Nutrition Status Kurang -->
+      <div class="card" style="border-top: 4px solid #f59e0b; text-align: center;">
+        <div style="font-size: 32px; margin-bottom: 8px;">⚠️</div>
+        <div style="font-size: 28px; font-weight: 800; color: #f59e0b;" id="status-kurang">-</div>
+        <div style="font-size: 12px; color: var(--text-muted);">Gizi Kurang</div>
+      </div>
+      <!-- Nutrition Status Buruk -->
+      <div class="card" style="border-top: 4px solid #ef4444; text-align: center;">
+        <div style="font-size: 32px; margin-bottom: 8px;">🚨</div>
+        <div style="font-size: 28px; font-weight: 800; color: #ef4444;" id="status-buruk">-</div>
+        <div style="font-size: 12px; color: var(--text-muted);">Gizi Buruk</div>
+      </div>
+      <!-- Red Flag Alert -->
+      <div class="card"
+        style="background: linear-gradient(135deg, #fef2f2, #fff); border-top: 4px solid #dc2626; text-align: center;">
+        <div style="font-size: 32px; margin-bottom: 8px;">🔴</div>
+        <div style="font-size: 28px; font-weight: 800; color: #dc2626;" id="red-flag-count">-</div>
+        <div style="font-size: 12px; color: var(--text-muted);">Perlu Intervensi</div>
+      </div>
+    </div>
+
+    <!-- Top Kecamatan Section -->
+    <div class="grid-cards" style="grid-template-columns: 1fr 1fr; margin-bottom: 40px;">
+      <div class="card" style="border-left: 4px solid var(--secondary);">
+        <h4 style="display: flex; align-items: center; gap: 8px;">📍 Top 5 Kecamatan</h4>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Kecamatan dengan balita terdaftar
+          terbanyak</p>
+        <div id="top-kecamatan-list" style="font-size: 13px;">
+          <div style="padding: 6px 0; border-bottom: 1px solid #f1f5f9;">Loading...</div>
+        </div>
+      </div>
+      <!-- Recent Activity -->
+      <div class="card" style="border-left: 4px solid var(--accent);">
+        <h4 style="display: flex; align-items: center; gap: 8px;">⚡ Aktivitas Terbaru</h4>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">5 monitoring antropometri terakhir
+        </p>
+        <div id="recent-activity-list" style="font-size: 12px;">
+          <div style="padding: 6px 0; border-bottom: 1px solid #f1f5f9;">Loading...</div>
+        </div>
+      </div>
+    </div>
+
     <div class="grid-cards" style="grid-template-columns: 1fr 1fr;">
       <div class="card" style="border-left: 4px solid var(--primary);">
         <h4>🩺 Untuk Tenaga Kesehatan</h4>
-        <p>Memantau progress individu balita, early warning system jika berat badan tidak naik, identifikasi red flag, dan dokumentasi asuhan gizi elektronik.</p>
+        <p>Memantau progress individu balita, early warning system jika berat badan tidak naik, identifikasi red flag,
+          dan dokumentasi asuhan gizi elektronik.</p>
       </div>
       <div class="card" style="border-left: 4px solid var(--accent);">
         <h4>📈 Untuk Pembuat Kebijakan</h4>
-        <p>Melihat efektivitas program PKMK, persebaran kasus gizi kurang/buruk per wilayah, dan laporan agregat untuk perencanaan anggaran tahunan.</p>
+        <p>Melihat efektivitas program PKMK, persebaran kasus gizi kurang/buruk per wilayah, dan laporan agregat untuk
+          perencanaan anggaran tahunan.</p>
       </div>
     </div>
 
     <footer>
-      <p>&copy; <span id="year"></span> PKMK Monitoring System - Dinas Kesehatan Kab. Malang. Dikembangkan oleh Tim Digital Health.</p>
+      <p>&copy; <span id="year"></span> PKMK Monitoring System - Dinas Kesehatan Kab. Malang. Dikembangkan oleh Tim
+        Digital Health.</p>
       <p style="margin-top: 8px; font-size: 10px; color: #94a3b8;">Data diperbarui secara real-time dari sistem</p>
     </footer>
 
@@ -500,7 +724,7 @@
     // 2. Smooth Scroll Fix for Google Sites iframe
     const scrollLinks = document.querySelectorAll('.nav-scroll');
     scrollLinks.forEach(link => {
-      link.addEventListener('click', function(e) {
+      link.addEventListener('click', function (e) {
         e.preventDefault();
         const targetId = this.getAttribute('href').substring(1);
         const targetElement = document.getElementById(targetId);
@@ -511,36 +735,36 @@
     });
 
     // 3. FETCH REAL DATA FROM API
-    const API_URL = 'https://pkmk-monitoring-2asq.vercel.app/api/public/stats';
+    const API_URL = 'https://pkmk-malangkab.app/api/public/stats';
 
     async function loadStats() {
       try {
         const response = await fetch(API_URL);
         if (!response.ok) throw new Error('API Error');
-        
+
         const data = await response.json();
-        
+
         // Update Total Balita
         document.getElementById('total-balita').textContent = data.totalBalita.toLocaleString('id-ID');
         document.getElementById('puskesmas-aktif').innerHTML = `📍 ${data.puskesmasAktif} Puskesmas Aktif`;
-        
+
         // Update Compliance
         document.getElementById('compliance-pct').textContent = data.compliancePercentage + '%';
         document.getElementById('kohort-count').textContent = `${data.balitaWithKohort} balita dalam kohort`;
-        
+
         // Update Periode Label
         document.getElementById('periode-label').textContent = `- ${data.periode.bulan} ${data.periode.tahun}`;
-        
+
         // Update Monitoring Total
         document.getElementById('monitoring-total').textContent = `${data.monitoringThisMonth.total} Entries`;
-        
+
         // Update Chart Bars
         const barsContainer = document.getElementById('chart-bars');
         const labelsContainer = document.getElementById('chart-labels');
-        
+
         barsContainer.innerHTML = '';
         labelsContainer.innerHTML = '';
-        
+
         data.monthlyTrend.forEach((month, i) => {
           // Bar
           const bar = document.createElement('div');
@@ -550,7 +774,7 @@
           fill.style.height = month.percentage + '%';
           bar.appendChild(fill);
           barsContainer.appendChild(bar);
-          
+
           // Label
           const label = document.createElement('span');
           label.textContent = month.label;
@@ -558,7 +782,46 @@
         });
 
         console.log('[LandingPage] Data loaded:', data);
-        
+
+        // NEW: Update Nutrition Status Cards
+        if (data.nutritionStatus) {
+          document.getElementById('status-normal').textContent = data.nutritionStatus.normal || 0;
+          document.getElementById('status-kurang').textContent = data.nutritionStatus.kurang || 0;
+          document.getElementById('status-buruk').textContent = data.nutritionStatus.buruk || 0;
+        }
+
+        // NEW: Update Red Flag Count
+        if (data.redFlagCount !== undefined) {
+          document.getElementById('red-flag-count').textContent = data.redFlagCount;
+        }
+
+        // NEW: Update Top Kecamatan List
+        if (data.topKecamatan && data.topKecamatan.length > 0) {
+          const kecList = document.getElementById('top-kecamatan-list');
+          kecList.innerHTML = data.topKecamatan.map((k, i) =>
+            `<div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f5f9;">
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="background: ${i === 0 ? '#10b981' : i === 1 ? '#0ea5e9' : '#64748b'}; color: white; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700;">${i + 1}</span>
+                ${k.name}
+              </span>
+              <span style="font-weight: 600; color: var(--text-main);">${k.count} balita</span>
+            </div>`
+          ).join('');
+        }
+
+        // NEW: Update Recent Activity List
+        if (data.recentActivity && data.recentActivity.length > 0) {
+          const actList = document.getElementById('recent-activity-list');
+          actList.innerHTML = data.recentActivity.map(a => {
+            const date = new Date(a.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+            return `<div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f5f9;">
+              <span style="color: var(--text-muted);">${date}</span>
+              <span style="font-weight: 500;">${a.name}</span>
+              <span style="color: var(--primary); font-size: 11px;">${a.bb}kg / ${a.tb}cm</span>
+            </div>`;
+          }).join('');
+        }
+
       } catch (error) {
         console.error('[LandingPage] Failed to load stats:', error);
         // Show fallback data on error
@@ -569,9 +832,10 @@
 
     // Load data on page load
     loadStats();
-    
+
     // Refresh every 5 minutes
     setInterval(loadStats, 5 * 60 * 1000);
   </script>
 </body>
+
 </html>

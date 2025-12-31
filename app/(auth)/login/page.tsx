@@ -594,6 +594,8 @@ function LoginForm() {
               <p className="footer-credit">
                 Crafted with <span className="heart">♥</span> by{" "}
                 <a href="https://dedik2urniawan.github.io/" target="_blank" rel="noopener noreferrer">DK</a>
+                <span style={{ margin: '0 8px', opacity: 0.5 }}>|</span>
+                <span style={{ opacity: 0.7, fontSize: '0.85em' }}>v1.2.0</span>
               </p>
             </div>
           </div>
