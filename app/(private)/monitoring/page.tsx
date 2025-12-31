@@ -76,6 +76,7 @@ export default function MonitoringIndex() {
   const [total, setTotal] = useState(0);
   const [limit, setLimit] = useState(10);
   const [pageInput, setPageInput] = useState("1");
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -88,6 +89,8 @@ export default function MonitoringIndex() {
       if (items.length === 1) {
         setKec((prev) => prev || items[0]);
       }
+      // Mark auth as ready after first successful auth call
+      setAuthReady(true);
     })();
   }, []);
 
@@ -150,9 +153,10 @@ export default function MonitoringIndex() {
   }
 
   useEffect(() => {
+    if (!authReady) return; // Wait for auth to be ready
     onSubmit();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit]);
+  }, [page, limit, authReady]);
 
   useEffect(() => { setPageInput(String(page)); }, [page]);
 
