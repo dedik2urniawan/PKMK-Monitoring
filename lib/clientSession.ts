@@ -17,22 +17,37 @@ export function clearClientTokens() {
 export async function getAuthHeaders() {
   if (typeof window === "undefined") return {};
   try {
-    const supabase = getSupabase();
-    const { data } = await supabase.auth.getSession();
-    let token = data.session?.access_token ?? null;
-    let refresh = data.session?.refresh_token ?? null;
+    // PRIORITY 1: Read from localStorage first (for Vercel production)
+    let token = localStorage.getItem(TOKEN_KEY);
+    let refresh = localStorage.getItem(REFRESH_KEY);
 
-    // Fallback: baca dari localStorage jika cookie tidak ada
-    if (!token && typeof window !== 'undefined') {
-      token = localStorage.getItem(TOKEN_KEY);
-      refresh = localStorage.getItem(REFRESH_KEY);
+    console.log('[getAuthHeaders] localStorage check:', {
+      hasToken: !!token,
+      tokenPrefix: token?.slice(0, 20)
+    });
+
+    // PRIORITY 2: Fallback to Supabase session if localStorage empty
+    if (!token) {
+      const supabase = getSupabase();
+      const { data } = await supabase.auth.getSession();
+      token = data.session?.access_token ?? null;
+      refresh = data.session?.refresh_token ?? null;
+      console.log('[getAuthHeaders] Supabase session check:', {
+        hasToken: !!token
+      });
     }
 
     const headers: Record<string, string> = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
     if (refresh) headers["x-refresh-token"] = refresh;
+
+    console.log('[getAuthHeaders] Final headers:', {
+      hasAuth: !!headers["Authorization"]
+    });
+
     return headers;
-  } catch {
+  } catch (e) {
+    console.error('[getAuthHeaders] Error:', e);
     return {};
   }
 }
