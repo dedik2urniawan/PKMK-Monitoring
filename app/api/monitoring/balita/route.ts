@@ -15,16 +15,13 @@ export async function GET(req: NextRequest) {
   const page = Number(req.nextUrl.searchParams.get("page") || "1");
   const limit = Math.max(1, Number(req.nextUrl.searchParams.get("limit") || "10"));
 
+  // Get user info for role-based filtering
+  const appUser = await getAppUser();
+  console.log('[monitoring/balita] User:', { role: appUser?.role, puskesmas_id: appUser?.puskesmas_id });
+
   // Base query builder
   const base = supabase.from("balita");
-  // Build filter once
-  // Build filter once
   let qFilter = base.select("id", { count: 'exact', head: true });
-  // Fetch balita with their latest cohort and the latest anthropometry from that cohort
-  // Note: This assumes 1-level deep relation or we fetch kohort and then frontend finds latest.
-  // We want to show "Status Redflag". This is usually in monitoring_antropometri.
-  // Relation: balita -> kohort -> monitoring_antropometri
-  // Fetch full monitoring data for modal display
   let qData = base.select(`
     *,
     kohort (
@@ -36,13 +33,27 @@ export async function GET(req: NextRequest) {
   `)
     .order("nama_balita");
 
-  const appUser = await getAppUser();
+  // Apply balita_id filter first (specific lookup)
   if (balita_id) { qFilter = qFilter.eq("id", balita_id); qData = qData.eq("id", balita_id); }
-  // Enforce role-based scoping
-  if (appUser?.role === 'admin_puskesmas') {
-    if (appUser.puskesmas_id) { qFilter = qFilter.eq('puskesmas_id', appUser.puskesmas_id); qData = qData.eq('puskesmas_id', appUser.puskesmas_id); }
+
+  // Role-based filtering - ALWAYS apply for admin_puskesmas
+  if (appUser?.role === 'admin_puskesmas' && appUser.puskesmas_id) {
+    // Admin puskesmas: FORCE filter by their puskesmas_id
+    console.log('[monitoring/balita] Filtering for admin_puskesmas:', appUser.puskesmas_id);
+    qFilter = qFilter.eq('puskesmas_id', appUser.puskesmas_id);
+    qData = qData.eq('puskesmas_id', appUser.puskesmas_id);
+  } else if (appUser?.role === 'superadmin') {
+    // Superadmin: apply optional filter from query param
+    if (puskesmas_id) {
+      console.log('[monitoring/balita] Superadmin filtering by selected puskesmas:', puskesmas_id);
+      qFilter = qFilter.eq('puskesmas_id', puskesmas_id);
+      qData = qData.eq('puskesmas_id', puskesmas_id);
+    }
   } else if (puskesmas_id) {
-    qFilter = qFilter.eq('puskesmas_id', puskesmas_id); qData = qData.eq('puskesmas_id', puskesmas_id)
+    // Fallback: if user role unknown but puskesmas_id provided, still filter
+    console.log('[monitoring/balita] Fallback filter by puskesmas_id:', puskesmas_id);
+    qFilter = qFilter.eq('puskesmas_id', puskesmas_id);
+    qData = qData.eq('puskesmas_id', puskesmas_id);
   }
   if (kec) { qFilter = qFilter.eq("kec", kec); qData = qData.eq("kec", kec); }
   if (desa_kel) { qFilter = qFilter.eq("desa_kel", desa_kel); qData = qData.eq("desa_kel", desa_kel); }
