@@ -93,14 +93,14 @@ export async function GET() {
         // 7. NEW: Nutrition status distribution from latest antropometri
         const { data: latestAntropometri } = await supabase
             .from("monitoring_antropometri")
-            .select("balita_id, status_gizi_bbu")
+            .select("kohort_id, klas_bbu")
             .order("tanggal", { ascending: false });
 
-        // Get latest status per balita
-        const latestStatusByBalita = new Map<string, string>();
+        // Get latest status per kohort (proxy for balita)
+        const latestStatusByKohort = new Map<string, string>();
         latestAntropometri?.forEach((m: any) => {
-            if (!latestStatusByBalita.has(m.balita_id)) {
-                latestStatusByBalita.set(m.balita_id, m.status_gizi_bbu || 'unknown');
+            if (!latestStatusByKohort.has(m.kohort_id)) {
+                latestStatusByKohort.set(m.kohort_id, m.klas_bbu || 'unknown');
             }
         });
 
@@ -112,12 +112,12 @@ export async function GET() {
             unknown: 0
         };
 
-        latestStatusByBalita.forEach((status) => {
-            const s = status.toLowerCase();
-            if (s.includes('normal')) nutritionStatus.normal++;
-            else if (s.includes('kurang')) nutritionStatus.kurang++;
-            else if (s.includes('buruk') || s.includes('sangat')) nutritionStatus.buruk++;
-            else if (s.includes('lebih') || s.includes('obesitas')) nutritionStatus.lebih++;
+        latestStatusByKohort.forEach((status) => {
+            const s = (status || '').toLowerCase();
+            if (s.includes('normal') || s.includes('gizi baik')) nutritionStatus.normal++;
+            else if (s.includes('kurang') || s.includes('underweight')) nutritionStatus.kurang++;
+            else if (s.includes('buruk') || s.includes('severe') || s.includes('sangat')) nutritionStatus.buruk++;
+            else if (s.includes('lebih') || s.includes('overweight') || s.includes('obesitas')) nutritionStatus.lebih++;
             else nutritionStatus.unknown++;
         });
 
@@ -127,17 +127,16 @@ export async function GET() {
         // 9. NEW: Top 5 kecamatan with most balita
         const { data: kecamatanData } = await supabase
             .from("balita")
-            .select("kecamatan_id, ref_kecamatan(nama)")
-            .not("kecamatan_id", "is", null);
+            .select("kec")
+            .not("kec", "is", null);
 
         const kecamatanCount = new Map<string, { name: string; count: number }>();
         kecamatanData?.forEach((b: any) => {
-            const id = b.kecamatan_id;
-            const name = b.ref_kecamatan?.nama || 'Unknown';
-            if (kecamatanCount.has(id)) {
-                kecamatanCount.get(id)!.count++;
+            const kecName = b.kec || 'Unknown';
+            if (kecamatanCount.has(kecName)) {
+                kecamatanCount.get(kecName)!.count++;
             } else {
-                kecamatanCount.set(id, { name, count: 1 });
+                kecamatanCount.set(kecName, { name: kecName, count: 1 });
             }
         });
 
@@ -145,18 +144,18 @@ export async function GET() {
             .sort((a, b) => b.count - a.count)
             .slice(0, 5);
 
-        // 10. NEW: Recent activity (last 5 monitoring entries)
+        // 10. NEW: Recent activity (last 5 monitoring entries via kohort->balita)
         const { data: recentActivity } = await supabase
             .from("monitoring_antropometri")
-            .select("tanggal, balita:balita_id(nama), berat_badan, tinggi_badan")
+            .select("tanggal, bb_kg, tb_cm, kohort:kohort_id(balita:balita_id(nama_balita))")
             .order("tanggal", { ascending: false })
             .limit(5);
 
         const recentActivityFormatted = recentActivity?.map((a: any) => ({
             date: a.tanggal,
-            name: a.balita?.nama?.substring(0, 15) || 'Balita',
-            bb: a.berat_badan,
-            tb: a.tinggi_badan
+            name: a.kohort?.balita?.nama_balita?.substring(0, 15) || 'Balita',
+            bb: a.bb_kg,
+            tb: a.tb_cm
         })) || [];
 
         // Response with CORS headers for iframe embed
