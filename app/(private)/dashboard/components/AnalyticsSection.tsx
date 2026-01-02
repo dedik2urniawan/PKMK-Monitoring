@@ -154,7 +154,16 @@ export default function AnalyticsSection() {
     };
 
     const handleExport = () => {
-        exportAnalyticsToPDF(complianceData, nutritionData, selectedYear, selectedMonth);
+        exportAnalyticsToPDF(
+            complianceData,
+            nutritionData,
+            selectedYear,
+            selectedMonth,
+            kepatuhanData,
+            dosageData,
+            redFlagData,
+            monitoringComplianceData
+        );
     };
 
     const MONTHS = [
