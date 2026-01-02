@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { LogOut, User, ChevronDown, Bell } from "lucide-react";
+import { LogOut, User, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
 import { getAuthHeaders } from "@/lib/clientSession";
+import NotificationBell from "./NotificationBell";
 
 export default function Header() {
     const router = useRouter();
@@ -302,10 +303,7 @@ export default function Header() {
 
                 <div className="header-right">
                     {/* Notifications */}
-                    <button className="notification-btn">
-                        <Bell size={20} />
-                        <span className="notification-dot" />
-                    </button>
+                    <NotificationBell />
 
                     {/* Profile Dropdown */}
                     <div className="profile-section" style={{ position: 'relative' }}>
