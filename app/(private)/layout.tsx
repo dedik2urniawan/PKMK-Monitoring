@@ -24,10 +24,6 @@ export default async function PrivateLayout({ children }: { children: React.Reac
           background: 'linear-gradient(to bottom right, #ecfdf5, #f0fdfa, #ecfeff)'
         }}
       >
-        <div className="flex items-center gap-2 p-4 border-b border-gray-200 bg-white/40 backdrop-blur-sm flex-shrink-0">
-          <Image src="/tindik-anting-logo.png" alt="PKMK" width={24} height={24} className="flex-shrink-0" />
-          <span className="font-bold text-sm whitespace-nowrap text-gray-800">Sistem Pelaporan PKMK</span>
-        </div>
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           <SideNav />
         </div>

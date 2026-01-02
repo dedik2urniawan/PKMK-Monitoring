@@ -84,83 +84,167 @@ export default function IdleGuard({ ms, warnMs }: { ms?: number; warnMs?: number
   }, [IDLE_MS, WARN_MS]);
 
   return !showWarn ? null : (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in fade-in zoom-in duration-200">
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      backdropFilter: 'blur(8px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 99999,
+      padding: 16
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: 16,
+        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
+        maxWidth: 420,
+        width: '100%',
+        overflow: 'hidden',
+        animation: 'scaleIn 0.2s ease-out'
+      }}>
         {/* Header */}
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-            <AlertTriangle className="text-white" size={24} />
+        <div style={{
+          background: 'linear-gradient(135deg, #f59e0b, #ea580c)',
+          padding: '20px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16
+        }}>
+          <div style={{
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            background: 'rgba(255,255,255,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <AlertTriangle color="white" size={28} />
           </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-white">Peringatan Sesi</h3>
-            <p className="text-xs text-white/90">Tidak ada aktivitas terdeteksi</p>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'white' }}>Peringatan Sesi</h3>
+            <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.9)' }}>Tidak ada aktivitas terdeteksi</p>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div style={{ padding: 32, textAlign: 'center' }}>
           {/* Countdown Circle */}
-          <div className="flex flex-col items-center mb-4">
-            <div className="relative w-24 h-24 mb-3">
-              <svg className="w-24 h-24 transform -rotate-90">
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ position: 'relative', width: 100, height: 100, margin: '0 auto' }}>
+              <svg width="100" height="100" style={{ transform: 'rotate(-90deg)' }}>
                 <circle
-                  cx="48"
-                  cy="48"
+                  cx="50"
+                  cy="50"
                   r="44"
-                  stroke="currentColor"
-                  strokeWidth="6"
+                  stroke="#e5e7eb"
+                  strokeWidth="8"
                   fill="none"
-                  className="text-gray-200"
                 />
                 <circle
-                  cx="48"
-                  cy="48"
+                  cx="50"
+                  cy="50"
                   r="44"
-                  stroke="currentColor"
-                  strokeWidth="6"
+                  stroke="#f59e0b"
+                  strokeWidth="8"
                   fill="none"
                   strokeDasharray={`${2 * Math.PI * 44}`}
                   strokeDashoffset={`${2 * Math.PI * 44 * (1 - secondsLeft / (WARN_MS / 1000))}`}
-                  className="text-amber-500 transition-all"
                   strokeLinecap="round"
+                  style={{ transition: 'stroke-dashoffset 0.25s linear' }}
                 />
               </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-amber-600">{secondsLeft}</div>
-                  <div className="text-xs text-gray-500">detik</div>
-                </div>
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <div style={{ fontSize: 36, fontWeight: 700, color: '#ea580c' }}>{secondsLeft}</div>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>detik</div>
               </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Clock size={16} />
-              <span>Sesi akan berakhir otomatis</span>
             </div>
           </div>
 
-          <p className="text-sm text-[var(--muted-foreground)] text-center mb-4">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16, color: '#4b5563', fontSize: 14 }}>
+            <Clock size={18} />
+            <span>Sesi akan berakhir otomatis</span>
+          </div>
+
+          <p style={{ fontSize: 14, color: '#6b7280', margin: 0, lineHeight: 1.5 }}>
             Anda akan secara otomatis keluar dari sistem jika tidak ada aktivitas.
-            Klik <span className="font-semibold">Tetap Masuk</span> untuk melanjutkan sesi.
+            Klik <strong>Tetap Masuk</strong> untuk melanjutkan sesi.
           </p>
         </div>
 
         {/* Actions */}
-        <div className="px-6 pb-6 flex gap-3">
+        <div style={{ padding: '0 24px 24px', display: 'flex', gap: 12 }}>
           <button
             onClick={doLogout}
-            className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] bg-white hover:bg-gray-50 text-[var(--foreground)] font-medium transition-colors"
+            style={{
+              flex: 1,
+              padding: '14px 20px',
+              borderRadius: 10,
+              border: '1px solid #d1d5db',
+              background: 'white',
+              color: '#374151',
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'background 0.15s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#f3f4f6'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'white'}
           >
             Keluar Sekarang
           </button>
           <button
             onClick={() => startTimers()}
-            className="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[var(--primary)] to-[var(--primary-600)] hover:from-[var(--primary-600)] hover:to-[var(--primary-700)] text-white font-medium transition-all shadow-sm"
+            style={{
+              flex: 1,
+              padding: '14px 20px',
+              borderRadius: 10,
+              border: 'none',
+              background: 'linear-gradient(135deg, #14b8a6, #0d9488)',
+              color: 'white',
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(20, 184, 166, 0.3)',
+              transition: 'transform 0.15s, box-shadow 0.15s'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(20, 184, 166, 0.4)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(20, 184, 166, 0.3)';
+            }}
           >
             Tetap Masuk
           </button>
         </div>
       </div>
+
+      <style>{`
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 }
