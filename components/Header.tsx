@@ -5,6 +5,7 @@ import { LogOut, User, ChevronDown, Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
+import { getAuthHeaders } from "@/lib/clientSession";
 
 export default function Header() {
     const router = useRouter();
@@ -15,8 +16,16 @@ export default function Header() {
     useEffect(() => {
         (async () => {
             try {
-                const { data } = await supabase.auth.getUser();
-                setEmail(data.user?.email ?? null);
+                // Fetch from API which properly reads JWT from localStorage
+                const authHeaders = await getAuthHeaders();
+                const res = await fetch('/api/auth/me', {
+                    credentials: 'include',
+                    headers: authHeaders
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setEmail(data.email ?? null);
+                }
             } catch { }
         })();
     }, []);

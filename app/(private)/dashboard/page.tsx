@@ -5,6 +5,7 @@ import { Users, Activity, TrendingUp, Plus, FileText, List, ClipboardList, Calen
 import AnalyticsSection from "./components/AnalyticsSection";
 import WelcomeModal from "./components/WelcomeModal";
 import UserInfoBadge from "@/components/UserInfoBadge";
+import RoleCard from "@/components/RoleCard";
 
 export default async function Dashboard() {
   // Get supabase for data queries (no auth check - handled client-side)
@@ -375,18 +376,8 @@ export default async function Dashboard() {
             <h3 className="stat-value">{monitoringCount ?? 0}</h3>
           </div>
 
-          {/* Role Card */}
-          <div className="stat-card">
-            <div className="stat-header">
-              <div className="stat-icon purple">
-                <FileText size={24} />
-              </div>
-            </div>
-            <p className="stat-label">Role Anda</p>
-            <h3 className="stat-value small">
-              {appUser?.role === 'admin_puskesmas' ? 'Admin Puskesmas' : appUser?.role || 'User'}
-            </h3>
-          </div>
+          {/* Role Card - Client Component for persistent role after refresh */}
+          <RoleCard />
         </div>
 
         {/* Quick Actions */}
