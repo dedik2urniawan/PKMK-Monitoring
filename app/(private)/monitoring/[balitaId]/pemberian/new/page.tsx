@@ -22,9 +22,21 @@ export default function NewPemberian() {
   // Fetch jenisPkmkList from API (same as logistik menu)
   useEffect(() => {
     (async () => {
-      const res = await fetch("/api/ref/jenis-pkmk");
-      const data = await res.json();
-      setJenisPkmkList(data.items || []);
+      try {
+        const authHeaders = await getAuthHeaders();
+        const res = await fetch("/api/ref/jenis-pkmk", {
+          credentials: "include",
+          headers: { ...authHeaders }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setJenisPkmkList(data.items || []);
+        } else {
+          console.error("[Pemberian] Failed to fetch jenis-pkmk:", res.status);
+        }
+      } catch (err) {
+        console.error("[Pemberian] Error fetching jenis-pkmk:", err);
+      }
     })();
   }, []);
 

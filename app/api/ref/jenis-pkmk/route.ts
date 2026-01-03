@@ -22,5 +22,6 @@ export async function GET() {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    console.log('[API /ref/jenis-pkmk] Returning', data?.length || 0, 'items');
     return NextResponse.json({ items: data || [] });
 }

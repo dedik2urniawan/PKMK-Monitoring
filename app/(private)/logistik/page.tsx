@@ -68,8 +68,13 @@ export default function ManajemenLogistikPage() {
                 setUser(userData.user);
                 if (userData.user?.puskesmas_id) setForm(f => ({ ...f, puskesmas_id: userData.user.puskesmas_id }));
                 const jenisPkmkRes = await fetch("/api/ref/jenis-pkmk", { credentials: 'include', headers: authHeaders });
-                const jenisPkmkData = await jenisPkmkRes.json();
-                setJenisPkmkList(jenisPkmkData.items || []);
+                if (jenisPkmkRes.ok) {
+                    const jenisPkmkData = await jenisPkmkRes.json();
+                    console.log("[Logistik] Jenis PKMK loaded:", jenisPkmkData.items?.length || 0, "items");
+                    setJenisPkmkList(jenisPkmkData.items || []);
+                } else {
+                    console.error("[Logistik] Failed to fetch jenis-pkmk:", jenisPkmkRes.status);
+                }
                 if (userData.user.role === 'superadmin') {
                     const pkmRes = await fetch("/api/ref/puskesmas", { credentials: 'include', headers: authHeaders });
                     const pkmData = await pkmRes.json();
