@@ -10,12 +10,14 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Note: Removed is_active filter due to potential column type mismatch (text vs boolean)
     const { data, error } = await supabase
         .from('ref_jenis_pkmk')
         .select('id, nama_merk, kategori_usia, rentang_usia, satuan, is_active')
-        .eq('is_active', true)
         .order('kategori_usia')
         .order('nama_merk');
+
+    console.log('[API /ref/jenis-pkmk] Raw query result:', data?.length || 0, 'items');
 
     if (error) {
         console.error('[API /ref/jenis-pkmk] Error:', error);
