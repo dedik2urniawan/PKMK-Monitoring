@@ -496,6 +496,103 @@
         display: none;
       }
     }
+
+    /* VIDEO TUTORIAL SECTION */
+    .video-tutorial-section {
+      margin: 60px 0 40px;
+      padding: 40px 0;
+    }
+
+    .video-wrapper {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    .video-container {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%;
+      background: linear-gradient(135deg, #1e293b, #334155);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .video-info {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .video-info-card {
+      display: flex;
+      gap: 16px;
+      padding: 20px;
+      background: var(--surface);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+
+    .video-info-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary);
+    }
+
+    .info-icon {
+      font-size: 24px;
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(99, 102, 241, 0.1));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .video-info-card h5 {
+      margin: 0 0 4px 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .video-info-card p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    @media (max-width: 768px) {
+      .video-wrapper {
+        grid-template-columns: 1fr;
+      }
+
+      .video-info {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 10px;
+      }
+
+      .video-info-card {
+        min-width: 200px;
+        flex-shrink: 0;
+      }
+    }
   </style>
 </head>
 
@@ -512,6 +609,7 @@
       </div>
       <nav>
         <a href="#fitur" class="nav-scroll">Fitur</a>
+        <a href="#tutorial" class="nav-scroll">Tutorial</a>
         <a href="#analytics" class="nav-scroll">Analytics</a>
         <a href="https://pkmk-malangkab.app/login" target="_blank" class="btn-login">Login App</a>
       </nav>
@@ -585,6 +683,48 @@
           <div>
             <div style="font-size:10px; color:var(--text-muted);">Monitoring Bulan Ini</div>
             <div style="font-size:12px; font-weight:700;" id="monitoring-total">- Entries</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIDEO TUTORIAL SECTION -->
+    <section id="tutorial" class="video-tutorial-section">
+      <div class="section-title">
+        <h3>🎥 Video Tutorial</h3>
+        <p>Pelajari cara menggunakan aplikasi PKMK Monitoring melalui panduan video lengkap.</p>
+      </div>
+
+      <div class="video-wrapper">
+        <div class="video-container">
+          <iframe src="https://www.youtube.com/embed/6gs1IjrDwcI" title="Tutorial Aplikasi PKMK Monitoring"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen>
+          </iframe>
+        </div>
+
+        <div class="video-info">
+          <div class="video-info-card">
+            <div class="info-icon">📚</div>
+            <div>
+              <h5>Panduan Lengkap</h5>
+              <p>Tutorial mencakup semua fitur dari login hingga manajemen logistik</p>
+            </div>
+          </div>
+          <div class="video-info-card">
+            <div class="info-icon">⏱️</div>
+            <div>
+              <h5>Step-by-Step</h5>
+              <p>Ikuti langkah demi langkah untuk memahami setiap fitur aplikasi</p>
+            </div>
+          </div>
+          <div class="video-info-card">
+            <div class="info-icon">💡</div>
+            <div>
+              <h5>Tips & Tricks</h5>
+              <p>Dapatkan tips untuk menggunakan aplikasi secara optimal</p>
+            </div>
           </div>
         </div>
       </div>
