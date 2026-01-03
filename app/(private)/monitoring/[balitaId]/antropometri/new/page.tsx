@@ -104,6 +104,37 @@ export default function NewAntropometri() {
     })();
   }, [kohort, editingId]);
 
+  // Mapping functions for legacy labels to Permenkes RI format
+  function mapKlasBBU(label: string | null): string {
+    if (!label) return '-';
+    const map: Record<string, string> = {
+      'Sangat Kurang': 'BB Sangat Kurang',
+      'Kurang': 'BB Kurang',
+      'Normal': 'BB Normal',
+      'Risiko Gemuk': 'Risiko BB Lebih',
+      'Gemuk': 'Risiko BB Lebih',
+    };
+    return map[label] || label;
+  }
+
+  function mapKlasTBU(label: string | null): string {
+    if (!label) return '-';
+    // TBU labels are already correct, just return as-is
+    return label;
+  }
+
+  function mapKlasBBTB(label: string | null): string {
+    if (!label) return '-';
+    const map: Record<string, string> = {
+      'Sangat Kurus': 'Gizi Buruk',
+      'Kurus': 'Gizi Kurang',
+      'Normal': 'Gizi Baik',
+      'Risiko Gemuk': 'Berisiko Gizi Lebih',
+      'Gemuk': 'Gizi Lebih',
+    };
+    return map[label] || label;
+  }
+
   // util hitung usia bulan
   function calcMonths(fromISO: string, toISO: string) {
     const d1 = new Date(fromISO);
@@ -149,14 +180,15 @@ export default function NewAntropometri() {
         if (L === 0) return Math.log(x / M) / S;
         return (Math.pow(x / M, L) - 1) / (L * S);
       }
+      // BB/U Classification (Berat Badan menurut Umur) - Permenkes RI
       function klasBBU(z: number) {
         if (isNaN(z)) return '';
-        if (z < -3) return 'Sangat Kurang';
-        if (z < -2) return 'Kurang';
-        if (z <= 1) return 'Normal';
-        if (z <= 2) return 'Risiko Gemuk';
-        return 'Gemuk';
+        if (z < -3) return 'BB Sangat Kurang';
+        if (z < -2) return 'BB Kurang';
+        if (z <= 1) return 'BB Normal';
+        return 'Risiko BB Lebih';
       }
+      // TB/U Classification (Tinggi/Panjang Badan menurut Umur) - Permenkes RI
       function klasTBU(z: number) {
         if (isNaN(z)) return '';
         if (z < -3) return 'Sangat Pendek';
@@ -164,13 +196,15 @@ export default function NewAntropometri() {
         if (z > 3) return 'Tinggi';
         return 'Normal';
       }
+      // BB/TB Classification (Berat Badan menurut Tinggi Badan) - Permenkes RI
       function klasBBTB(z: number) {
         if (isNaN(z)) return '';
-        if (z < -3) return 'Sangat Kurus';
-        if (z < -2) return 'Kurus';
-        if (z <= 1) return 'Normal';
-        if (z <= 2) return 'Risiko Gemuk';
-        return 'Gemuk';
+        if (z < -3) return 'Gizi Buruk';
+        if (z < -2) return 'Gizi Kurang';
+        if (z <= 1) return 'Gizi Baik';
+        if (z <= 2) return 'Berisiko Gizi Lebih';
+        if (z <= 3) return 'Gizi Lebih';
+        return 'Obesitas';
       }
 
       try {
@@ -731,37 +765,46 @@ export default function NewAntropometri() {
                     <td style={{ padding: '16px', fontSize: 14, fontWeight: 500, color: '#111518' }}>{h.tb_cm != null ? `${h.tb_cm} cm` : '-'}</td>
                     <td style={{ padding: '16px', fontSize: 14, fontWeight: 600, color: '#0d9488' }}>{h.zs_bbu != null ? `${Number(h.zs_bbu).toFixed(1)} SD` : '-'}</td>
                     <td style={{ padding: '16px' }}>
-                      {h.klas_bbu ? (
-                        <span style={{
-                          display: 'inline-block', padding: '4px 10px', borderRadius: 9999, fontSize: 12, fontWeight: 500,
-                          background: h.klas_bbu.includes('Normal') ? '#dcfce7' : h.klas_bbu.includes('Sangat') ? '#fee2e2' : '#fef9c3',
-                          color: h.klas_bbu.includes('Normal') ? '#166534' : h.klas_bbu.includes('Sangat') ? '#991b1b' : '#854d0e'
-                        }}>{h.klas_bbu}</span>
-                      ) : '-'}
+                      {h.klas_bbu ? (() => {
+                        const label = mapKlasBBU(h.klas_bbu);
+                        return (
+                          <span style={{
+                            display: 'inline-block', padding: '4px 10px', borderRadius: 9999, fontSize: 12, fontWeight: 500,
+                            background: label.includes('Normal') ? '#dcfce7' : label.includes('Sangat') ? '#fee2e2' : '#fef9c3',
+                            color: label.includes('Normal') ? '#166534' : label.includes('Sangat') ? '#991b1b' : '#854d0e'
+                          }}>{label}</span>
+                        );
+                      })() : '-'}
                     </td>
                     {/* ZS TBU */}
                     <td style={{ padding: '16px', fontSize: 14, fontWeight: 600, color: '#6366f1' }}>{h.zs_tbu != null ? `${Number(h.zs_tbu).toFixed(1)} SD` : '-'}</td>
                     {/* KLAS TBU */}
                     <td style={{ padding: '16px' }}>
-                      {h.klas_tbu ? (
-                        <span style={{
-                          display: 'inline-block', padding: '4px 10px', borderRadius: 9999, fontSize: 12, fontWeight: 500,
-                          background: h.klas_tbu.includes('Normal') ? '#dcfce7' : h.klas_tbu.includes('Sangat') || h.klas_tbu.includes('Severe') ? '#fee2e2' : '#fef9c3',
-                          color: h.klas_tbu.includes('Normal') ? '#166534' : h.klas_tbu.includes('Sangat') || h.klas_tbu.includes('Severe') ? '#991b1b' : '#854d0e'
-                        }}>{h.klas_tbu}</span>
-                      ) : '-'}
+                      {h.klas_tbu ? (() => {
+                        const label = mapKlasTBU(h.klas_tbu);
+                        return (
+                          <span style={{
+                            display: 'inline-block', padding: '4px 10px', borderRadius: 9999, fontSize: 12, fontWeight: 500,
+                            background: label.includes('Normal') ? '#dcfce7' : label.includes('Sangat') || label.includes('Severe') ? '#fee2e2' : '#fef9c3',
+                            color: label.includes('Normal') ? '#166534' : label.includes('Sangat') || label.includes('Severe') ? '#991b1b' : '#854d0e'
+                          }}>{label}</span>
+                        );
+                      })() : '-'}
                     </td>
                     {/* ZS BBTB */}
                     <td style={{ padding: '16px', fontSize: 14, fontWeight: 600, color: '#f59e0b' }}>{h.zs_bbtb != null ? `${Number(h.zs_bbtb).toFixed(1)} SD` : '-'}</td>
                     {/* KLAS BBTB */}
                     <td style={{ padding: '16px' }}>
-                      {h.klas_bbtb ? (
-                        <span style={{
-                          display: 'inline-block', padding: '4px 10px', borderRadius: 9999, fontSize: 12, fontWeight: 500,
-                          background: h.klas_bbtb.includes('Normal') ? '#dcfce7' : h.klas_bbtb.includes('Sangat') || h.klas_bbtb.includes('Severe') ? '#fee2e2' : '#fef9c3',
-                          color: h.klas_bbtb.includes('Normal') ? '#166534' : h.klas_bbtb.includes('Sangat') || h.klas_bbtb.includes('Severe') ? '#991b1b' : '#854d0e'
-                        }}>{h.klas_bbtb}</span>
-                      ) : '-'}
+                      {h.klas_bbtb ? (() => {
+                        const label = mapKlasBBTB(h.klas_bbtb);
+                        return (
+                          <span style={{
+                            display: 'inline-block', padding: '4px 10px', borderRadius: 9999, fontSize: 12, fontWeight: 500,
+                            background: label.includes('Baik') ? '#dcfce7' : label.includes('Buruk') ? '#fee2e2' : '#fef9c3',
+                            color: label.includes('Baik') ? '#166534' : label.includes('Buruk') ? '#991b1b' : '#854d0e'
+                          }}>{label}</span>
+                        );
+                      })() : '-'}
                     </td>
                     <td style={{ padding: '16px', fontSize: 14, fontWeight: 600, color: h.delta_bb_kg > 0 ? '#16a34a' : h.delta_bb_kg < 0 ? '#dc2626' : '#6b7280' }}>
                       {h.delta_bb_kg != null ? `${h.delta_bb_kg > 0 ? '+' : ''}${(h.delta_bb_kg * 1000).toFixed(0)} gr` : '-'}

@@ -66,10 +66,30 @@ export default function NutritionScorecard({
         );
     }
 
-    const getZScoreStatus = (score: number) => {
-        if (score >= -1) return { label: "Normal", color: "#22c55e", bg: "rgba(34, 197, 94, 0.1)" };
-        if (score >= -2) return { label: "Waspada", color: "#f59e0b", bg: "rgba(245, 158, 11, 0.1)" };
-        return { label: "Stunted", color: "#ef4444", bg: "rgba(239, 68, 68, 0.1)" };
+    // BB/U Classification (Berat Badan menurut Umur) - Permenkes RI
+    const getBBUStatus = (score: number) => {
+        if (score < -3) return { label: "BB Sangat Kurang", color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" };
+        if (score < -2) return { label: "BB Kurang", color: "#ef4444", bg: "rgba(239, 68, 68, 0.1)" };
+        if (score <= 1) return { label: "BB Normal", color: "#22c55e", bg: "rgba(34, 197, 94, 0.1)" };
+        return { label: "Risiko BB Lebih", color: "#f59e0b", bg: "rgba(245, 158, 11, 0.1)" };
+    };
+
+    // TB/U Classification (Height-for-Age / Stunting)
+    const getTBUStatus = (score: number) => {
+        if (score < -3) return { label: "Sangat Pendek", color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" };
+        if (score < -2) return { label: "Pendek", color: "#ef4444", bg: "rgba(239, 68, 68, 0.1)" };
+        if (score <= 3) return { label: "Normal", color: "#22c55e", bg: "rgba(34, 197, 94, 0.1)" };
+        return { label: "Tinggi", color: "#3b82f6", bg: "rgba(59, 130, 246, 0.1)" };
+    };
+
+    // BB/TB Classification (Weight-for-Height / Wasting)
+    const getBBTBStatus = (score: number) => {
+        if (score < -3) return { label: "Gizi Buruk", color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" };
+        if (score < -2) return { label: "Gizi Kurang", color: "#ef4444", bg: "rgba(239, 68, 68, 0.1)" };
+        if (score <= 1) return { label: "Gizi Baik", color: "#22c55e", bg: "rgba(34, 197, 94, 0.1)" };
+        if (score <= 2) return { label: "Berisiko Gizi Lebih", color: "#f59e0b", bg: "rgba(245, 158, 11, 0.1)" };
+        if (score <= 3) return { label: "Gizi Lebih", color: "#f97316", bg: "rgba(249, 115, 22, 0.1)" };
+        return { label: "Obesitas", color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" };
     };
 
     const getDeltaStatus = (delta: number) => {
@@ -83,9 +103,9 @@ export default function NutritionScorecard({
         return { color: "#16a34a", bg: "rgba(22, 163, 74, 0.05)", border: "#bbf7d0" };
     };
 
-    const bbuStatus = getZScoreStatus(avgBBU);
-    const tbuStatus = getZScoreStatus(avgTBU);
-    const bbtbStatus = getZScoreStatus(avgBBTB);
+    const bbuStatus = getBBUStatus(avgBBU);
+    const tbuStatus = getTBUStatus(avgTBU);
+    const bbtbStatus = getBBTBStatus(avgBBTB);
     const deltaStatus = getDeltaStatus(avgDeltaBB);
     const redFlagLevel = getRedFlagLevel();
 
