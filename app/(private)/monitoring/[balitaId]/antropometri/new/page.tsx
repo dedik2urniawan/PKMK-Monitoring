@@ -159,6 +159,7 @@ export default function NewAntropometri() {
     if (!isNaN(umur) && !isNaN(tb) && tb > 0) {
       let corr = tb;
       let badge = "";
+      // Apply height correction based on measurement method and age (WHO standard)
       if (umur >= 24 && form.cara_ukur === 'terlentang') { corr = tb - 0.7; badge = "-0.7 cm"; }
       if (umur < 24 && form.cara_ukur === 'berdiri') { corr = tb + 0.7; badge = "+0.7 cm"; }
       setForm((f) => ({ ...f, tb_corr_cm: corr.toFixed(2) }));
