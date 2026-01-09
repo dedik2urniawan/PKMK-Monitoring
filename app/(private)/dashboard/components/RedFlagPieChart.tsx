@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Sector } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { AlertTriangle, TrendingDown, Activity, ChevronDown, ChevronUp } from "lucide-react";
 
 interface RedFlagData {
@@ -26,15 +26,6 @@ const COLORS = [
     { main: "#f97316", light: "#fff7ed", text: "#9a3412" },   // Orange
 ];
 
-const renderActiveShape = (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent } = props;
-    return (
-        <g>
-            <Sector cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={outerRadius + 8} startAngle={startAngle} endAngle={endAngle} fill={fill} />
-            <Sector cx={cx} cy={cy} innerRadius={innerRadius - 6} outerRadius={innerRadius - 2} startAngle={startAngle} endAngle={endAngle} fill={fill} />
-        </g>
-    );
-};
 
 export default function RedFlagPieChart({ data, totalWithRedFlag, loading = false }: RedFlagPieChartProps) {
     const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
@@ -151,16 +142,25 @@ export default function RedFlagPieChart({ data, totalWithRedFlag, loading = fals
                                                 cx="50%"
                                                 cy="50%"
                                                 innerRadius={60}
-                                                outerRadius={100}
+                                                outerRadius={activeIndex !== undefined ? 105 : 100}
                                                 paddingAngle={2}
                                                 dataKey="value"
-                                                activeIndex={activeIndex}
-                                                activeShape={renderActiveShape}
                                                 onMouseEnter={onPieEnter}
                                                 onMouseLeave={onPieLeave}
                                             >
                                                 {sortedData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length].main} stroke="white" strokeWidth={2} />
+                                                    <Cell
+                                                        key={`cell-${index}`}
+                                                        fill={COLORS[index % COLORS.length].main}
+                                                        stroke="white"
+                                                        strokeWidth={2}
+                                                        style={{
+                                                            opacity: activeIndex === undefined || activeIndex === index ? 1 : 0.5,
+                                                            transform: activeIndex === index ? 'scale(1.05)' : 'scale(1)',
+                                                            transformOrigin: 'center',
+                                                            transition: 'all 0.2s ease',
+                                                        }}
+                                                    />
                                                 ))}
                                             </Pie>
                                             <Tooltip
