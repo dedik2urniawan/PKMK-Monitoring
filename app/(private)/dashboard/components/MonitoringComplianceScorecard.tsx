@@ -1,5 +1,5 @@
 "use client";
-import { Ruler, Utensils, Pill } from "lucide-react";
+import { Ruler, Utensils, Pill, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface ComplianceData {
     monitored: number;
@@ -23,37 +23,19 @@ export default function MonitoringComplianceScorecard({
 }: MonitoringComplianceScorecardProps) {
     if (loading) {
         return (
-            <>
-                <style jsx>{`
-                    .loading-grid {
-                        display: grid;
-                        grid-template-columns: repeat(1, 1fr);
-                        gap: 20px;
-                    }
-                    @media (min-width: 768px) {
-                        .loading-grid {
-                            grid-template-columns: repeat(3, 1fr);
-                        }
-                    }
-                    .loading-card {
-                        background: #e5e7eb;
-                        border-radius: 12px;
-                        height: 140px;
-                        animation: pulse 2s infinite;
-                    }
-                    @keyframes pulse {
-                        0%, 100% { opacity: 1; }
-                        50% { opacity: 0.5; }
-                    }
-                `}</style>
-                <div className="loading-grid">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="loading-card" />
-                    ))}
-                </div>
-            </>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+                {[1, 2, 3].map((i) => (
+                    <div key={i} style={{ background: '#f1f5f9', borderRadius: 16, height: 180, animation: 'pulse 2s infinite' }} />
+                ))}
+            </div>
         );
     }
+
+    const getStatusColor = (percentage: number) => {
+        if (percentage >= 80) return { main: "#10b981", light: "#ecfdf5", text: "#065f46", status: "Baik", icon: ArrowUpRight };
+        if (percentage >= 60) return { main: "#f59e0b", light: "#fffbeb", text: "#92400e", status: "Cukup", icon: TrendingUp };
+        return { main: "#ef4444", light: "#fef2f2", text: "#991b1b", status: "Perlu Ditingkatkan", icon: ArrowDownRight };
+    };
 
     const cards = [
         {
@@ -61,136 +43,154 @@ export default function MonitoringComplianceScorecard({
             icon: Ruler,
             value: data?.antropometri?.monitored || 0,
             percentage: data?.antropometri?.percentage || 0,
-            color: "#3b82f6",
-            bgColor: "rgba(59, 130, 246, 0.1)",
-            badge: "W1",
-            badgeBg: "rgba(59, 130, 246, 0.1)",
-            badgeColor: "#1d4ed8",
+            gradient: "linear-gradient(135deg, #3b82f6, #2563eb)",
+            shadow: "rgba(59, 130, 246, 0.3)",
+            light: "#eff6ff",
+            accent: "#1d4ed8",
+            badge: "Mingguan",
         },
         {
             title: "Konsumsi",
             icon: Utensils,
             value: data?.konsumsi?.monitored || 0,
             percentage: data?.konsumsi?.percentage || 0,
-            color: "#8b5cf6",
-            bgColor: "rgba(139, 92, 246, 0.1)",
-            badge: "Daily",
-            badgeBg: "rgba(139, 92, 246, 0.1)",
-            badgeColor: "#6d28d9",
+            gradient: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+            shadow: "rgba(139, 92, 246, 0.3)",
+            light: "#f5f3ff",
+            accent: "#6d28d9",
+            badge: "Harian",
         },
         {
             title: "Pemberian",
             icon: Pill,
             value: data?.pemberian?.monitored || 0,
             percentage: data?.pemberian?.percentage || 0,
-            color: "#f59e0b",
-            bgColor: "rgba(245, 158, 11, 0.1)",
+            gradient: "linear-gradient(135deg, #f59e0b, #d97706)",
+            shadow: "rgba(245, 158, 11, 0.3)",
+            light: "#fffbeb",
+            accent: "#b45309",
             badge: "Stock",
-            badgeBg: "rgba(245, 158, 11, 0.1)",
-            badgeColor: "#b45309",
         },
     ];
 
     return (
-        <>
-            <style jsx>{`
-                .monitoring-grid {
-                    display: grid;
-                    grid-template-columns: repeat(1, 1fr);
-                    gap: 20px;
-                }
-                @media (min-width: 768px) {
-                    .monitoring-grid {
-                        grid-template-columns: repeat(3, 1fr);
-                    }
-                }
-                .progress-card {
-                    background: white;
-                    padding: 24px;
-                    border-radius: 12px;
-                    border: 1px solid #f3f4f6;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-                    display: flex;
-                    flex-direction: column;
-                    gap: 16px;
-                }
-                .card-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-                .card-title {
-                    font-size: 18px;
-                    font-weight: 700;
-                    color: #111817;
-                }
-                .card-badge {
-                    font-size: 12px;
-                    font-weight: 700;
-                    padding: 4px 10px;
-                    border-radius: 4px;
-                }
-                .card-stats {
-                    display: flex;
-                    align-items: flex-end;
-                    gap: 8px;
-                }
-                .card-percentage {
-                    font-size: 30px;
-                    font-weight: 900;
-                    color: #111817;
-                }
-                .card-fraction {
-                    font-size: 14px;
-                    font-weight: 500;
-                    color: #638884;
-                    margin-bottom: 6px;
-                }
-                .progress-bar {
-                    width: 100%;
-                    height: 12px;
-                    background: #f3f4f6;
-                    border-radius: 9999px;
-                    overflow: hidden;
-                }
-                .progress-fill {
-                    height: 100%;
-                    border-radius: 9999px;
-                    transition: width 0.5s ease;
-                }
-            `}</style>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+            {cards.map((card, index) => {
+                const IconComponent = card.icon;
+                const statusColors = getStatusColor(card.percentage);
+                const StatusIcon = statusColors.icon;
 
-            <div className="monitoring-grid">
-                {cards.map((card, index) => (
-                    <div key={index} className="progress-card">
-                        <div className="card-header">
-                            <p className="card-title">{card.title}</p>
-                            <span
-                                className="card-badge"
-                                style={{
-                                    background: card.badgeBg,
-                                    color: card.badgeColor
-                                }}
-                            >
+                return (
+                    <div key={index} style={{
+                        background: 'white',
+                        borderRadius: 16,
+                        padding: 24,
+                        border: '1px solid #e5e7eb',
+                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+                        position: 'relative',
+                        overflow: 'hidden',
+                    }}>
+                        {/* Decorative background */}
+                        <div style={{
+                            position: 'absolute',
+                            top: -30,
+                            right: -30,
+                            width: 120,
+                            height: 120,
+                            background: `linear-gradient(135deg, ${card.accent}15, ${card.accent}05)`,
+                            borderRadius: '50%',
+                        }} />
+
+                        {/* Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                            <div style={{
+                                width: 48,
+                                height: 48,
+                                background: card.gradient,
+                                borderRadius: 12,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: `0 4px 12px ${card.shadow}`,
+                            }}>
+                                <IconComponent color="white" size={24} />
+                            </div>
+                            <span style={{
+                                padding: '4px 10px',
+                                background: card.light,
+                                color: card.accent,
+                                borderRadius: 20,
+                                fontSize: 11,
+                                fontWeight: 700,
+                            }}>
                                 {card.badge}
                             </span>
                         </div>
-                        <div className="card-stats">
-                            <span className="card-percentage">{card.percentage.toFixed(1)}%</span>
-                            <span className="card-fraction">({card.value}/{totalBalita})</span>
+
+                        {/* Title */}
+                        <p style={{ fontSize: 14, fontWeight: 700, color: '#374151', marginBottom: 12 }}>{card.title}</p>
+
+                        {/* Main Stats */}
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, marginBottom: 16 }}>
+                            <span style={{ fontSize: 36, fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>{card.percentage.toFixed(1)}%</span>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                padding: '4px 8px',
+                                background: statusColors.light,
+                                borderRadius: 6,
+                                marginBottom: 4,
+                            }}>
+                                <StatusIcon size={12} color={statusColors.main} />
+                                <span style={{ fontSize: 10, fontWeight: 600, color: statusColors.main }}>{statusColors.status}</span>
+                            </div>
                         </div>
-                        <div className="progress-bar">
-                            <div
-                                className="progress-fill"
-                                style={{
+
+                        {/* Progress Bar */}
+                        <div style={{ marginBottom: 12 }}>
+                            <div style={{
+                                height: 10,
+                                background: '#f1f5f9',
+                                borderRadius: 8,
+                                overflow: 'hidden',
+                            }}>
+                                <div style={{
+                                    height: '100%',
                                     width: `${Math.min(card.percentage, 100)}%`,
-                                    backgroundColor: card.color
-                                }}
-                            />
+                                    background: card.gradient,
+                                    borderRadius: 8,
+                                    transition: 'width 0.5s ease',
+                                    position: 'relative',
+                                }}>
+                                    <div style={{
+                                        position: 'absolute',
+                                        right: 0,
+                                        top: 0,
+                                        bottom: 0,
+                                        width: 15,
+                                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4))',
+                                    }} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 12, color: '#64748b' }}>
+                                <strong style={{ color: '#1f2937' }}>{card.value}</strong> / {totalBalita} balita
+                            </span>
+                            <span style={{
+                                fontSize: 11,
+                                color: statusColors.main,
+                                fontWeight: 600,
+                            }}>
+                                {card.value > 0 ? `+${card.value} monitored` : 'Belum ada data'}
+                            </span>
                         </div>
                     </div>
-                ))}
-            </div>
-        </>
+                );
+            })}
+        </div>
     );
 }

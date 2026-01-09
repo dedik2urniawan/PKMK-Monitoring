@@ -5,6 +5,7 @@ import FilterSection from "./FilterSection";
 import ComplianceScorecard from "./ComplianceScorecard";
 import ComplianceDrilldownChart from "./ComplianceDrilldownChart";
 import NutritionScorecard from "./NutritionScorecard";
+import NutritionCohortChart from "./NutritionCohortChart";
 import ZScoreLineChart from "./ZScoreLineChart";
 import DeltaBBChart from "./DeltaBBChart";
 import RedFlagPieChart from "./RedFlagPieChart";
@@ -38,6 +39,9 @@ export default function AnalyticsSection() {
 
     const [monitoringComplianceData, setMonitoringComplianceData] = useState<any>(null);
     const [monitoringComplianceLoading, setMonitoringComplianceLoading] = useState(true);
+
+    const [cohortData, setCohortData] = useState<any[]>([]);
+    const [cohortLoading, setCohortLoading] = useState(true);
 
     const fetchComplianceData = async () => {
         setComplianceLoading(true);
@@ -136,10 +140,27 @@ export default function AnalyticsSection() {
         }
     }, [selectedYear, selectedMonth, selectedWeek]);
 
+    const fetchCohortData = useCallback(async () => {
+        setCohortLoading(true);
+        try {
+            const headers = await getAuthHeaders();
+            const response = await fetch('/api/analytics/nutrition-cohort', { headers });
+            if (response.ok) {
+                const data = await response.json();
+                setCohortData(data.months || []);
+            }
+        } catch (error) {
+            console.error("Error fetching cohort data:", error);
+        } finally {
+            setCohortLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         fetchComplianceData();
         fetchNutritionData();
         fetchRedFlagData();
+        fetchCohortData();
         fetchKepatuhanData();
         fetchDosageData();
     }, [selectedYear, selectedMonth]);
@@ -467,7 +488,12 @@ export default function AnalyticsSection() {
                         loading={nutritionLoading}
                     />
 
-                    <div className="chart-grid-3">
+                    <NutritionCohortChart
+                        data={cohortData}
+                        loading={cohortLoading}
+                    />
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                         <ZScoreLineChart
                             title="Z-Score BB/U"
                             subtitle="Berat Badan menurut Umur"
@@ -514,7 +540,7 @@ export default function AnalyticsSection() {
                         <h2 className="section-title">Analisis Kepatuhan & Tren</h2>
                     </div>
 
-                    <div className="chart-grid">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                         <KepatuhanBarChart
                             data={kepatuhanData?.kepatuhanByLocation || []}
                             loading={kepatuhanLoading}
@@ -523,12 +549,11 @@ export default function AnalyticsSection() {
                             data={kepatuhanData?.healthByLocation || []}
                             loading={kepatuhanLoading}
                         />
+                        <DosageBarChart
+                            data={dosageData?.dosageByLocation || []}
+                            loading={dosageLoading}
+                        />
                     </div>
-
-                    <DosageBarChart
-                        data={dosageData?.dosageByLocation || []}
-                        loading={dosageLoading}
-                    />
                 </section>
             </div>
         </>
