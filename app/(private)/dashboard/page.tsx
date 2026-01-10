@@ -108,7 +108,7 @@ export default async function Dashboard() {
         .stats-grid {
           display: grid;
           grid-template-columns: repeat(1, 1fr);
-          gap: 24px;
+          gap: 20px;
           margin-bottom: 32px;
         }
         @media (min-width: 640px) {
@@ -124,88 +124,132 @@ export default async function Dashboard() {
         .stat-card {
           background: white;
           padding: 24px;
-          border-radius: 12px;
-          border: 1px solid #dce5e4;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-          transition: all 0.2s;
+          border-radius: 16px;
+          border: 1px solid #e5e7eb;
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
         }
+        .stat-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 4px;
+          height: 100%;
+          border-radius: 16px 0 0 16px;
+          transition: all 0.3s ease;
+        }
+        .stat-card.blue-accent::before { background: linear-gradient(180deg, #3b82f6, #2563eb); }
+        .stat-card.teal-accent::before { background: linear-gradient(180deg, #14b8a6, #0d9488); }
+        .stat-card.orange-accent::before { background: linear-gradient(180deg, #f97316, #ea580c); }
+        .stat-card.purple-accent::before { background: linear-gradient(180deg, #8b5cf6, #7c3aed); }
         .stat-card:hover {
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          transform: translateY(-4px);
+          box-shadow: 0 12px 24px -8px rgba(0,0,0,0.12);
         }
+        .stat-card-decoration {
+          position: absolute;
+          top: -30px;
+          right: -30px;
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          opacity: 0.5;
+        }
+        .stat-card.blue-accent .stat-card-decoration { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.05)); }
+        .stat-card.teal-accent .stat-card-decoration { background: linear-gradient(135deg, rgba(20,184,166,0.2), rgba(20,184,166,0.05)); }
+        .stat-card.orange-accent .stat-card-decoration { background: linear-gradient(135deg, rgba(249,115,22,0.2), rgba(249,115,22,0.05)); }
+        .stat-card.purple-accent .stat-card-decoration { background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.05)); }
         .stat-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
           margin-bottom: 16px;
+          position: relative;
+          z-index: 1;
         }
         .stat-icon {
-          width: 48px;
-          height: 48px;
-          border-radius: 12px;
+          width: 52px;
+          height: 52px;
+          border-radius: 14px;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s;
+          transition: all 0.3s ease;
         }
         .stat-icon.blue {
-          background: rgba(59, 130, 246, 0.1);
-          color: #3b82f6;
-        }
-        .stat-card:hover .stat-icon.blue {
-          background: #3b82f6;
+          background: linear-gradient(135deg, #3b82f6, #2563eb);
           color: white;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
         }
         .stat-icon.teal {
-          background: rgba(20, 184, 166, 0.1);
-          color: #14b8a6;
-        }
-        .stat-card:hover .stat-icon.teal {
-          background: #14b8a6;
+          background: linear-gradient(135deg, #14b8a6, #0d9488);
           color: white;
+          box-shadow: 0 4px 12px rgba(20, 184, 166, 0.35);
         }
         .stat-icon.orange {
-          background: rgba(249, 115, 22, 0.1);
-          color: #f97316;
-        }
-        .stat-card:hover .stat-icon.orange {
-          background: #f97316;
+          background: linear-gradient(135deg, #f97316, #ea580c);
           color: white;
+          box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
         }
         .stat-icon.purple {
-          background: rgba(139, 92, 246, 0.1);
-          color: #8b5cf6;
-        }
-        .stat-card:hover .stat-icon.purple {
-          background: #8b5cf6;
+          background: linear-gradient(135deg, #8b5cf6, #7c3aed);
           color: white;
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+        }
+        .stat-card:hover .stat-icon {
+          transform: scale(1.05);
         }
         .stat-badge {
-          font-size: 12px;
-          font-weight: 500;
-          padding: 4px 10px;
-          border-radius: 9999px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 11px;
+          font-weight: 700;
+          padding: 5px 10px;
+          border-radius: 20px;
         }
         .stat-badge.green {
-          background: rgba(34, 197, 94, 0.1);
-          color: #16a34a;
+          background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+          color: #059669;
         }
         .stat-badge.gray {
-          background: #f1f5f9;
-          color: #64748b;
+          background: #fef3c7;
+          color: #d97706;
+        }
+        .stat-badge.blue {
+          background: linear-gradient(135deg, #eff6ff, #dbeafe);
+          color: #2563eb;
         }
         .stat-label {
-          font-size: 14px;
-          font-weight: 500;
-          color: #638884;
-          margin-bottom: 4px;
+          font-size: 13px;
+          font-weight: 600;
+          color: #64748b;
+          margin-bottom: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+          position: relative;
+          z-index: 1;
         }
         .stat-value {
-          font-size: 30px;
-          font-weight: 700;
-          color: #111817;
+          font-size: 34px;
+          font-weight: 900;
+          color: #0f172a;
+          line-height: 1.1;
+          position: relative;
+          z-index: 1;
         }
         .stat-value.small {
-          font-size: 24px;
+          font-size: 22px;
+        }
+        .stat-hint {
+          font-size: 12px;
+          color: #94a3b8;
+          margin-top: 8px;
+          position: relative;
+          z-index: 1;
         }
         .quick-actions-section {
           margin-bottom: 32px;
@@ -340,40 +384,55 @@ export default async function Dashboard() {
         {/* Statistics Grid */}
         <div className="stats-grid">
           {/* Total Balita Card */}
-          <div className="stat-card">
+          <div className="stat-card blue-accent">
+            <div className="stat-card-decoration" />
             <div className="stat-header">
               <div className="stat-icon blue">
                 <Users size={24} />
               </div>
-              <span className="stat-badge green">+12%</span>
+              <span className="stat-badge green">
+                <TrendingUp size={12} />
+                +12%
+              </span>
             </div>
             <p className="stat-label">Total Balita</p>
             <h3 className="stat-value">{balitaCount ?? 0}</h3>
+            <p className="stat-hint">Terdaftar dalam program PKMK</p>
           </div>
 
           {/* Kohort Aktif Card */}
-          <div className="stat-card">
+          <div className="stat-card teal-accent">
+            <div className="stat-card-decoration" />
             <div className="stat-header">
               <div className="stat-icon teal">
                 <ClipboardList size={24} />
               </div>
+              <span className="stat-badge blue">Aktif</span>
             </div>
             <p className="stat-label">Kohort Aktif</p>
             <h3 className="stat-value">{kohortCount ?? 0}</h3>
+            <p className="stat-hint">Kohort program saat ini</p>
           </div>
 
           {/* Monitoring 7 Hari Card */}
-          <div className="stat-card">
+          <div className="stat-card orange-accent">
+            <div className="stat-card-decoration" />
             <div className="stat-header">
               <div className="stat-icon orange">
                 <Activity size={24} />
               </div>
-              {(monitoringCount ?? 0) === 0 && (
-                <span className="stat-badge gray">Low Activity</span>
+              {(monitoringCount ?? 0) === 0 ? (
+                <span className="stat-badge gray">⚠ Low Activity</span>
+              ) : (
+                <span className="stat-badge green">
+                  <TrendingUp size={12} />
+                  Active
+                </span>
               )}
             </div>
             <p className="stat-label">Monitoring (7 Hari)</p>
             <h3 className="stat-value">{monitoringCount ?? 0}</h3>
+            <p className="stat-hint">Pengukuran 7 hari terakhir</p>
           </div>
 
           {/* Role Card - Client Component for persistent role after refresh */}
