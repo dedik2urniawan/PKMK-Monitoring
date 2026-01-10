@@ -53,9 +53,9 @@ export async function GET(req: NextRequest) {
     sd2neg: calcX(item.L, item.M, item.S, -2),
     sd1neg: calcX(item.L, item.M, item.S, -1),
     sd0: calcX(item.L, item.M, item.S, 0),
-    sd1: calcX(item.L, item.M, item.S, 1),
-    sd2: calcX(item.L, item.M, item.S, 2),
-    sd3: calcX(item.L, item.M, item.S, 3),
+    sd1pos: calcX(item.L, item.M, item.S, 1),
+    sd2pos: calcX(item.L, item.M, item.S, 2),
+    sd3pos: calcX(item.L, item.M, item.S, 3),
   })) ?? [];
 
   if (length !== null && items.length > 0) {

@@ -984,14 +984,66 @@ export default function NewAntropometri() {
 
       {/* WHO-style charts */}
       {history.length > 0 && (
-        <div className="mt-8 space-y-6">
-          <h2 className="text-lg font-semibold">Grafik WHO (berdasarkan riwayat)</h2>
+        <div style={{ marginTop: 32 }}>
+          {/* Section Header */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            marginBottom: 24,
+            paddingBottom: 16,
+            borderBottom: '2px solid #e5e7eb',
+          }}>
+            <div style={{
+              width: 44,
+              height: 44,
+              background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+              borderRadius: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)',
+              fontSize: 22,
+            }}>
+              📈
+            </div>
+            <div>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: 0 }}>Grafik WHO (berdasarkan riwayat)</h2>
+              <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>Kurva pertumbuhan standar WHO berdasarkan data pengukuran</p>
+            </div>
+          </div>
           <WhoCharts history={history} jk={balita?.jk} />
         </div>
       )}
       {history.length > 1 && (
-        <div className="mt-8 space-y-3">
-          <h2 className="text-lg font-semibold">Analisis Kenaikan BB</h2>
+        <div style={{ marginTop: 32 }}>
+          {/* Section Header */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            marginBottom: 24,
+            paddingBottom: 16,
+            borderBottom: '2px solid #e5e7eb',
+          }}>
+            <div style={{
+              width: 44,
+              height: 44,
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              borderRadius: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+              fontSize: 22,
+            }}>
+              📊
+            </div>
+            <div>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: 0 }}>Analisis Kenaikan BB</h2>
+              <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>Perbandingan kenaikan BB per minggu dengan rekomendasi</p>
+            </div>
+          </div>
           <DeltaBBInsights history={history} />
         </div>
       )}
@@ -1119,68 +1171,223 @@ function WhoCharts({ history, jk }: { history: any[]; jk?: 'L' | 'P' }) {
     })();
   }, [history, jk]);
 
-  const CommonChart = ({ data, xLabel, yLabel, title }: any) => (
-    <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-      <h3 className="text-base font-semibold text-gray-800 mb-4">{title}</h3>
-      <div className="h-[400px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 5, right: 20, bottom: 20, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-            <XAxis
-              dataKey="x"
-              type="number"
-              domain={['dataMin', 'dataMax']}
-              tick={{ fontSize: 12 }}
-              label={{ value: xLabel, position: 'insideBottom', offset: -10, fontSize: 12 }}
-              allowDuplicatedCategory={false}
-            />
-            <YAxis
-              tick={{ fontSize: 12 }}
-              label={{ value: yLabel, angle: -90, position: 'insideLeft', fontSize: 12 }}
-              domain={['auto', 'auto']}
-            />
-            <Tooltip
-              contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-              itemStyle={{ fontSize: '12px', padding: '2px 0' }}
-              labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
-              formatter={(value: number) => value ? value.toFixed(2) : '-'}
-            />
-            <Legend verticalAlign="top" height={36} iconType="plainline" />
+  // Get icon and color config based on chart type
+  const getChartConfig = (type: 'bbu' | 'tbu' | 'bbtb') => {
+    switch (type) {
+      case 'bbu':
+        return {
+          gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+          shadow: 'rgba(59, 130, 246, 0.3)',
+          light: '#eff6ff',
+          accent: '#2563eb',
+          badge: 'BB/U',
+          icon: '⚖️',
+        };
+      case 'tbu':
+        return {
+          gradient: 'linear-gradient(135deg, #10b981, #059669)',
+          shadow: 'rgba(16, 185, 129, 0.3)',
+          light: '#ecfdf5',
+          accent: '#059669',
+          badge: 'TB/U',
+          icon: '📏',
+        };
+      case 'bbtb':
+        return {
+          gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+          shadow: 'rgba(139, 92, 246, 0.3)',
+          light: '#f5f3ff',
+          accent: '#7c3aed',
+          badge: 'BB/TB',
+          icon: '📊',
+        };
+    }
+  };
 
-            {/* Reference Lines - Smooth Curves */}
-            <Line type="monotone" dataKey="sd3pos" stroke="#ef4444" strokeWidth={1.5} dot={false} name="+3 SD" connectNulls />
-            <Line type="monotone" dataKey="sd2pos" stroke="#f97316" strokeWidth={1.5} dot={false} name="+2 SD" connectNulls />
-            <Line type="monotone" dataKey="sd1pos" stroke="#eab308" strokeWidth={1.5} dot={false} name="+1 SD" connectNulls />
-            <Line type="monotone" dataKey="sd0" stroke="#22c55e" strokeWidth={2} dot={false} name="Median" connectNulls />
-            <Line type="monotone" dataKey="sd1neg" stroke="#eab308" strokeWidth={1.5} dot={false} name="-1 SD" connectNulls />
-            <Line type="monotone" dataKey="sd2neg" stroke="#f97316" strokeWidth={1.5} dot={false} name="-2 SD" connectNulls />
-            <Line type="monotone" dataKey="sd3neg" stroke="#ef4444" strokeWidth={1.5} dot={false} name="-3 SD" connectNulls />
+  const CommonChart = ({ data, xLabel, yLabel, title, type }: any) => {
+    const config = getChartConfig(type);
 
-            {/* Child Line - Linear with Dots */}
-            <Line
-              type="linear"
-              dataKey="anak"
-              stroke="#3b82f6"
-              strokeWidth={3}
-              dot={{ r: 5, fill: "#3b82f6", strokeWidth: 2, stroke: "#fff" }}
-              activeDot={{ r: 7 }}
-              name="Anak"
-              connectNulls
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+    return (
+      <div style={{
+        background: 'white',
+        borderRadius: 16,
+        border: '1px solid #e5e7eb',
+        overflow: 'hidden',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: '20px 24px',
+          borderBottom: '1px solid #f1f5f9',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: `linear-gradient(135deg, ${config.light}, white)`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: 48,
+              height: 48,
+              background: config.gradient,
+              borderRadius: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: `0 4px 12px ${config.shadow}`,
+              fontSize: 24,
+            }}>
+              {config.icon}
+            </div>
+            <div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', margin: 0 }}>{title}</h3>
+              <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>Kurva pertumbuhan standar WHO</p>
+            </div>
+          </div>
+          <span style={{
+            padding: '6px 14px',
+            background: config.gradient,
+            color: 'white',
+            borderRadius: 20,
+            fontSize: 12,
+            fontWeight: 700,
+            boxShadow: `0 2px 8px ${config.shadow}`,
+          }}>
+            {config.badge}
+          </span>
+        </div>
+
+        {/* Legend */}
+        <div style={{
+          padding: '12px 24px',
+          borderBottom: '1px solid #f1f5f9',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 16,
+          background: '#fafafa',
+        }}>
+          {[
+            { label: '+3 SD', color: '#ef4444' },
+            { label: '+2 SD', color: '#f97316' },
+            { label: '+1 SD', color: '#eab308' },
+            { label: 'Median', color: '#22c55e', bold: true },
+            { label: '-1 SD', color: '#eab308' },
+            { label: '-2 SD', color: '#f97316' },
+            { label: '-3 SD', color: '#ef4444' },
+            { label: 'Anak', color: '#3b82f6', bold: true },
+          ].map((item) => (
+            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{
+                width: item.bold ? 14 : 10,
+                height: item.bold ? 14 : 10,
+                borderRadius: '50%',
+                background: item.color,
+                border: item.bold ? '2px solid white' : 'none',
+                boxShadow: item.bold ? `0 0 0 2px ${item.color}` : 'none',
+              }} />
+              <span style={{
+                fontSize: 11,
+                color: '#374151',
+                fontWeight: item.bold ? 700 : 500,
+              }}>{item.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Chart */}
+        <div style={{ padding: 24 }}>
+          <div style={{ height: 400, width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={data} margin={{ top: 5, right: 20, bottom: 20, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <XAxis
+                  dataKey="x"
+                  type="number"
+                  domain={['dataMin', 'dataMax']}
+                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  label={{ value: xLabel, position: 'insideBottom', offset: -10, fontSize: 11, fill: '#64748b' }}
+                  allowDuplicatedCategory={false}
+                  axisLine={{ stroke: '#d1d5db' }}
+                  tickLine={{ stroke: '#d1d5db' }}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  label={{ value: yLabel, angle: -90, position: 'insideLeft', fontSize: 11, fill: '#64748b' }}
+                  domain={['auto', 'auto']}
+                  axisLine={{ stroke: '#d1d5db' }}
+                  tickLine={{ stroke: '#d1d5db' }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: 12,
+                    border: '1px solid #e5e7eb',
+                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                    padding: '12px 16px',
+                  }}
+                  itemStyle={{ fontSize: 12, padding: '2px 0' }}
+                  labelStyle={{ fontWeight: 700, marginBottom: 8, color: '#0f172a' }}
+                  formatter={(value: number) => value ? value.toFixed(2) : '-'}
+                />
+
+                {/* Reference Lines - Smooth Curves */}
+                <Line type="monotone" dataKey="sd3pos" stroke="#ef4444" strokeWidth={1.5} dot={false} name="+3 SD" connectNulls legendType="none" />
+                <Line type="monotone" dataKey="sd2pos" stroke="#f97316" strokeWidth={1.5} dot={false} name="+2 SD" connectNulls legendType="none" />
+                <Line type="monotone" dataKey="sd1pos" stroke="#eab308" strokeWidth={1.5} dot={false} name="+1 SD" connectNulls legendType="none" />
+                <Line type="monotone" dataKey="sd0" stroke="#22c55e" strokeWidth={2.5} dot={false} name="Median" connectNulls legendType="none" />
+                <Line type="monotone" dataKey="sd1neg" stroke="#eab308" strokeWidth={1.5} dot={false} name="-1 SD" connectNulls legendType="none" />
+                <Line type="monotone" dataKey="sd2neg" stroke="#f97316" strokeWidth={1.5} dot={false} name="-2 SD" connectNulls legendType="none" />
+                <Line type="monotone" dataKey="sd3neg" stroke="#ef4444" strokeWidth={1.5} dot={false} name="-3 SD" connectNulls legendType="none" />
+
+                {/* Child Line - Linear with Dots */}
+                <Line
+                  type="linear"
+                  dataKey="anak"
+                  stroke="#3b82f6"
+                  strokeWidth={3}
+                  dot={{ r: 6, fill: "#3b82f6", strokeWidth: 3, stroke: "#fff" }}
+                  activeDot={{ r: 8, stroke: '#3b82f6', strokeWidth: 2, fill: 'white' }}
+                  name="Anak"
+                  connectNulls
+                  legendType="none"
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Interpretation Info */}
+        <div style={{
+          padding: '16px 24px',
+          background: '#f8fafc',
+          borderTop: '1px solid #e5e7eb',
+        }}>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 12, height: 12, borderRadius: 3, background: '#22c55e' }} />
+              <span style={{ fontSize: 11, color: '#374151' }}><strong>Normal:</strong> -2 SD s/d +2 SD</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 12, height: 12, borderRadius: 3, background: '#f97316' }} />
+              <span style={{ fontSize: 11, color: '#374151' }}><strong>Berisiko:</strong> -3 SD s/d -2 SD atau +2 SD s/d +3 SD</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 12, height: 12, borderRadius: 3, background: '#ef4444' }} />
+              <span style={{ fontSize: 11, color: '#374151' }}><strong>Perlu Perhatian:</strong> &lt; -3 SD atau &gt; +3 SD</span>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div className="space-y-8">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {bbuData.length > 0 && (
         <CommonChart
           data={bbuData}
           title="Grafik Status Gizi BB Menurut Umur (BB/U)"
           xLabel="Umur (bulan)"
           yLabel="Berat Badan (kg)"
+          type="bbu"
         />
       )}
       {tbuData.length > 0 && (
@@ -1189,6 +1396,7 @@ function WhoCharts({ history, jk }: { history: any[]; jk?: 'L' | 'P' }) {
           title="Grafik Status Gizi TB Menurut Umur (TB/U)"
           xLabel="Umur (bulan)"
           yLabel="Tinggi Badan (cm)"
+          type="tbu"
         />
       )}
       {bbtbData.length > 0 && (
@@ -1197,6 +1405,7 @@ function WhoCharts({ history, jk }: { history: any[]; jk?: 'L' | 'P' }) {
           title="Grafik Status Gizi BB Menurut TB (BB/TB)"
           xLabel="Tinggi Badan (cm)"
           yLabel="Berat Badan (kg)"
+          type="bbtb"
         />
       )}
     </div>
@@ -1225,80 +1434,212 @@ function DeltaBBInsights({ history }: { history: any[] }) {
     }
   }
 
+  // Calculate summary stats
+  const sesuaiCount = data.filter(d => d.status === 'sesuai').length;
+  const kurangCount = data.filter(d => d.status === 'kurang').length;
+  const lebihCount = data.filter(d => d.status === 'lebih').length;
+
   return (
-    <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-      <div className="mb-4">
-        <h3 className="text-base font-semibold text-gray-800">Analisis Kenaikan Berat Badan (ΔBB)</h3>
-        <p className="text-sm text-gray-500">Perbandingan kenaikan BB per minggu dengan rekomendasi 5–10 gram/kg BB.</p>
+    <div style={{
+      background: 'white',
+      borderRadius: 16,
+      border: '1px solid #e5e7eb',
+      overflow: 'hidden',
+      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: '20px 24px',
+        borderBottom: '1px solid #f1f5f9',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: 'linear-gradient(135deg, #ecfdf5, white)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 48,
+            height: 48,
+            background: 'linear-gradient(135deg, #10b981, #059669)',
+            borderRadius: 12,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+            fontSize: 24,
+          }}>
+            📈
+          </div>
+          <div>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', margin: 0 }}>Analisis Kenaikan Berat Badan (ΔBB)</h3>
+            <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>Perbandingan kenaikan BB per minggu dengan rekomendasi 5–10 gram/kg BB</p>
+          </div>
+        </div>
+        <span style={{
+          padding: '6px 14px',
+          background: 'linear-gradient(135deg, #10b981, #059669)',
+          color: 'white',
+          borderRadius: 20,
+          fontSize: 12,
+          fontWeight: 700,
+          boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+        }}>
+          ΔBB
+        </span>
       </div>
 
-      <div className="h-[300px] w-full mb-6">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 10, right: 20, bottom: 20, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-            <XAxis
-              dataKey="week"
-              tick={{ fontSize: 12 }}
-              label={{ value: 'Minggu Ke', position: 'insideBottom', offset: -10, fontSize: 12 }}
-            />
-            <YAxis
-              tick={{ fontSize: 12 }}
-              label={{ value: 'ΔBB (kg)', angle: -90, position: 'insideLeft', fontSize: 12 }}
-            />
-            <Tooltip
-              contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-              formatter={(value: number, name: string) => [value.toFixed(3) + ' kg', name === 'delta' ? 'ΔBB Anak' : name === 'low' ? 'Min. Rekom' : 'Max. Rekom']}
-            />
-            <Legend verticalAlign="top" height={36} />
+      {/* Summary Stats */}
+      {data.length > 0 && (
+        <div style={{
+          padding: '16px 24px',
+          borderBottom: '1px solid #f1f5f9',
+          display: 'flex',
+          gap: 16,
+          flexWrap: 'wrap',
+          background: '#fafafa',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#ecfdf5', borderRadius: 8 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }} />
+            <span style={{ fontSize: 13, color: '#065f46', fontWeight: 600 }}>{sesuaiCount} Sesuai</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#fef2f2', borderRadius: 8 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }} />
+            <span style={{ fontSize: 13, color: '#991b1b', fontWeight: 600 }}>{kurangCount} Di Bawah</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#fffbeb', borderRadius: 8 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b' }} />
+            <span style={{ fontSize: 13, color: '#92400e', fontWeight: 600 }}>{lebihCount} Di Atas</span>
+          </div>
+        </div>
+      )}
 
-            <Area type="monotone" dataKey="high" stackId="1" stroke="none" fill="#dcfce7" name="Area Rekomendasi" />
-            <Area type="monotone" dataKey="low" stackId="2" stroke="none" fill="#ffffff" name="Area Bawah" />
-
-            <Line type="monotone" dataKey="high" stroke="#22c55e" strokeDasharray="5 5" dot={false} name="Max. Rekom" />
-            <Line type="monotone" dataKey="low" stroke="#ef4444" strokeDasharray="5 5" dot={false} name="Min. Rekom" />
-            <Line
-              type="monotone"
-              dataKey="delta"
-              stroke="#3b82f6"
-              strokeWidth={2.5}
-              dot={{ r: 4, fill: "#3b82f6", strokeWidth: 2, stroke: "#fff" }}
-              name="ΔBB Anak"
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+      {/* Legend */}
+      <div style={{
+        padding: '12px 24px',
+        borderBottom: '1px solid #f1f5f9',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 20,
+        background: '#fafafa',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 20, height: 12, background: '#dcfce7', borderRadius: 2, border: '1px dashed #22c55e' }} />
+          <span style={{ fontSize: 11, color: '#374151', fontWeight: 500 }}>Area Rekomendasi</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 20, height: 2, background: '#22c55e' }} />
+          <span style={{ fontSize: 11, color: '#374151', fontWeight: 500 }}>Max. Rekom</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 20, height: 2, background: '#ef4444' }} />
+          <span style={{ fontSize: 11, color: '#374151', fontWeight: 500 }}>Min. Rekom</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#3b82f6', border: '2px solid white', boxShadow: '0 0 0 2px #3b82f6' }} />
+          <span style={{ fontSize: 11, color: '#374151', fontWeight: 700 }}>ΔBB Anak</span>
+        </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-gray-700">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="border border-gray-200 p-3 text-left font-medium text-gray-600">Minggu</th>
-              <th className="border border-gray-200 p-3 text-left font-medium text-gray-600">ΔBB (kg)</th>
-              <th className="border border-gray-200 p-3 text-left font-medium text-gray-600">Rekom (kg)</th>
-              <th className="border border-gray-200 p-3 text-left font-medium text-gray-600">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map(d => {
-              const cls = d.status === 'sesuai' ? 'text-emerald-600 font-medium' : d.status === 'lebih' ? 'text-orange-600' : 'text-red-600 font-medium';
-              return (
-                <tr key={d.week} className="hover:bg-gray-50 transition-colors">
-                  <td className="border border-gray-200 p-3">{d.week}</td>
-                  <td className="border border-gray-200 p-3">{d.delta.toFixed(3)}</td>
-                  <td className="border border-gray-200 p-3">{d.low.toFixed(3)} – {d.high.toFixed(3)}</td>
-                  <td className={`border border-gray-200 p-3 ${cls}`}>
-                    {d.status === 'sesuai' ? 'Sesuai' : d.status === 'lebih' ? 'Di Atas' : 'Di Bawah'}
+      {/* Chart */}
+      <div style={{ padding: 24 }}>
+        <div style={{ height: 320, width: '100%' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data} margin={{ top: 10, right: 20, bottom: 20, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+              <XAxis
+                dataKey="week"
+                tick={{ fontSize: 11, fill: '#64748b' }}
+                label={{ value: 'Minggu Ke', position: 'insideBottom', offset: -10, fontSize: 11, fill: '#64748b' }}
+                axisLine={{ stroke: '#d1d5db' }}
+                tickLine={{ stroke: '#d1d5db' }}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: '#64748b' }}
+                label={{ value: 'ΔBB (kg)', angle: -90, position: 'insideLeft', fontSize: 11, fill: '#64748b' }}
+                axisLine={{ stroke: '#d1d5db' }}
+                tickLine={{ stroke: '#d1d5db' }}
+              />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: 12,
+                  border: '1px solid #e5e7eb',
+                  boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                  padding: '12px 16px',
+                }}
+                formatter={(value: number, name: string) => [value.toFixed(3) + ' kg', name === 'delta' ? 'ΔBB Anak' : name === 'low' ? 'Min. Rekom' : 'Max. Rekom']}
+              />
+
+              <Area type="monotone" dataKey="high" stackId="1" stroke="none" fill="#dcfce7" name="Area Rekomendasi" legendType="none" />
+              <Area type="monotone" dataKey="low" stackId="2" stroke="none" fill="#ffffff" name="Area Bawah" legendType="none" />
+
+              <Line type="monotone" dataKey="high" stroke="#22c55e" strokeDasharray="5 5" strokeWidth={1.5} dot={false} name="Max. Rekom" legendType="none" />
+              <Line type="monotone" dataKey="low" stroke="#ef4444" strokeDasharray="5 5" strokeWidth={1.5} dot={false} name="Min. Rekom" legendType="none" />
+              <Line
+                type="monotone"
+                dataKey="delta"
+                stroke="#3b82f6"
+                strokeWidth={3}
+                dot={{ r: 6, fill: "#3b82f6", strokeWidth: 3, stroke: "#fff" }}
+                activeDot={{ r: 8, stroke: '#3b82f6', strokeWidth: 2, fill: 'white' }}
+                name="ΔBB Anak"
+                legendType="none"
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div style={{ padding: '0 24px 24px 24px' }}>
+        <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)' }}>
+                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', borderBottom: '1px solid #e5e7eb' }}>Minggu</th>
+                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', borderBottom: '1px solid #e5e7eb' }}>ΔBB (kg)</th>
+                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', borderBottom: '1px solid #e5e7eb' }}>Rekom (kg)</th>
+                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', borderBottom: '1px solid #e5e7eb' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((d, idx) => {
+                const statusConfig = d.status === 'sesuai'
+                  ? { bg: '#ecfdf5', color: '#059669', text: '✓ Sesuai' }
+                  : d.status === 'lebih'
+                    ? { bg: '#fffbeb', color: '#d97706', text: '↑ Di Atas' }
+                    : { bg: '#fef2f2', color: '#dc2626', text: '↓ Di Bawah' };
+                return (
+                  <tr key={d.week} style={{ background: idx % 2 === 0 ? 'white' : '#fafafa' }}>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', fontWeight: 600, color: '#374151' }}>{d.week}</td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', color: '#3b82f6', fontWeight: 600 }}>{d.delta.toFixed(3)}</td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', color: '#64748b' }}>{d.low.toFixed(3)} – {d.high.toFixed(3)}</td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        padding: '4px 12px',
+                        borderRadius: 20,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        background: statusConfig.bg,
+                        color: statusConfig.color,
+                      }}>
+                        {statusConfig.text}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+              {data.length === 0 && (
+                <tr>
+                  <td colSpan={4} style={{ padding: 24, textAlign: 'center', color: '#94a3b8' }}>
+                    Belum cukup data untuk analisis (minimal 2 pengukuran).
                   </td>
                 </tr>
-              );
-            })}
-            {data.length === 0 && (
-              <tr>
-                <td className="border border-gray-200 p-4 text-center text-gray-500" colSpan={4}>Belum cukup data untuk analisis (minimal 2 pengukuran).</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
