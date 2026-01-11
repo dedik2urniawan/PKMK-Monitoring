@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { getAuthHeaders } from "@/lib/clientSession";
-import { Eye, Pencil, Trash2, X, User, MapPin, Calendar, Weight, Ruler, AlertTriangle, Heart } from "lucide-react";
+import { Eye, Pencil, Trash2, X, User, MapPin, Calendar, Weight, Ruler, AlertTriangle, Heart, TrendingUp } from "lucide-react";
+import GrowthModal from "@/components/GrowthModal";
 
 type Balita = {
     id: string;
@@ -44,6 +45,7 @@ export default function BalitaActionsNew({ balita, onDeleted, onUpdated }: Balit
     const [showViewModal, setShowViewModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showGrowthModal, setShowGrowthModal] = useState(false);
     const [loading, setLoading] = useState(false);
 
     // Edit form state - ALL FIELDS
@@ -158,9 +160,15 @@ export default function BalitaActionsNew({ balita, onDeleted, onUpdated }: Balit
             {/* Action Buttons - Icon Only */}
             <div className="flex items-center justify-center gap-1">
                 <button onClick={() => setShowViewModal(true)} className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Lihat Detail"><Eye size={16} /></button>
+                <button onClick={() => setShowGrowthModal(true)} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Lihat Pertumbuhan"><TrendingUp size={16} /></button>
                 <button onClick={() => setShowEditModal(true)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit"><Pencil size={16} /></button>
                 <button onClick={() => setShowDeleteModal(true)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Hapus"><Trash2 size={16} /></button>
             </div>
+
+            {/* GROWTH MODAL */}
+            {mounted && showGrowthModal && (
+                <GrowthModal balita={balita} onClose={() => setShowGrowthModal(false)} />
+            )}
 
             {/* VIEW DETAIL MODAL */}
             {mounted && showViewModal && (
