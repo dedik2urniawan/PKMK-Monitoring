@@ -2,8 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Users, PlusCircle, Activity, BarChart3, ChevronLeft, ChevronRight, Search, Upload, FileText, Package, LogOut, ClipboardList } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { LayoutDashboard, Users, PlusCircle, Activity, BarChart3, ChevronLeft, ChevronRight, Upload, FileText, Package, LogOut, ClipboardList, Sparkles } from "lucide-react";
 import Image from "next/image";
 
 type NavItem = { href: string; label: string; icon?: any; children?: NavItem[] };
@@ -59,7 +58,6 @@ export default function SideNav() {
     );
   };
 
-  // Auto-collapse on mobile
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768) {
@@ -71,308 +69,391 @@ export default function SideNav() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const sidebarWidth = isExpanded ? 272 : 80;
+
   return (
-    <>
-      <style jsx>{`
-        .sidebar {
-          width: ${isExpanded ? '256px' : '80px'};
-          flex-shrink: 0;
-          background: white;
-          border-right: 1px solid #dce5e4;
-          display: flex;
-          flex-direction: column;
-          transition: width 0.3s ease;
-          position: relative;
-          height: 100%;
-        }
-        .sidebar-header {
-          height: 80px;
-          display: flex;
-          align-items: center;
-          padding: 0 ${isExpanded ? '24px' : '16px'};
-          border-bottom: 1px solid #dce5e4;
-          gap: 12px;
-        }
-        .logo-icon {
-          width: 40px;
-          height: 40px;
-          background: rgba(20, 184, 166, 0.1);
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-        .sidebar-nav {
-          flex: 1;
-          overflow-y: auto;
-          padding: 24px 12px;
-        }
-        .nav-section-title {
-          font-size: 11px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: #638884;
-          padding: 16px 12px 8px;
-        }
-        .nav-item {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 12px;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 500;
-          color: #111817;
-          text-decoration: none;
-          transition: all 0.2s;
-          cursor: pointer;
-          margin-bottom: 4px;
-        }
-        .nav-item:hover {
-          background: #f6f8f8;
-        }
-        .nav-item.active {
-          background: rgba(20, 184, 166, 0.1);
-          color: #14b8a6;
-          border-left: 4px solid #14b8a6;
-          font-weight: 600;
-        }
-        .nav-item.active .nav-icon {
-          color: #14b8a6;
-        }
-        .nav-icon {
-          width: 20px;
-          height: 20px;
-          color: #638884;
-          flex-shrink: 0;
-        }
-        .nav-item.active .nav-icon {
-          color: #14b8a6;
-        }
-        .nav-arrow {
-          margin-left: auto;
-          width: 16px;
-          height: 16px;
-          color: #638884;
-          transition: transform 0.2s;
-        }
-        .nav-arrow.expanded {
-          transform: rotate(180deg);
-        }
-        .submenu {
-          display: flex;
-          flex-direction: column;
-          padding-left: 44px;
-          margin-top: 4px;
-          gap: 2px;
-        }
-        .submenu-item {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 12px;
-          font-size: 13px;
-          color: #638884;
-          text-decoration: none;
-          border-radius: 8px;
-          transition: all 0.2s;
-        }
-        .submenu-item:hover {
-          color: #14b8a6;
-          background: rgba(20, 184, 166, 0.05);
-        }
-        .submenu-item.active {
-          color: #14b8a6;
-          font-weight: 500;
-        }
-        .submenu-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: currentColor;
-        }
-        .sidebar-footer {
-          padding: 16px;
-          border-top: 1px solid #dce5e4;
-        }
-        .logout-btn {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 12px;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 500;
-          color: #ef4444;
-          width: 100%;
-          background: none;
-          border: none;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-        .logout-btn:hover {
-          background: rgba(239, 68, 68, 0.05);
-        }
-        .toggle-btn {
-          position: absolute;
-          right: -12px;
-          top: 32px;
-          width: 24px;
-          height: 24px;
-          border-radius: 50%;
-          background: white;
-          border: 2px solid #14b8a6;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          z-index: 10;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-          transition: transform 0.2s;
-        }
-        .toggle-btn:hover {
-          transform: scale(1.1);
-        }
-        .collapsed-nav {
-          justify-content: center;
-        }
-      `}</style>
+    <aside style={{
+      width: sidebarWidth,
+      flexShrink: 0,
+      background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
+      borderRight: '1px solid #e2e8f0',
+      display: 'flex',
+      flexDirection: 'column',
+      transition: 'width 0.3s ease',
+      position: 'relative',
+      height: '100%',
+    }}>
+      {/* Toggle Button */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        style={{
+          position: 'absolute',
+          right: -14,
+          top: 36,
+          width: 28,
+          height: 28,
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #10b981, #059669)',
+          border: '3px solid white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 10,
+          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+          transition: 'transform 0.2s',
+        }}
+      >
+        {isExpanded ? (
+          <ChevronLeft size={14} color="white" />
+        ) : (
+          <ChevronRight size={14} color="white" />
+        )}
+      </button>
 
-      <aside className="sidebar">
-        {/* Toggle Button */}
-        <button
-          className="toggle-btn"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          {isExpanded ? (
-            <ChevronLeft size={14} color="#14b8a6" />
-          ) : (
-            <ChevronRight size={14} color="#14b8a6" />
-          )}
-        </button>
-
-        {/* Header */}
-        <div className="sidebar-header">
-          <div className="logo-icon">
-            <Image src="/tindik-anting-logo.png" alt="PKMK" width={28} height={28} />
+      {/* Header */}
+      <div style={{
+        padding: isExpanded ? '20px 20px' : '20px 16px',
+        borderBottom: '1px solid #e2e8f0',
+        background: 'linear-gradient(135deg, #ecfdf5, #f0fdf4)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 44,
+            height: 44,
+            background: 'linear-gradient(135deg, #10b981, #059669)',
+            borderRadius: 12,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+          }}>
+            <Image src="/tindik-anting-logo.png" alt="PKMK" width={26} height={26} style={{ filter: 'brightness(0) invert(1)' }} />
           </div>
           {isExpanded && (
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#111817' }}>Sistem PKMK</div>
-              <div style={{ fontSize: '12px', color: '#638884' }}>Kab. Malang</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Sistem PKMK</span>
+                <span style={{
+                  padding: '3px 8px',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  color: 'white',
+                  borderRadius: 6,
+                  fontSize: 9,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}>Pro</span>
+              </div>
+              <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Kab. Malang</div>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Navigation */}
-        <nav className="sidebar-nav">
-          {isExpanded && <div className="nav-section-title">Menu Utama</div>}
+      {/* Navigation */}
+      <nav style={{ flex: 1, overflowY: 'auto', padding: '20px 12px' }}>
+        {/* Section: Menu Utama */}
+        {isExpanded && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '12px 12px 10px',
+            marginBottom: 4,
+          }}>
+            <div style={{ width: 20, height: 2, background: 'linear-gradient(90deg, #10b981, transparent)', borderRadius: 2 }} />
+            <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#64748b' }}>Menu Utama</span>
+            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+          </div>
+        )}
 
-          {nav.slice(0, 4).map((item) => (
-            <div key={item.label}>
-              {item.children ? (
-                <>
-                  <div
-                    className={cn("nav-item", isActive(item.href) && "active", !isExpanded && "collapsed-nav")}
-                    onClick={() => isExpanded && toggleMenu(item.label)}
-                  >
-                    {item.icon && <item.icon className="nav-icon" />}
-                    {isExpanded && (
-                      <>
-                        <span style={{ flex: 1 }}>{item.label}</span>
-                        <ChevronRight
-                          className={cn("nav-arrow", expandedMenus.includes(item.label) && "expanded")}
-                          style={{ transform: expandedMenus.includes(item.label) ? 'rotate(90deg)' : 'none' }}
-                        />
-                      </>
-                    )}
-                  </div>
-                  {isExpanded && expandedMenus.includes(item.label) && (
-                    <div className="submenu">
-                      {item.children.map((sub) => (
-                        <Link
-                          key={sub.href}
-                          href={sub.href}
-                          className={cn("submenu-item", isActive(sub.href) && "active")}
-                        >
-                          <span className="submenu-dot" />
-                          {sub.label}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <Link
-                  href={item.href}
-                  className={cn("nav-item", isActive(item.href) && "active", !isExpanded && "collapsed-nav")}
+        {nav.slice(0, 4).map((item) => (
+          <div key={item.label} style={{ marginBottom: 4 }}>
+            {item.children ? (
+              <>
+                <div
+                  onClick={() => isExpanded && toggleMenu(item.label)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: isExpanded ? '10px 12px' : '10px',
+                    borderRadius: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    background: isActive(item.href) ? 'linear-gradient(135deg, #ecfdf5, #d1fae5)' : 'transparent',
+                    border: isActive(item.href) ? '1px solid #a7f3d0' : '1px solid transparent',
+                    justifyContent: isExpanded ? 'flex-start' : 'center',
+                  }}
                 >
-                  {item.icon && <item.icon className="nav-icon" />}
-                  {isExpanded && <span>{item.label}</span>}
-                </Link>
-              )}
-            </div>
-          ))}
-
-          {isExpanded && <div className="nav-section-title">Laporan & Aset</div>}
-
-          {nav.slice(4).map((item) => (
-            <div key={item.label}>
-              {item.children ? (
-                <>
-                  <div
-                    className={cn("nav-item", !isExpanded && "collapsed-nav")}
-                    onClick={() => isExpanded && toggleMenu(item.label)}
-                  >
-                    {item.icon && <item.icon className="nav-icon" />}
-                    {isExpanded && (
-                      <>
-                        <span style={{ flex: 1 }}>{item.label}</span>
-                        <ChevronRight
-                          className={cn("nav-arrow")}
-                          style={{ transform: expandedMenus.includes(item.label) ? 'rotate(90deg)' : 'none' }}
-                        />
-                      </>
-                    )}
+                  <div style={{
+                    width: 36,
+                    height: 36,
+                    background: isActive(item.href) ? 'linear-gradient(135deg, #10b981, #059669)' : '#f1f5f9',
+                    borderRadius: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: isActive(item.href) ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
+                    transition: 'all 0.2s',
+                  }}>
+                    {item.icon && <item.icon size={18} color={isActive(item.href) ? 'white' : '#64748b'} />}
                   </div>
-                  {isExpanded && expandedMenus.includes(item.label) && (
-                    <div className="submenu">
-                      {item.children.map((sub) => (
-                        <Link
-                          key={sub.href}
-                          href={sub.href}
-                          className={cn("submenu-item", isActive(sub.href) && "active")}
-                        >
-                          <span className="submenu-dot" />
-                          {sub.label}
-                        </Link>
-                      ))}
-                    </div>
+                  {isExpanded && (
+                    <>
+                      <span style={{ flex: 1, fontSize: 14, fontWeight: isActive(item.href) ? 600 : 500, color: isActive(item.href) ? '#047857' : '#374151' }}>{item.label}</span>
+                      <ChevronRight
+                        size={16}
+                        color="#94a3b8"
+                        style={{ transform: expandedMenus.includes(item.label) ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}
+                      />
+                    </>
                   )}
-                </>
-              ) : (
-                <Link
-                  href={item.href}
-                  className={cn("nav-item", isActive(item.href) && "active", !isExpanded && "collapsed-nav")}
-                >
-                  {item.icon && <item.icon className="nav-icon" />}
-                  {isExpanded && <span>{item.label}</span>}
-                </Link>
-              )}
-            </div>
-          ))}
-        </nav>
+                </div>
+                {isExpanded && expandedMenus.includes(item.label) && (
+                  <div style={{ marginLeft: 24, paddingLeft: 20, borderLeft: '2px solid #e2e8f0', marginTop: 4, marginBottom: 8 }}>
+                    {item.children.map((sub) => (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '10px 12px',
+                          fontSize: 13,
+                          color: isActive(sub.href) ? '#10b981' : '#64748b',
+                          textDecoration: 'none',
+                          borderRadius: 8,
+                          fontWeight: isActive(sub.href) ? 600 : 400,
+                          background: isActive(sub.href) ? 'rgba(16, 185, 129, 0.08)' : 'transparent',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <div style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          background: isActive(sub.href) ? '#10b981' : '#cbd5e1',
+                          boxShadow: isActive(sub.href) ? '0 0 0 3px rgba(16, 185, 129, 0.2)' : 'none',
+                        }} />
+                        {sub.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <Link
+                href={item.href}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: isExpanded ? '10px 12px' : '10px',
+                  borderRadius: 12,
+                  textDecoration: 'none',
+                  transition: 'all 0.2s',
+                  background: isActive(item.href) ? 'linear-gradient(135deg, #ecfdf5, #d1fae5)' : 'transparent',
+                  border: isActive(item.href) ? '1px solid #a7f3d0' : '1px solid transparent',
+                  justifyContent: isExpanded ? 'flex-start' : 'center',
+                }}
+              >
+                <div style={{
+                  width: 36,
+                  height: 36,
+                  background: isActive(item.href) ? 'linear-gradient(135deg, #10b981, #059669)' : '#f1f5f9',
+                  borderRadius: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: isActive(item.href) ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
+                  transition: 'all 0.2s',
+                }}>
+                  {item.icon && <item.icon size={18} color={isActive(item.href) ? 'white' : '#64748b'} />}
+                </div>
+                {isExpanded && (
+                  <span style={{ fontSize: 14, fontWeight: isActive(item.href) ? 600 : 500, color: isActive(item.href) ? '#047857' : '#374151' }}>{item.label}</span>
+                )}
+              </Link>
+            )}
+          </div>
+        ))}
 
-        {/* Footer */}
-        <div className="sidebar-footer">
-          <Link href="/logout" className="logout-btn">
-            <LogOut size={20} />
-            {isExpanded && <span>Keluar</span>}
-          </Link>
-        </div>
-      </aside>
-    </>
+        {/* Section: Laporan & Aset */}
+        {isExpanded && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '20px 12px 10px',
+            marginBottom: 4,
+          }}>
+            <div style={{ width: 20, height: 2, background: 'linear-gradient(90deg, #3b82f6, transparent)', borderRadius: 2 }} />
+            <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#64748b' }}>Laporan & Aset</span>
+            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+          </div>
+        )}
+
+        {nav.slice(4).map((item) => (
+          <div key={item.label} style={{ marginBottom: 4 }}>
+            {item.children ? (
+              <>
+                <div
+                  onClick={() => isExpanded && toggleMenu(item.label)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: isExpanded ? '10px 12px' : '10px',
+                    borderRadius: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    background: 'transparent',
+                    justifyContent: isExpanded ? 'flex-start' : 'center',
+                  }}
+                >
+                  <div style={{
+                    width: 36,
+                    height: 36,
+                    background: '#f1f5f9',
+                    borderRadius: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    {item.icon && <item.icon size={18} color="#64748b" />}
+                  </div>
+                  {isExpanded && (
+                    <>
+                      <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: '#374151' }}>{item.label}</span>
+                      <ChevronRight
+                        size={16}
+                        color="#94a3b8"
+                        style={{ transform: expandedMenus.includes(item.label) ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}
+                      />
+                    </>
+                  )}
+                </div>
+                {isExpanded && expandedMenus.includes(item.label) && (
+                  <div style={{ marginLeft: 24, paddingLeft: 20, borderLeft: '2px solid #e2e8f0', marginTop: 4, marginBottom: 8 }}>
+                    {item.children.map((sub) => (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '10px 12px',
+                          fontSize: 13,
+                          color: isActive(sub.href) ? '#10b981' : '#64748b',
+                          textDecoration: 'none',
+                          borderRadius: 8,
+                          fontWeight: isActive(sub.href) ? 600 : 400,
+                          background: isActive(sub.href) ? 'rgba(16, 185, 129, 0.08)' : 'transparent',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <div style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          background: isActive(sub.href) ? '#10b981' : '#cbd5e1',
+                        }} />
+                        {sub.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <Link
+                href={item.href}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: isExpanded ? '10px 12px' : '10px',
+                  borderRadius: 12,
+                  textDecoration: 'none',
+                  transition: 'all 0.2s',
+                  background: isActive(item.href) ? 'linear-gradient(135deg, #ecfdf5, #d1fae5)' : 'transparent',
+                  border: isActive(item.href) ? '1px solid #a7f3d0' : '1px solid transparent',
+                  justifyContent: isExpanded ? 'flex-start' : 'center',
+                }}
+              >
+                <div style={{
+                  width: 36,
+                  height: 36,
+                  background: isActive(item.href) ? 'linear-gradient(135deg, #10b981, #059669)' : '#f1f5f9',
+                  borderRadius: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: isActive(item.href) ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
+                }}>
+                  {item.icon && <item.icon size={18} color={isActive(item.href) ? 'white' : '#64748b'} />}
+                </div>
+                {isExpanded && (
+                  <span style={{ fontSize: 14, fontWeight: isActive(item.href) ? 600 : 500, color: isActive(item.href) ? '#047857' : '#374151' }}>{item.label}</span>
+                )}
+              </Link>
+            )}
+          </div>
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div style={{
+        padding: 16,
+        borderTop: '1px solid #e2e8f0',
+        background: 'linear-gradient(180deg, #f8fafc, #f1f5f9)',
+      }}>
+        <Link
+          href="/logout"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: isExpanded ? '12px 16px' : '12px',
+            borderRadius: 12,
+            textDecoration: 'none',
+            background: 'linear-gradient(135deg, #fef2f2, #fee2e2)',
+            border: '1px solid #fecaca',
+            transition: 'all 0.2s',
+            justifyContent: isExpanded ? 'flex-start' : 'center',
+          }}
+        >
+          <div style={{
+            width: 36,
+            height: 36,
+            background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            borderRadius: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)',
+          }}>
+            <LogOut size={18} color="white" />
+          </div>
+          {isExpanded && (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#dc2626' }}>Keluar</span>
+              <span style={{
+                padding: '3px 8px',
+                background: '#fecaca',
+                color: '#991b1b',
+                borderRadius: 6,
+                fontSize: 10,
+                fontWeight: 600,
+              }}>v1.2</span>
+            </div>
+          )}
+        </Link>
+      </div>
+    </aside>
   );
 }

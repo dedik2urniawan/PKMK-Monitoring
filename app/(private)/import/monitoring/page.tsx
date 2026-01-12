@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { BarChart3, Utensils, Package, ChevronRight, Info, CheckCircle, AlertCircle, FileSpreadsheet } from "lucide-react";
 import { ensureServerSession, getAuthHeaders } from "@/lib/clientSession";
 import LocationFilter from "@/components/import/LocationFilter";
 import ExcelImporter, { ImportRow } from "@/components/import/ExcelImporter";
@@ -39,9 +40,9 @@ const TEMPLATE_CONFIGS: Record<MonitoringType, { key: string; label: string; req
 };
 
 const TAB_CONFIG = [
-    { key: "antropometri" as MonitoringType, label: "Antropometri", icon: "📊", color: "#3b82f6" },
-    { key: "konsumsi" as MonitoringType, label: "PKMK Konsumsi", icon: "🍽️", color: "#f59e0b" },
-    { key: "pemberian" as MonitoringType, label: "PKMK Pemberian", icon: "📦", color: "#8b5cf6" },
+    { key: "antropometri" as MonitoringType, label: "Antropometri", icon: BarChart3, color: "#3b82f6", gradient: "linear-gradient(135deg, #3b82f6, #2563eb)", bgLight: "#eff6ff" },
+    { key: "konsumsi" as MonitoringType, label: "PKMK Konsumsi", icon: Utensils, color: "#f59e0b", gradient: "linear-gradient(135deg, #f59e0b, #d97706)", bgLight: "#fffbeb" },
+    { key: "pemberian" as MonitoringType, label: "PKMK Pemberian", icon: Package, color: "#8b5cf6", gradient: "linear-gradient(135deg, #8b5cf6, #7c3aed)", bgLight: "#f5f3ff" },
 ];
 
 export default function ImportMonitoringPage() {
@@ -78,20 +79,17 @@ export default function ImportMonitoringPage() {
             const errors: string[] = [];
             let status: ImportRow["status"] = "valid";
 
-            // Check required fields
             columns.forEach((col) => {
                 if (col.required && !row[col.key]) {
                     errors.push(`${col.label} wajib diisi`);
                 }
             });
 
-            // Validate minggu_ke
             const mingguKe = parseInt(row.minggu_ke);
             if (isNaN(mingguKe) || mingguKe < 1 || mingguKe > 12) {
                 errors.push("minggu_ke harus 1-12");
             }
 
-            // Validate tanggal - normalize date format first
             if (row.tanggal) {
                 let parsedDate: Date | null = null;
                 const tanggalStr = String(row.tanggal).trim();
@@ -118,7 +116,6 @@ export default function ImportMonitoringPage() {
                 }
             }
 
-            // Type-specific validations
             if (activeTab === "antropometri") {
                 if (row.cara_ukur && !["terlentang", "berdiri"].includes(row.cara_ukur.toLowerCase())) {
                     errors.push("cara_ukur harus 'terlentang' atau 'berdiri'");
@@ -196,81 +193,191 @@ export default function ImportMonitoringPage() {
         return (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
                 <div style={{ width: 40, height: 40, border: '4px solid #10b981', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
         );
     }
 
     const canImport = !!filter.puskesmasId || user?.role === "admin_puskesmas";
-    const activeTabConfig = TAB_CONFIG.find(t => t.key === activeTab);
+    const activeTabConfig = TAB_CONFIG.find(t => t.key === activeTab)!;
+    const ActiveIcon = activeTabConfig.icon;
 
     return (
         <div style={{ maxWidth: 1024, margin: '0 auto', padding: '32px 24px' }}>
             {/* Breadcrumbs */}
-            <nav style={{ display: 'flex', gap: 8, fontSize: 14, marginBottom: 24 }}>
-                <Link href="/dashboard" style={{ color: '#61897c', fontWeight: 500, textDecoration: 'none' }}>Home</Link>
-                <span style={{ color: '#61897c' }}>/</span>
-                <Link href="/monitoring" style={{ color: '#61897c', fontWeight: 500, textDecoration: 'none' }}>Monitoring</Link>
-                <span style={{ color: '#61897c' }}>/</span>
-                <span style={{ color: '#111816', fontWeight: 500 }}>Import Data</span>
+            <nav style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, marginBottom: 24 }}>
+                <Link href="/dashboard" style={{ color: '#64748b', fontWeight: 500, textDecoration: 'none' }}>Home</Link>
+                <ChevronRight size={14} style={{ color: '#94a3b8' }} />
+                <Link href="/monitoring" style={{ color: '#64748b', fontWeight: 500, textDecoration: 'none' }}>Monitoring</Link>
+                <ChevronRight size={14} style={{ color: '#94a3b8' }} />
+                <span style={{ color: '#0f172a', fontWeight: 600 }}>Import Data</span>
             </nav>
 
-            {/* Page Heading */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 32 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        <span style={{ fontSize: 48, lineHeight: 1 }}>📊</span>
-                        <h1 style={{ fontSize: 36, fontWeight: 900, color: '#111816', letterSpacing: '-0.033em', margin: 0 }}>Import Data Monitoring</h1>
-                    </div>
-                    <p style={{ color: '#61897c', fontSize: 16, marginLeft: 64, margin: 0 }}>Upload file Excel untuk import data monitoring secara massal</p>
+            {/* Page Header - Modernized */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 32 }}>
+                <div style={{
+                    width: 64,
+                    height: 64,
+                    background: activeTabConfig.gradient,
+                    borderRadius: 18,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: `0 6px 20px ${activeTabConfig.color}40`,
+                    transition: 'all 0.3s',
+                }}>
+                    <FileSpreadsheet size={32} color="white" />
+                </div>
+                <div>
+                    <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.025em' }}>
+                        Import Data Monitoring
+                    </h1>
+                    <p style={{ fontSize: 14, color: '#64748b', margin: '6px 0 0 0' }}>
+                        Upload file Excel untuk import data monitoring secara massal
+                    </p>
                 </div>
             </div>
 
-            {/* Tabs - Stitch Style */}
-            <div style={{ background: 'white', padding: 8, borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #f3f4f6', marginBottom: 24 }}>
+            {/* Tabs - Premium Gradient Style */}
+            <div style={{
+                background: 'white',
+                padding: 8,
+                borderRadius: 20,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                border: '1px solid #e5e7eb',
+                marginBottom: 28,
+            }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                    {TAB_CONFIG.map((tab) => (
-                        <button
-                            key={tab.key}
-                            onClick={() => setActiveTab(tab.key)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 8,
-                                padding: '12px 16px',
-                                borderRadius: 12,
-                                border: activeTab === tab.key ? '1px solid #f3f4f6' : 'none',
-                                background: activeTab === tab.key ? 'white' : 'transparent',
-                                boxShadow: activeTab === tab.key ? '0 4px 6px rgba(0,0,0,0.05)' : 'none',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                position: 'relative',
-                            }}
-                        >
-                            {activeTab === tab.key && (
-                                <div style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 4, height: 32, background: tab.color, borderRadius: '0 4px 4px 0' }} />
-                            )}
-                            <span style={{ fontSize: 18 }}>{tab.icon}</span>
-                            <span style={{ fontSize: 14, fontWeight: 700, color: activeTab === tab.key ? '#111816' : '#61897c' }}>{tab.label}</span>
-                        </button>
-                    ))}
+                    {TAB_CONFIG.map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.key;
+                        return (
+                            <button
+                                key={tab.key}
+                                onClick={() => setActiveTab(tab.key)}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: 10,
+                                    padding: '14px 20px',
+                                    borderRadius: 14,
+                                    border: 'none',
+                                    background: isActive ? tab.gradient : 'transparent',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s',
+                                    boxShadow: isActive ? `0 4px 12px ${tab.color}40` : 'none',
+                                }}
+                            >
+                                <div style={{
+                                    width: 36,
+                                    height: 36,
+                                    background: isActive ? 'rgba(255,255,255,0.25)' : tab.bgLight,
+                                    borderRadius: 10,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}>
+                                    <Icon size={20} color={isActive ? 'white' : tab.color} />
+                                </div>
+                                <span style={{
+                                    fontSize: 14,
+                                    fontWeight: 700,
+                                    color: isActive ? 'white' : '#475569',
+                                }}>{tab.label}</span>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* Section 1: Location Filter - Stitch Style */}
-            <div style={{ background: 'white', borderRadius: 24, padding: '32px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #f3f4f6', marginBottom: 24 }}>
-                <div style={{ marginBottom: 20 }}>
-                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111816', margin: 0 }}>Filter Lokasi (Opsional)</h3>
-                    <p style={{ color: '#61897c', fontSize: 14, marginTop: 6 }}>Pilih lokasi untuk validasi data otomatis saat upload.</p>
+            {/* Section 1: Location Filter */}
+            <section style={{
+                background: 'white',
+                borderRadius: 20,
+                padding: 28,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                border: '1px solid #e5e7eb',
+                marginBottom: 24,
+            }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                    paddingBottom: 20,
+                    marginBottom: 24,
+                    borderBottom: '1px solid #f1f5f9',
+                }}>
+                    <div style={{
+                        width: 42,
+                        height: 42,
+                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                        color: 'white',
+                        borderRadius: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 16,
+                        fontWeight: 800,
+                        boxShadow: '0 3px 10px rgba(16, 185, 129, 0.3)',
+                    }}>1</div>
+                    <div>
+                        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#0f172a', margin: 0 }}>Filter Lokasi (Opsional)</h2>
+                        <p style={{ fontSize: 13, color: '#64748b', margin: '2px 0 0 0' }}>Pilih lokasi untuk validasi data otomatis saat upload</p>
+                    </div>
                 </div>
                 <LocationFilter user={user} onFilterChange={setFilter} />
-            </div>
+            </section>
 
-            {/* Section 2: Excel Uploader - Stitch Style */}
-            <div style={{ background: 'white', borderRadius: 24, padding: '32px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #f3f4f6', marginBottom: 24 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111816', marginBottom: 24 }}>
-                    Upload File Excel - {activeTabConfig?.label}
-                </h3>
+            {/* Section 2: Excel Uploader */}
+            <section style={{
+                background: 'white',
+                borderRadius: 20,
+                padding: 28,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                border: '1px solid #e5e7eb',
+                marginBottom: 24,
+            }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                    paddingBottom: 20,
+                    marginBottom: 24,
+                    borderBottom: '1px solid #f1f5f9',
+                }}>
+                    <div style={{
+                        width: 42,
+                        height: 42,
+                        background: activeTabConfig.gradient,
+                        color: 'white',
+                        borderRadius: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 16,
+                        fontWeight: 800,
+                        boxShadow: `0 3px 10px ${activeTabConfig.color}40`,
+                    }}>2</div>
+                    <div style={{ flex: 1 }}>
+                        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                            Upload File Excel - {activeTabConfig.label}
+                        </h2>
+                        <p style={{ fontSize: 13, color: '#64748b', margin: '2px 0 0 0' }}>Download template, isi data, lalu upload</p>
+                    </div>
+                    <span style={{
+                        padding: '6px 14px',
+                        background: activeTabConfig.gradient,
+                        color: 'white',
+                        borderRadius: 20,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        boxShadow: `0 2px 8px ${activeTabConfig.color}30`,
+                    }}>
+                        {activeTabConfig.label.toUpperCase()}
+                    </span>
+                </div>
                 <ExcelImporter
                     key={activeTab}
                     templateColumns={TEMPLATE_CONFIGS[activeTab]}
@@ -279,45 +386,97 @@ export default function ImportMonitoringPage() {
                     templateName={`Import_Monitoring_${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
                     disabled={!canImport}
                 />
-            </div>
+            </section>
 
-            {/* Section 3: Instructions - Stitch Style */}
-            <div style={{ background: '#f9fafb', borderRadius: 24, padding: '32px', border: '1px solid rgba(229,231,235,0.6)' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-                    <div style={{ padding: 10, background: '#dbeafe', color: '#2563eb', borderRadius: 12, flexShrink: 0 }}>
-                        <span style={{ fontSize: 24 }}>ℹ️</span>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111816', marginBottom: 16 }}>📋 Petunjuk Import Monitoring</h3>
-                        <ul style={{ listStyle: 'disc', paddingLeft: 20, color: '#4b5563', fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                            <li><strong>NIK</strong> harus sesuai dengan NIK balita yang sudah terdaftar di sistem.</li>
-                            <li>Balita harus sudah memiliki data <strong>Kohort</strong> sebelum monitoring diinput.</li>
-                            <li>Format tanggal harus <strong>YYYY-MM-DD</strong> (contoh: 2023-08-17).</li>
-                            <li>Kolom <strong>minggu_ke</strong> harus berisi angka antara 1-12.</li>
-                            {activeTab === "antropometri" && (
-                                <>
-                                    <li>Untuk Antropometri, <strong>cara_ukur</strong> diisi &apos;terlentang&apos; atau &apos;berdiri&apos;.</li>
-                                    <li>Nilai <strong>Z-score</strong> akan dihitung secara otomatis oleh sistem setelah import.</li>
-                                </>
-                            )}
-                            {activeTab === "konsumsi" && (
-                                <li><strong>kepatuhan_pct</strong>: persentase kepatuhan 0-100</li>
-                            )}
-                            {activeTab === "pemberian" && (
-                                <li><strong>jenis_formulasi</strong>: contoh F100, F75, dll</li>
-                            )}
-                            <li>Data yang terdeteksi <strong>duplikat</strong> (NIK &amp; Tanggal sama) akan otomatis di-SKIP.</li>
-                        </ul>
+            {/* Section 3: Instructions - Type-specific */}
+            <section style={{
+                background: `linear-gradient(135deg, ${activeTabConfig.bgLight}, white)`,
+                borderRadius: 20,
+                padding: 28,
+                border: `1px solid ${activeTabConfig.color}20`,
+            }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                    paddingBottom: 20,
+                    marginBottom: 20,
+                    borderBottom: `1px solid ${activeTabConfig.color}15`,
+                }}>
+                    <div style={{
+                        width: 42,
+                        height: 42,
+                        background: 'linear-gradient(135deg, #64748b, #475569)',
+                        color: 'white',
+                        borderRadius: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 16,
+                        fontWeight: 800,
+                        boxShadow: '0 3px 10px rgba(100, 116, 139, 0.3)',
+                    }}>3</div>
+                    <div>
+                        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#0f172a', margin: 0 }}>Petunjuk Import {activeTabConfig.label}</h2>
+                        <p style={{ fontSize: 13, color: '#64748b', margin: '2px 0 0 0' }}>Panduan format data yang benar</p>
                     </div>
                 </div>
-            </div>
 
-            <style jsx>{`
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-            `}</style>
+                <div style={{ display: 'grid', gap: 12 }}>
+                    {/* Common Instructions */}
+                    {[
+                        { icon: CheckCircle, color: '#10b981', text: 'NIK harus sesuai dengan NIK balita yang sudah terdaftar di sistem' },
+                        { icon: CheckCircle, color: '#10b981', text: 'Balita harus sudah memiliki data Kohort sebelum monitoring diinput' },
+                        { icon: CheckCircle, color: '#3b82f6', text: 'Format tanggal harus YYYY-MM-DD (contoh: 2023-08-17)' },
+                        { icon: CheckCircle, color: '#3b82f6', text: 'Kolom minggu_ke harus berisi angka antara 1-12' },
+                    ].map((item, idx) => (
+                        <div key={idx} style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 12,
+                            padding: '12px 16px',
+                            background: 'white',
+                            borderRadius: 12,
+                            border: '1px solid #e5e7eb',
+                        }}>
+                            <item.icon size={18} color={item.color} style={{ flexShrink: 0, marginTop: 2 }} />
+                            <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>{item.text}</span>
+                        </div>
+                    ))}
+
+                    {/* Type-specific */}
+                    {activeTab === "antropometri" && (
+                        <>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', background: '#eff6ff', borderRadius: 12, border: '1px solid #bfdbfe' }}>
+                                <Info size={18} color="#3b82f6" style={{ flexShrink: 0, marginTop: 2 }} />
+                                <span style={{ fontSize: 13, color: '#1e40af', lineHeight: 1.5 }}><strong>cara_ukur</strong> diisi 'terlentang' atau 'berdiri'</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', background: '#eff6ff', borderRadius: 12, border: '1px solid #bfdbfe' }}>
+                                <Info size={18} color="#3b82f6" style={{ flexShrink: 0, marginTop: 2 }} />
+                                <span style={{ fontSize: 13, color: '#1e40af', lineHeight: 1.5 }}>Nilai <strong>Z-score</strong> akan dihitung secara otomatis oleh sistem setelah import</span>
+                            </div>
+                        </>
+                    )}
+                    {activeTab === "konsumsi" && (
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', background: '#fffbeb', borderRadius: 12, border: '1px solid #fcd34d' }}>
+                            <Info size={18} color="#d97706" style={{ flexShrink: 0, marginTop: 2 }} />
+                            <span style={{ fontSize: 13, color: '#92400e', lineHeight: 1.5 }}><strong>kepatuhan_pct</strong>: persentase kepatuhan 0-100</span>
+                        </div>
+                    )}
+                    {activeTab === "pemberian" && (
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', background: '#f5f3ff', borderRadius: 12, border: '1px solid #c4b5fd' }}>
+                            <Info size={18} color="#7c3aed" style={{ flexShrink: 0, marginTop: 2 }} />
+                            <span style={{ fontSize: 13, color: '#5b21b6', lineHeight: 1.5 }}><strong>jenis_formulasi</strong>: contoh F100, F75, dll</span>
+                        </div>
+                    )}
+
+                    {/* Warning */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', background: '#fef2f2', borderRadius: 12, border: '1px solid #fecaca' }}>
+                        <AlertCircle size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
+                        <span style={{ fontSize: 13, color: '#991b1b', lineHeight: 1.5 }}>Data yang terdeteksi <strong>duplikat</strong> (NIK & Tanggal sama) akan otomatis di-SKIP</span>
+                    </div>
+                </div>
+            </section>
         </div>
     );
 }

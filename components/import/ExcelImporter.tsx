@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download, X } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download, X, FileUp, Sparkles, Table } from "lucide-react";
 import * as XLSX from "xlsx";
 
 export type ImportRow = {
@@ -33,20 +33,15 @@ export default function ExcelImporter({
     const [validating, setValidating] = useState(false);
     const [result, setResult] = useState<{ success: number; failed: number } | null>(null);
 
-    // Download template
     const downloadTemplate = () => {
         const headers = templateColumns.map((c) => c.label);
         const ws = XLSX.utils.aoa_to_sheet([headers]);
-
-        // Set column widths
         ws["!cols"] = templateColumns.map(() => ({ wch: 20 }));
-
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Template");
         XLSX.writeFile(wb, `Template_${templateName}.xlsx`);
     };
 
-    // Handle file upload
     const handleFileChange = useCallback(
         async (e: React.ChangeEvent<HTMLInputElement>) => {
             const selectedFile = e.target.files?.[0];
@@ -62,17 +57,14 @@ export default function ExcelImporter({
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
 
-                // Convert to JSON with header mapping
                 const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, {
                     raw: false,
                     dateNF: "yyyy-mm-dd",
                 });
 
-                // Map Excel headers to expected keys
                 const mappedData = jsonData.map((row) => {
                     const mapped: Record<string, any> = {};
                     templateColumns.forEach((col) => {
-                        // Try to find matching column by label (case-insensitive)
                         const key = Object.keys(row).find(
                             (k) => k.toLowerCase().trim() === col.label.toLowerCase().trim()
                         );
@@ -84,8 +76,6 @@ export default function ExcelImporter({
                 });
 
                 setRawData(mappedData);
-
-                // Validate rows
                 const validated = await onValidate(mappedData);
                 setPreviewRows(validated);
             } catch (err) {
@@ -98,7 +88,6 @@ export default function ExcelImporter({
         [templateColumns, onValidate]
     );
 
-    // Handle import
     const handleImport = async () => {
         const validRows = previewRows.filter((r) => r.status === "valid");
         if (validRows.length === 0) return;
@@ -108,7 +97,6 @@ export default function ExcelImporter({
             const result = await onImport(validRows);
             setResult(result);
             if (result.success > 0) {
-                // Clear file after successful import
                 setFile(null);
                 setRawData([]);
                 setPreviewRows([]);
@@ -120,7 +108,6 @@ export default function ExcelImporter({
         }
     };
 
-    // Reset
     const handleReset = () => {
         setFile(null);
         setRawData([]);
@@ -133,179 +120,309 @@ export default function ExcelImporter({
     const warningCount = previewRows.filter((r) => r.status === "warning" || r.status === "duplicate").length;
 
     return (
-        <div className="space-y-6">
-            {/* Download Template */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="font-semibold text-blue-900 flex items-center gap-2">
-                            <FileSpreadsheet size={20} />
-                            Download Template Excel
-                        </h3>
-                        <p className="text-sm text-blue-700 mt-1">
-                            Download template, isi data sesuai kolom, lalu upload kembali.
-                        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* Download Template - Premium Card */}
+            <div style={{
+                background: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
+                borderRadius: 16,
+                padding: 24,
+                border: '1px solid #93c5fd',
+                position: 'relative',
+                overflow: 'hidden',
+            }}>
+                <div style={{
+                    position: 'absolute',
+                    top: -20,
+                    right: -20,
+                    width: 100,
+                    height: 100,
+                    background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                    borderRadius: '50%',
+                    opacity: 0.1,
+                }} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <div style={{
+                            width: 52,
+                            height: 52,
+                            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                            borderRadius: 14,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                        }}>
+                            <FileSpreadsheet size={26} color="white" />
+                        </div>
+                        <div>
+                            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#1e40af', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                Download Template Excel
+                                <span style={{
+                                    padding: '4px 10px',
+                                    background: '#3b82f6',
+                                    color: 'white',
+                                    borderRadius: 12,
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                }}>XLSX</span>
+                            </h3>
+                            <p style={{ fontSize: 13, color: '#3b82f6', margin: '4px 0 0 0' }}>
+                                Download template, isi data sesuai kolom, lalu upload kembali
+                            </p>
+                        </div>
                     </div>
                     <button
                         onClick={downloadTemplate}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            padding: '12px 24px',
+                            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                            color: 'white',
+                            borderRadius: 12,
+                            border: 'none',
+                            fontWeight: 600,
+                            fontSize: 14,
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)',
+                            transition: 'all 0.2s',
+                        }}
                     >
                         <Download size={18} />
                         Download Template
                     </button>
                 </div>
 
-                {/* Column info */}
-                <div className="mt-3 text-xs text-blue-800">
-                    <strong>Kolom:</strong>{" "}
-                    {templateColumns.map((c, i) => (
-                        <span key={c.key}>
-                            {c.label}
-                            {c.required && <span className="text-red-500">*</span>}
-                            {i < templateColumns.length - 1 && ", "}
+                {/* Columns Preview */}
+                <div style={{
+                    marginTop: 16,
+                    padding: '12px 16px',
+                    background: 'rgba(255,255,255,0.8)',
+                    borderRadius: 10,
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#1e40af', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Table size={14} /> Kolom:
+                    </span>
+                    {templateColumns.slice(0, 8).map((c) => (
+                        <span key={c.key} style={{
+                            padding: '4px 10px',
+                            background: c.required ? '#dbeafe' : '#f1f5f9',
+                            color: c.required ? '#1d4ed8' : '#64748b',
+                            borderRadius: 6,
+                            fontSize: 11,
+                            fontWeight: 500,
+                        }}>
+                            {c.label}{c.required && <span style={{ color: '#ef4444', marginLeft: 2 }}>*</span>}
                         </span>
                     ))}
+                    {templateColumns.length > 8 && (
+                        <span style={{ fontSize: 11, color: '#64748b' }}>+{templateColumns.length - 8} lainnya</span>
+                    )}
                 </div>
             </div>
 
-            {/* Upload Area */}
+            {/* Upload Area - Premium */}
             <div
-                className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${disabled
-                        ? "border-gray-200 bg-gray-50 cursor-not-allowed"
-                        : file
-                            ? "border-emerald-300 bg-emerald-50"
-                            : "border-gray-300 hover:border-emerald-400 hover:bg-emerald-50 cursor-pointer"
-                    }`}
+                style={{
+                    border: `2px dashed ${disabled ? '#e2e8f0' : file ? '#10b981' : '#94a3b8'}`,
+                    borderRadius: 16,
+                    padding: 40,
+                    textAlign: 'center',
+                    transition: 'all 0.3s',
+                    background: disabled ? '#f8fafc' : file ? 'linear-gradient(135deg, #ecfdf5, #d1fae5)' : 'linear-gradient(135deg, #fafafa, white)',
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    position: 'relative',
+                    overflow: 'hidden',
+                }}
             >
+                {!disabled && !file && (
+                    <div style={{
+                        position: 'absolute',
+                        top: 20,
+                        right: 20,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '6px 12px',
+                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                        color: 'white',
+                        borderRadius: 20,
+                        fontSize: 11,
+                        fontWeight: 600,
+                    }}>
+                        <Sparkles size={12} /> Drag & Drop
+                    </div>
+                )}
                 <input
                     type="file"
                     accept=".xlsx,.xls"
                     onChange={handleFileChange}
                     disabled={disabled || importing}
-                    className="hidden"
+                    style={{ display: 'none' }}
                     id="excel-upload"
                 />
-                <label
-                    htmlFor="excel-upload"
-                    className={disabled ? "cursor-not-allowed" : "cursor-pointer"}
-                >
-                    <Upload className="mx-auto text-gray-400 mb-3" size={40} />
+                <label htmlFor="excel-upload" style={{ cursor: disabled ? 'not-allowed' : 'pointer', display: 'block' }}>
                     {file ? (
-                        <div className="flex items-center justify-center gap-2 text-emerald-700">
-                            <FileSpreadsheet size={20} />
-                            <span className="font-medium">{file.name}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                            <div style={{
+                                width: 56,
+                                height: 56,
+                                background: 'linear-gradient(135deg, #10b981, #059669)',
+                                borderRadius: 14,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                            }}>
+                                <FileSpreadsheet size={28} color="white" />
+                            </div>
+                            <div style={{ textAlign: 'left' }}>
+                                <p style={{ fontSize: 16, fontWeight: 700, color: '#047857', margin: 0 }}>{file.name}</p>
+                                <p style={{ fontSize: 13, color: '#10b981', margin: '4px 0 0 0' }}>File siap diproses</p>
+                            </div>
                             <button
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    handleReset();
+                                onClick={(e) => { e.preventDefault(); handleReset(); }}
+                                style={{
+                                    marginLeft: 12,
+                                    padding: 8,
+                                    background: '#fee2e2',
+                                    color: '#dc2626',
+                                    borderRadius: 8,
+                                    border: 'none',
+                                    cursor: 'pointer',
                                 }}
-                                className="ml-2 text-gray-500 hover:text-red-500"
                             >
                                 <X size={18} />
                             </button>
                         </div>
                     ) : (
                         <>
-                            <p className="text-gray-600 font-medium">
-                                Drag & drop atau klik untuk upload
+                            <div style={{
+                                width: 72,
+                                height: 72,
+                                margin: '0 auto 16px',
+                                background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
+                                borderRadius: 18,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}>
+                                <FileUp size={32} color={disabled ? '#94a3b8' : '#64748b'} />
+                            </div>
+                            <p style={{ fontSize: 16, fontWeight: 600, color: disabled ? '#94a3b8' : '#374151', margin: '0 0 8px 0' }}>
+                                {disabled ? 'Pilih lokasi terlebih dahulu' : 'Klik atau seret file ke sini'}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p style={{ fontSize: 13, color: '#94a3b8', margin: 0 }}>
                                 Format: .xlsx, .xls (max 5MB)
                             </p>
                         </>
                     )}
                 </label>
-                {disabled && (
-                    <p className="text-sm text-amber-600 mt-2">
-                        ⚠️ Pilih lokasi (Puskesmas/Desa) terlebih dahulu
-                    </p>
-                )}
             </div>
 
             {/* Validation Status */}
             {validating && (
-                <div className="text-center text-gray-600 py-4">
-                    <div className="animate-spin inline-block w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full mr-2" />
-                    Memvalidasi data...
+                <div style={{ textAlign: 'center', padding: 24, color: '#64748b' }}>
+                    <div style={{
+                        display: 'inline-block',
+                        width: 32,
+                        height: 32,
+                        border: '3px solid #e5e7eb',
+                        borderTopColor: '#10b981',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                        marginBottom: 12,
+                    }} />
+                    <p style={{ margin: 0, fontWeight: 500 }}>Memvalidasi data...</p>
+                    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 </div>
             )}
 
             {/* Preview Table */}
             {previewRows.length > 0 && (
-                <div className="border rounded-xl overflow-hidden">
-                    <div className="bg-gray-50 px-4 py-3 border-b flex items-center justify-between">
-                        <h3 className="font-semibold text-gray-800">
+                <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+                    <div style={{
+                        padding: '16px 20px',
+                        background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
+                        borderBottom: '1px solid #e5e7eb',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                    }}>
+                        <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Table size={18} style={{ color: '#10b981' }} />
                             Preview Data ({previewRows.length} baris)
                         </h3>
-                        <div className="flex items-center gap-4 text-sm">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                             {validCount > 0 && (
-                                <span className="flex items-center gap-1 text-emerald-600">
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: '#dcfce7', color: '#166534', borderRadius: 8, fontSize: 13, fontWeight: 600 }}>
                                     <CheckCircle size={16} /> {validCount} valid
                                 </span>
                             )}
                             {warningCount > 0 && (
-                                <span className="flex items-center gap-1 text-amber-600">
-                                    <AlertCircle size={16} /> {warningCount} warning
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: '#fef9c3', color: '#854d0e', borderRadius: 8, fontSize: 13, fontWeight: 600 }}>
+                                    <AlertCircle size={16} /> {warningCount} skip
                                 </span>
                             )}
                             {errorCount > 0 && (
-                                <span className="flex items-center gap-1 text-red-600">
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: '#fecaca', color: '#991b1b', borderRadius: 8, fontSize: 13, fontWeight: 600 }}>
                                     <AlertCircle size={16} /> {errorCount} error
                                 </span>
                             )}
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto max-h-96">
-                        <table className="w-full text-sm">
-                            <thead className="bg-gray-100 sticky top-0">
-                                <tr>
-                                    <th className="px-3 py-2 text-left text-xs font-bold text-gray-700">#</th>
-                                    <th className="px-3 py-2 text-left text-xs font-bold text-gray-700">Status</th>
+                    <div style={{ overflowX: 'auto', maxHeight: 400 }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                            <thead>
+                                <tr style={{ background: '#f8fafc' }}>
+                                    <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#475569', borderBottom: '1px solid #e5e7eb' }}>#</th>
+                                    <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#475569', borderBottom: '1px solid #e5e7eb' }}>Status</th>
                                     {templateColumns.slice(0, 5).map((col) => (
-                                        <th key={col.key} className="px-3 py-2 text-left text-xs font-bold text-gray-700">
+                                        <th key={col.key} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#475569', borderBottom: '1px solid #e5e7eb' }}>
                                             {col.label}
                                         </th>
                                     ))}
-                                    <th className="px-3 py-2 text-left text-xs font-bold text-gray-700">Keterangan</th>
+                                    <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#475569', borderBottom: '1px solid #e5e7eb' }}>Keterangan</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {previewRows.slice(0, 20).map((row) => (
+                            <tbody>
+                                {previewRows.slice(0, 20).map((row, idx) => (
                                     <tr
                                         key={row.rowNum}
-                                        className={
-                                            row.status === "error"
-                                                ? "bg-red-50"
-                                                : row.status === "warning" || row.status === "duplicate"
-                                                    ? "bg-amber-50"
-                                                    : ""
-                                        }
+                                        style={{
+                                            background: row.status === "error" ? '#fef2f2' : row.status === "warning" || row.status === "duplicate" ? '#fffbeb' : idx % 2 === 0 ? 'white' : '#fafafa',
+                                        }}
                                     >
-                                        <td className="px-3 py-2 text-gray-600">{row.rowNum}</td>
-                                        <td className="px-3 py-2">
+                                        <td style={{ padding: '10px 16px', borderBottom: '1px solid #f1f5f9', color: '#64748b' }}>{row.rowNum}</td>
+                                        <td style={{ padding: '10px 16px', borderBottom: '1px solid #f1f5f9' }}>
                                             {row.status === "valid" && (
-                                                <span className="inline-flex items-center gap-1 text-emerald-600">
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: '#dcfce7', color: '#166534', borderRadius: 6, fontSize: 12, fontWeight: 600 }}>
                                                     <CheckCircle size={14} /> OK
                                                 </span>
                                             )}
                                             {row.status === "error" && (
-                                                <span className="inline-flex items-center gap-1 text-red-600">
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: '#fecaca', color: '#991b1b', borderRadius: 6, fontSize: 12, fontWeight: 600 }}>
                                                     <AlertCircle size={14} /> Error
                                                 </span>
                                             )}
                                             {(row.status === "warning" || row.status === "duplicate") && (
-                                                <span className="inline-flex items-center gap-1 text-amber-600">
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: '#fef9c3', color: '#854d0e', borderRadius: 6, fontSize: 12, fontWeight: 600 }}>
                                                     <AlertCircle size={14} /> Skip
                                                 </span>
                                             )}
                                         </td>
                                         {templateColumns.slice(0, 5).map((col) => (
-                                            <td key={col.key} className="px-3 py-2 text-gray-800 max-w-32 truncate">
+                                            <td key={col.key} style={{ padding: '10px 16px', borderBottom: '1px solid #f1f5f9', color: '#374151', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                 {String(row.data[col.key] || "-")}
                                             </td>
                                         ))}
-                                        <td className="px-3 py-2 text-gray-600 text-xs">
+                                        <td style={{ padding: '10px 16px', borderBottom: '1px solid #f1f5f9', color: '#dc2626', fontSize: 12 }}>
                                             {row.errors.length > 0 ? row.errors.join(", ") : "-"}
                                         </td>
                                     </tr>
@@ -315,7 +432,7 @@ export default function ExcelImporter({
                     </div>
 
                     {previewRows.length > 20 && (
-                        <div className="bg-gray-50 px-4 py-2 text-center text-sm text-gray-500">
+                        <div style={{ padding: 12, textAlign: 'center', background: '#f8fafc', color: '#64748b', fontSize: 13, borderTop: '1px solid #e5e7eb' }}>
                             Menampilkan 20 dari {previewRows.length} baris
                         </div>
                     )}
@@ -324,24 +441,37 @@ export default function ExcelImporter({
 
             {/* Import Button */}
             {previewRows.length > 0 && validCount > 0 && (
-                <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-600">
-                        <strong>{validCount}</strong> data siap di-import.
-                        {warningCount > 0 && ` ${warningCount} data akan di-skip.`}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: '#f8fafc', borderRadius: 12 }}>
+                    <p style={{ fontSize: 14, color: '#475569', margin: 0 }}>
+                        <strong style={{ color: '#10b981' }}>{validCount}</strong> data siap di-import.
+                        {warningCount > 0 && <span style={{ color: '#d97706' }}> {warningCount} data akan di-skip.</span>}
                     </p>
                     <button
                         onClick={handleImport}
                         disabled={importing}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            padding: '14px 28px',
+                            background: importing ? '#94a3b8' : 'linear-gradient(135deg, #10b981, #059669)',
+                            color: 'white',
+                            borderRadius: 12,
+                            border: 'none',
+                            fontWeight: 700,
+                            fontSize: 15,
+                            cursor: importing ? 'not-allowed' : 'pointer',
+                            boxShadow: importing ? 'none' : '0 4px 12px rgba(16, 185, 129, 0.4)',
+                        }}
                     >
                         {importing ? (
                             <>
-                                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                                <div style={{ width: 18, height: 18, border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                                 Importing...
                             </>
                         ) : (
                             <>
-                                <Upload size={18} />
+                                <Upload size={20} />
                                 Import {validCount} Data
                             </>
                         )}
@@ -351,25 +481,37 @@ export default function ExcelImporter({
 
             {/* Result */}
             {result && (
-                <div
-                    className={`rounded-xl p-4 ${result.failed > 0 ? "bg-amber-50 border border-amber-200" : "bg-emerald-50 border border-emerald-200"
-                        }`}
-                >
-                    <div className="flex items-center gap-3">
-                        {result.failed > 0 ? (
-                            <AlertCircle className="text-amber-600" size={24} />
-                        ) : (
-                            <CheckCircle className="text-emerald-600" size={24} />
-                        )}
-                        <div>
-                            <p className="font-semibold text-gray-800">
-                                Import selesai: {result.success} berhasil
-                                {result.failed > 0 && `, ${result.failed} gagal`}
+                <div style={{
+                    borderRadius: 16,
+                    padding: 20,
+                    background: result.failed > 0 ? 'linear-gradient(135deg, #fffbeb, #fef3c7)' : 'linear-gradient(135deg, #ecfdf5, #d1fae5)',
+                    border: `1px solid ${result.failed > 0 ? '#fcd34d' : '#a7f3d0'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 16,
+                }}>
+                    <div style={{
+                        width: 48,
+                        height: 48,
+                        background: result.failed > 0 ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #10b981, #059669)',
+                        borderRadius: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: `0 4px 12px ${result.failed > 0 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
+                    }}>
+                        {result.failed > 0 ? <AlertCircle size={24} color="white" /> : <CheckCircle size={24} color="white" />}
+                    </div>
+                    <div>
+                        <p style={{ fontSize: 16, fontWeight: 700, color: result.failed > 0 ? '#92400e' : '#047857', margin: 0 }}>
+                            Import selesai: {result.success} berhasil
+                            {result.failed > 0 && `, ${result.failed} gagal`}
+                        </p>
+                        {result.success > 0 && (
+                            <p style={{ fontSize: 13, color: result.failed > 0 ? '#a16207' : '#10b981', margin: '4px 0 0 0' }}>
+                                Data sudah tersimpan ke database.
                             </p>
-                            {result.success > 0 && (
-                                <p className="text-sm text-gray-600">Data sudah tersimpan ke database.</p>
-                            )}
-                        </div>
+                        )}
                     </div>
                 </div>
             )}

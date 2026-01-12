@@ -385,27 +385,79 @@ export default function ImportBalitaPage() {
             `}</style>
 
             <div className="page-container">
-                {/* Page Header */}
-                <div className="page-header">
-                    <Link href="/balita" className="back-btn">
+                {/* Page Header - Modernized */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
+                    <Link href="/balita" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 44,
+                        height: 44,
+                        background: 'white',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: 12,
+                        color: '#64748b',
+                        textDecoration: 'none',
+                        transition: 'all 0.2s',
+                    }}>
                         <ArrowLeft size={20} />
                     </Link>
-                    <div className="header-content">
-                        <div className="header-icon">
-                            <FileSpreadsheet size={28} />
-                        </div>
-                        <div>
-                            <h1 className="page-title">Import Data Balita</h1>
-                            <p className="page-subtitle">Upload file Excel untuk import data balita secara massal</p>
-                        </div>
+                    <div style={{
+                        width: 60,
+                        height: 60,
+                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                        borderRadius: 16,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
+                    }}>
+                        <FileSpreadsheet size={30} color="white" />
+                    </div>
+                    <div>
+                        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.025em' }}>
+                            Import Data Balita
+                        </h1>
+                        <p style={{ fontSize: 14, color: '#64748b', margin: '4px 0 0 0' }}>
+                            Upload file Excel untuk import data balita secara massal
+                        </p>
                     </div>
                 </div>
 
                 {/* Step 1: Location Filter */}
-                <section className="section-card">
-                    <div className="section-header">
-                        <span className="step-badge">1</span>
-                        <h2 className="section-title">Pilih Lokasi Tujuan Import</h2>
+                <section style={{
+                    background: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 20,
+                    padding: 28,
+                    marginBottom: 24,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 14,
+                        paddingBottom: 20,
+                        marginBottom: 24,
+                        borderBottom: '1px solid #f1f5f9',
+                    }}>
+                        <div style={{
+                            width: 40,
+                            height: 40,
+                            background: 'linear-gradient(135deg, #10b981, #059669)',
+                            color: 'white',
+                            borderRadius: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 16,
+                            fontWeight: 800,
+                            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                        }}>1</div>
+                        <div>
+                            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: 0 }}>Pilih Lokasi Tujuan Import</h2>
+                            <p style={{ fontSize: 13, color: '#64748b', margin: '2px 0 0 0' }}>Tentukan puskesmas dan desa tujuan import</p>
+                        </div>
                     </div>
                     <LocationFilter
                         user={user}
@@ -413,20 +465,69 @@ export default function ImportBalitaPage() {
                         requiredDesa={user?.role === "superadmin"}
                     />
                     {user?.role === "superadmin" && !canImport && (
-                        <div className="warning-alert">
-                            <AlertTriangle size={20} className="warning-alert-icon" />
-                            <p className="warning-alert-text">
-                                ⚠️ Perhatian: Superadmin wajib memilih Puskesmas dan Desa sebelum melanjutkan proses upload data.
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 14,
+                            padding: 18,
+                            background: 'linear-gradient(135deg, #fffbeb, #fef3c7)',
+                            border: '1px solid #fcd34d',
+                            borderRadius: 14,
+                            marginTop: 24,
+                        }}>
+                            <div style={{
+                                width: 40,
+                                height: 40,
+                                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                borderRadius: 10,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)',
+                            }}>
+                                <AlertTriangle size={20} color="white" />
+                            </div>
+                            <p style={{ fontSize: 14, color: '#92400e', fontWeight: 500, margin: 0, lineHeight: 1.5 }}>
+                                <strong>Perhatian:</strong> Superadmin wajib memilih Puskesmas dan Desa sebelum melanjutkan proses upload data.
                             </p>
                         </div>
                     )}
                 </section>
 
                 {/* Step 2: Excel Importer */}
-                <section className="section-card">
-                    <div className="section-header">
-                        <span className="step-badge">2</span>
-                        <h2 className="section-title">Upload File Excel</h2>
+                <section style={{
+                    background: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 20,
+                    padding: 28,
+                    marginBottom: 24,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 14,
+                        paddingBottom: 20,
+                        marginBottom: 24,
+                        borderBottom: '1px solid #f1f5f9',
+                    }}>
+                        <div style={{
+                            width: 40,
+                            height: 40,
+                            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                            color: 'white',
+                            borderRadius: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 16,
+                            fontWeight: 800,
+                            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
+                        }}>2</div>
+                        <div>
+                            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: 0 }}>Upload File Excel</h2>
+                            <p style={{ fontSize: 13, color: '#64748b', margin: '2px 0 0 0' }}>Download template, isi data, lalu upload</p>
+                        </div>
                     </div>
                     <ExcelImporter
                         templateColumns={BALITA_COLUMNS}
@@ -438,61 +539,85 @@ export default function ImportBalitaPage() {
                 </section>
 
                 {/* Step 3: Instructions */}
-                <section className="section-card instructions">
-                    <div className="section-header">
-                        <span className="step-badge">3</span>
-                        <h2 className="section-title">Petunjuk Pengisian</h2>
-                    </div>
-                    <div className="instructions-grid">
-                        {/* Required Fields */}
+                <section style={{
+                    background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 20,
+                    padding: 28,
+                    marginBottom: 24,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 14,
+                        paddingBottom: 20,
+                        marginBottom: 24,
+                        borderBottom: '1px solid #e2e8f0',
+                    }}>
+                        <div style={{
+                            width: 40,
+                            height: 40,
+                            background: 'linear-gradient(135deg, #64748b, #475569)',
+                            color: 'white',
+                            borderRadius: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 16,
+                            fontWeight: 800,
+                            boxShadow: '0 2px 8px rgba(100, 116, 139, 0.3)',
+                        }}>3</div>
                         <div>
-                            <h4 className="instruction-title">
-                                <CheckCircle size={16} className="instruction-title-icon" />
+                            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: 0 }}>Petunjuk Pengisian</h2>
+                            <p style={{ fontSize: 13, color: '#64748b', margin: '2px 0 0 0' }}>Panduan format data Excel</p>
+                        </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+                        {/* Required Fields */}
+                        <div style={{ background: 'white', borderRadius: 14, padding: 20, border: '1px solid #e2e8f0' }}>
+                            <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: '#0f172a', margin: '0 0 16px 0' }}>
+                                <CheckCircle size={18} style={{ color: '#10b981' }} />
                                 Kolom Wajib Diisi
                             </h4>
-                            <ul className="instruction-list">
-                                <li className="instruction-item">
-                                    <span className="instruction-bullet" />
-                                    <span><strong>NIK:</strong> Nomor Induk Kependudukan (16 digit)</span>
-                                </li>
-                                <li className="instruction-item">
-                                    <span className="instruction-bullet" />
-                                    <span><strong>nama_balita:</strong> Nama lengkap sesuai KK</span>
-                                </li>
-                                <li className="instruction-item">
-                                    <span className="instruction-bullet" />
-                                    <span><strong>jk:</strong> Jenis Kelamin (L atau P)</span>
-                                </li>
-                                <li className="instruction-item">
-                                    <span className="instruction-bullet" />
-                                    <span><strong>tgl_lahir:</strong> Format YYYY-MM-DD</span>
-                                </li>
-                            </ul>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                {[
+                                    { label: 'NIK', desc: 'Nomor Induk Kependudukan (16 digit)' },
+                                    { label: 'nama_balita', desc: 'Nama lengkap sesuai KK' },
+                                    { label: 'jk', desc: 'Jenis Kelamin (L atau P)' },
+                                    { label: 'tgl_lahir', desc: 'Format YYYY-MM-DD' },
+                                ].map((item) => (
+                                    <div key={item.label} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                                        <div style={{ width: 6, height: 6, background: '#10b981', borderRadius: '50%', marginTop: 6, flexShrink: 0 }} />
+                                        <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
+                                            <strong style={{ color: '#0f172a' }}>{item.label}:</strong> {item.desc}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                         {/* Red Flag Options */}
-                        <div>
-                            <h4 className="instruction-title">
-                                <Flag size={16} className="instruction-title-icon red" />
+                        <div style={{ background: 'white', borderRadius: 14, padding: 20, border: '1px solid #e2e8f0' }}>
+                            <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: '#0f172a', margin: '0 0 12px 0' }}>
+                                <Flag size={18} style={{ color: '#ef4444' }} />
                                 Red Flag (Opsional)
                             </h4>
-                            <p className="redflag-note">Isi dengan "Ya" atau "Tidak" untuk kolom berikut:</p>
-                            <div className="redflag-tags">
-                                <div className="redflag-tag">
-                                    <span className="redflag-dot" />
-                                    BB tidak adekuat
-                                </div>
-                                <div className="redflag-tag">
-                                    <span className="redflag-dot" />
-                                    Murmur/Edema
-                                </div>
-                                <div className="redflag-tag">
-                                    <span className="redflag-dot" />
-                                    Delayed Dev.
-                                </div>
-                                <div className="redflag-tag">
-                                    <span className="redflag-dot" />
-                                    Wajah Dismorfik
-                                </div>
+                            <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 12px 0' }}>Isi dengan "Ya" atau "Tidak" untuk kolom berikut:</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                                {['BB tidak adekuat', 'Murmur/Edema', 'Delayed Dev.', 'Wajah Dismorfik'].map((tag) => (
+                                    <div key={tag} style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 8,
+                                        padding: '10px 12px',
+                                        background: '#fef2f2',
+                                        borderRadius: 8,
+                                        border: '1px solid #fecaca',
+                                    }}>
+                                        <div style={{ width: 6, height: 6, background: '#ef4444', borderRadius: '50%' }} />
+                                        <span style={{ fontSize: 12, color: '#991b1b', fontWeight: 500 }}>{tag}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
