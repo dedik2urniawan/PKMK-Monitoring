@@ -1,61 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
-import { getAppUser } from "@/lib/appUser";
 import Link from "next/link";
-import { Users, Activity, TrendingUp, Plus, FileText, List, ClipboardList, Calendar, Zap } from "lucide-react";
+import { Plus, FileText, List, Calendar, Zap, ClipboardList } from "lucide-react";
 import AnalyticsSection from "./components/AnalyticsSection";
 import WelcomeModal from "./components/WelcomeModal";
 import UserInfoBadge from "@/components/UserInfoBadge";
-import RoleCard from "@/components/RoleCard";
+import DashboardStats from "./components/DashboardStats";
 
 export default async function Dashboard() {
-  // Get supabase for data queries (no auth check - handled client-side)
-  const supabase = await createClient();
-  const appUser = await getAppUser();
-
-  // Fetch statistics
-  let balitaQuery = supabase.from("balita").select("id", { head: true, count: "exact" });
-  if (appUser?.role === 'admin_puskesmas' && appUser.puskesmas_id) {
-    balitaQuery = balitaQuery.eq('puskesmas_id', appUser.puskesmas_id);
-  }
-  const { count: balitaCount } = await balitaQuery;
-
-  // Get kohort count
-  let kohortQuery = supabase.from("kohort").select("id", { head: true, count: "exact" });
-  if (appUser?.role === 'admin_puskesmas' && appUser.puskesmas_id) {
-    kohortQuery = kohortQuery.eq('puskesmas_id', appUser.puskesmas_id);
-  }
-  const { count: kohortCount } = await kohortQuery;
-
-  // Get recent monitoring count (last 7 days)
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  let monitoringQuery = supabase
-    .from("monitoring_antropometri")
-    .select("id", { head: true, count: "exact" })
-    .gte('tanggal', sevenDaysAgo.toISOString().split('T')[0]);
-
-  if (appUser?.role === 'admin_puskesmas' && appUser.puskesmas_id) {
-    const { data: kohortIds } = await supabase
-      .from("kohort")
-      .select("id")
-      .eq('puskesmas_id', appUser.puskesmas_id);
-    if (kohortIds && kohortIds.length > 0) {
-      monitoringQuery = monitoringQuery.in('kohort_id', kohortIds.map(k => k.id));
-    }
-  }
-  const { count: monitoringCount } = await monitoringQuery;
-
-  // Get puskesmas info if admin_puskesmas
-  let puskesmasName = null;
-  if (appUser?.role === 'admin_puskesmas' && appUser.puskesmas_id) {
-    const { data } = await supabase
-      .from("ref_puskesmas")
-      .select("nama")
-      .eq("id", appUser.puskesmas_id)
-      .single();
-    puskesmasName = data?.nama;
-  }
-
   const today = new Date().toLocaleDateString('id-ID', {
     day: 'numeric',
     month: 'short',
@@ -381,63 +331,8 @@ export default async function Dashboard() {
           </div>
         </div>
 
-        {/* Statistics Grid */}
-        <div className="stats-grid">
-          {/* Total Balita Card */}
-          <div className="stat-card blue-accent">
-            <div className="stat-card-decoration" />
-            <div className="stat-header">
-              <div className="stat-icon blue">
-                <Users size={24} />
-              </div>
-              <span className="stat-badge green">
-                <TrendingUp size={12} />
-                +12%
-              </span>
-            </div>
-            <p className="stat-label">Total Balita</p>
-            <h3 className="stat-value">{balitaCount ?? 0}</h3>
-            <p className="stat-hint">Terdaftar dalam program PKMK</p>
-          </div>
-
-          {/* Kohort Aktif Card */}
-          <div className="stat-card teal-accent">
-            <div className="stat-card-decoration" />
-            <div className="stat-header">
-              <div className="stat-icon teal">
-                <ClipboardList size={24} />
-              </div>
-              <span className="stat-badge blue">Aktif</span>
-            </div>
-            <p className="stat-label">Kohort Aktif</p>
-            <h3 className="stat-value">{kohortCount ?? 0}</h3>
-            <p className="stat-hint">Kohort program saat ini</p>
-          </div>
-
-          {/* Monitoring 7 Hari Card */}
-          <div className="stat-card orange-accent">
-            <div className="stat-card-decoration" />
-            <div className="stat-header">
-              <div className="stat-icon orange">
-                <Activity size={24} />
-              </div>
-              {(monitoringCount ?? 0) === 0 ? (
-                <span className="stat-badge gray">⚠ Low Activity</span>
-              ) : (
-                <span className="stat-badge green">
-                  <TrendingUp size={12} />
-                  Active
-                </span>
-              )}
-            </div>
-            <p className="stat-label">Monitoring (7 Hari)</p>
-            <h3 className="stat-value">{monitoringCount ?? 0}</h3>
-            <p className="stat-hint">Pengukuran 7 hari terakhir</p>
-          </div>
-
-          {/* Role Card - Client Component for persistent role after refresh */}
-          <RoleCard />
-        </div>
+        {/* Statistics Grid - Client Component for proper auth */}
+        <DashboardStats />
 
         {/* Quick Actions */}
         <section className="quick-actions-section">
