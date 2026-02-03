@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Users, PlusCircle, Activity, BarChart3, ChevronLeft, ChevronRight, Upload, FileText, Package, LogOut, ClipboardList, Sparkles } from "lucide-react";
+import { LayoutDashboard, Users, PlusCircle, Activity, BarChart3, ChevronLeft, ChevronRight, Upload, FileText, Package, LogOut, ClipboardList, Sparkles, Search, MapPin } from "lucide-react";
 import Image from "next/image";
 
 type NavItem = { href: string; label: string; icon?: any; children?: NavItem[] };
@@ -29,6 +29,16 @@ const nav: NavItem[] = [
     ],
   },
   { href: "/kohort/new", label: "Daftar Kohort Intervensi", icon: ClipboardList },
+  {
+    href: "/determinan",
+    label: "Determinan Stunting",
+    icon: Search,
+    children: [
+      { href: "/determinan/daftar-balita", label: "Daftar Balita", icon: Users },
+      { href: "/determinan/analisis", label: "Analisis Determinan", icon: BarChart3 },
+      { href: "/determinan/rekap", label: "Rekap Determinan", icon: FileText },
+    ],
+  },
   {
     href: "#laporan",
     label: "Laporan Tatalaksana",
