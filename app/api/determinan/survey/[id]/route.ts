@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { getAppUser } from "@/lib/appUser";
 
 // Calculate risk score based on answers
@@ -47,7 +47,7 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
-        const supabase = await createClient();
+        const supabase = createAdminClient();
 
         const { data, error } = await supabase
             .from('survey_determinan')
@@ -72,7 +72,7 @@ export async function PUT(
 ) {
     try {
         const { id } = await params;
-        const supabase = await createClient();
+        const supabase = createAdminClient();
         const appUser = await getAppUser();
 
         if (!appUser) {
@@ -113,7 +113,7 @@ export async function DELETE(
 ) {
     try {
         const { id } = await params;
-        const supabase = await createClient();
+        const supabase = createAdminClient();
         const appUser = await getAppUser();
 
         if (!appUser) {

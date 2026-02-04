@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -110,12 +110,13 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: balitaError.message }, { status: 500 });
     }
 
-    // Get survey data for fetched balita only
+    // Get survey data for fetched balita only (use admin client to bypass RLS)
     const balitaIds = balitaData?.map(b => b.id) || [];
 
     let surveyData: any[] = [];
     if (balitaIds.length > 0) {
-        const { data } = await supabase
+        const adminClient = createAdminClient();
+        const { data } = await adminClient
             .from('survey_determinan')
             .select('balita_id, tanggal_survey, risk_category')
             .in('balita_id', balitaIds)

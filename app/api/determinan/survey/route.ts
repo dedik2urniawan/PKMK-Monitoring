@@ -52,7 +52,7 @@ function calculateRiskScore(data: any): { score: number; category: string } {
 
 export async function GET(request: NextRequest) {
     try {
-        const supabase = await createClient();
+        const supabase = createAdminClient(); // Use admin client to bypass RLS
         const appUser = await getAppUser();
 
         const { searchParams } = new URL(request.url);

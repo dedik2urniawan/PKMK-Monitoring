@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { getAppUser } from "@/lib/appUser";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +46,7 @@ const SECTIONS = [
 
 export async function GET(req: NextRequest) {
     try {
-        const supabase = await createClient();
+        const supabase = createAdminClient(); // Bypass RLS
         const appUser = await getAppUser();
 
         // Parse filters
