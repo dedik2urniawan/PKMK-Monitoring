@@ -84,7 +84,7 @@ export default function RekapLogistikPage() {
                 const userRes = await fetch("/api/auth/session", { credentials: 'include', headers: authHeaders });
                 const userData = await userRes.json();
                 setUser(userData.user);
-                if (userData.user.role === 'superadmin') {
+                if (userData.user?.role === 'superadmin') {
                     const pkmRes = await fetch("/api/ref/puskesmas", { credentials: 'include', headers: authHeaders });
                     const pkmData = await pkmRes.json();
                     setPuskesmasList(pkmData.items || []);

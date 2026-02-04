@@ -75,7 +75,7 @@ export default function ManajemenLogistikPage() {
                 } else {
                     console.error("[Logistik] Failed to fetch jenis-pkmk:", jenisPkmkRes.status);
                 }
-                if (userData.user.role === 'superadmin') {
+                if (userData.user?.role === 'superadmin') {
                     const pkmRes = await fetch("/api/ref/puskesmas", { credentials: 'include', headers: authHeaders });
                     const pkmData = await pkmRes.json();
                     setPuskesmasList(pkmData.items || []);
