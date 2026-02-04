@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { getAppUser } from '@/lib/appUser';
 
 // GET - List stok per puskesmas
 export async function GET(request: NextRequest) {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const user = await getAppUser();
 
     if (!user) {
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
 
 // POST - Initialize or update stok record
 export async function POST(request: NextRequest) {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const user = await getAppUser();
 
     if (!user) {
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
 
 // DELETE - Remove stok record and its related transactions
 export async function DELETE(request: NextRequest) {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const user = await getAppUser();
 
     if (!user) {
