@@ -1,13 +1,6 @@
 
-/* Removed invalid import to tw-animate-css. If you want animations,
-   keep the tailwindcss-animate plugin below (requires package installed). */
+@import "tailwindcss";
 @plugin "tailwindcss-animate";
-
-@custom-variant dark (&:is(.dark *));
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* -----------------------------
    Global Theme Colors & Fonts
@@ -187,12 +180,19 @@ a:hover {
 /* Mobile Optimized Cards */
 @media (max-width: 768px) {
   .mobile-card {
-    @apply rounded-2xl border-none shadow-sm bg-white p-4 mb-4;
+    /* Removed base layer to avoid conflict with v4 import */
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   }
   
   /* Touch target optimization */
   button, a {
-    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   /* Hide scrollbar but keep functionality */
