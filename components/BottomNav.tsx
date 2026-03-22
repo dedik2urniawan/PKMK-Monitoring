@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Activity, Search, Menu, PlusCircle, X } from "lucide-react";
+import { LayoutDashboard, Grid, PlaySquare, User, PlusCircle, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function BottomNav() {
@@ -40,11 +40,10 @@ export default function BottomNav() {
   };
 
   const navItems = [
-    { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-    { href: "/balita", label: "Balita", icon: Users },
-    { href: "/monitoring", label: "Input", icon: Activity },
-    { href: "/determinan/daftar-balita", label: "Survey", icon: Search },
-    { href: "#", label: "Menu", icon: Menu },
+    { href: "/dashboard", label: "Beranda", icon: LayoutDashboard },
+    { href: "/fitur", label: "Fitur", icon: Grid },
+    { href: "/tutorial", label: "Tutorial", icon: PlaySquare },
+    { href: "/profil", label: "Profil", icon: User },
   ];
 
   return (

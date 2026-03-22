@@ -224,7 +224,13 @@ export default function NewBalitaPage() {
         .page-container {
           max-width: 1024px;
           margin: 0 auto;
-          padding: 32px;
+          padding: 16px;
+          padding-bottom: 100px; /* Safe space for BottomNav */
+        }
+        @media (min-width: 640px) {
+          .page-container {
+            padding: 32px;
+          }
         }
         .page-header {
           display: flex;
@@ -364,7 +370,12 @@ export default function NewBalitaPage() {
           color: #991b1b;
         }
         .section-body {
-          padding: 24px;
+          padding: 16px;
+        }
+        @media (min-width: 640px) {
+          .section-body {
+            padding: 24px;
+          }
         }
         .form-grid {
           display: grid;
@@ -460,7 +471,7 @@ export default function NewBalitaPage() {
           display: flex;
           flex-direction: column-reverse;
           gap: 16px;
-          padding: 24px;
+          padding: 16px;
           background: #f8fafc;
           border-top: 1px solid #e2e8f0;
           border-radius: 0 0 12px 12px;
@@ -470,6 +481,7 @@ export default function NewBalitaPage() {
             flex-direction: row;
             align-items: center;
             justify-content: space-between;
+            padding: 24px;
           }
         }
         .required-note {
