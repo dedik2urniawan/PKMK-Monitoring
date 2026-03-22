@@ -9,6 +9,7 @@ type NavItem = { href: string; label: string; icon?: any; children?: NavItem[] }
 
 const nav: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/kohort/new", label: "Daftar Kohort Intervensi", icon: ClipboardList },
   {
     href: "/balita",
     label: "Daftar Balita",
@@ -28,7 +29,6 @@ const nav: NavItem[] = [
       { href: "/import/monitoring", label: "Import Excel", icon: Upload },
     ],
   },
-  { href: "/kohort/new", label: "Daftar Kohort Intervensi", icon: ClipboardList },
   {
     href: "/determinan",
     label: "Determinan Stunting",

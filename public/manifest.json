@@ -1,0 +1,24 @@
+{
+  "name": "PKMK Monitoring Kab. Malang",
+  "short_name": "PKMK",
+  "description": "Sistem Pelaporan PKMK & Monitoring Real Time untuk Kabupaten Malang",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0ea5e9",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/SIGMA Logo_192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/SIGMA Logo_512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

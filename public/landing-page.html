@@ -141,6 +141,27 @@
       transform: translateY(-1px);
     }
 
+    .btn-pwa {
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      color: white !important;
+      padding: 8px 20px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-pwa:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+      background: linear-gradient(135deg, #0284c7, #4f46e5);
+    }
+
     /* HERO */
     .hero {
       display: grid;
@@ -157,6 +178,7 @@
       margin-bottom: 20px;
       background: linear-gradient(to right, #0f172a, #334155);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
@@ -201,6 +223,19 @@
       opacity: 0.9;
       transform: translateY(-2px);
       box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-pwa-hero {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      color: var(--primary) !important;
+      border: 2px solid var(--primary);
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
+    }
+
+    .btn-pwa-hero:hover {
+      background: white;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(14, 165, 233, 0.25);
     }
 
     .btn-outline {
@@ -497,6 +532,118 @@
       }
     }
 
+    /* MOBILE APP PWA BANNER */
+    .mobile-app-banner {
+      margin: 80px 0;
+      padding: 60px 40px;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      border-radius: 24px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 40px;
+      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mobile-app-banner::before {
+      content: "";
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 300px;
+      height: 300px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      filter: blur(40px);
+    }
+
+    .mobile-banner-content {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+    }
+
+    .mobile-banner-content h3 {
+      font-size: 36px;
+      font-weight: 800;
+      margin: 0 0 16px;
+      line-height: 1.2;
+    }
+
+    .mobile-banner-content p {
+      font-size: 16px;
+      margin: 0 0 32px;
+      opacity: 0.9;
+      line-height: 1.6;
+      max-width: 500px;
+    }
+
+    .btn-white {
+      background: white;
+      color: #0ea5e9 !important;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 16px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-white:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .mobile-banner-visual {
+      position: relative;
+      z-index: 2;
+      width: 250px;
+      height: 250px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .mobile-banner-visual img {
+      width: 140px;
+      height: 140px;
+      border-radius: 30px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    @media (max-width: 768px) {
+      .mobile-app-banner {
+        flex-direction: column;
+        text-align: center;
+        padding: 40px 24px;
+      }
+      .mobile-banner-content h3 {
+        font-size: 28px;
+      }
+      .btn-white {
+        margin: 0 auto;
+      }
+      .mobile-banner-visual {
+        width: 200px;
+        height: 200px;
+        margin: 0 auto;
+      }
+      .mobile-banner-visual img {
+        width: 100px;
+        height: 100px;
+      }
+    }
+
     /* VIDEO TUTORIAL SECTION */
     .video-tutorial-section {
       margin: 60px 0 40px;
@@ -611,7 +758,8 @@
         <a href="#fitur" class="nav-scroll">Fitur</a>
         <a href="#tutorial" class="nav-scroll">Tutorial</a>
         <a href="#analytics" class="nav-scroll">Analytics</a>
-        <a href="https://pkmk-malangkab.app/login" target="_blank" class="btn-login">Login App</a>
+        <a href="https://pwa.pkmk-malangkab.app" class="btn-pwa">📱 PWA Mobile</a>
+        <a href="https://pkmk-malangkab.app/login" class="btn-login">💻 Web App</a>
       </nav>
     </header>
 
@@ -622,11 +770,11 @@
           Medis Khusus (PKMK) di Kabupaten Malang.</p>
 
         <div class="cta-group">
-          <a href="https://pkmk-malangkab.app/login" target="_blank" class="btn btn-primary">
-            🚀 Buka Dashboard
+          <a href="https://pkmk-malangkab.app/login" class="btn btn-primary">
+            🚀 Buka Dashboard Web
           </a>
-          <a href="#analytics" class="btn btn-outline nav-scroll">
-            Lihat Data
+          <a href="https://pwa.pkmk-malangkab.app" class="btn btn-pwa-hero">
+            📱 Akses PWA Mobile
           </a>
         </div>
       </div>
@@ -774,7 +922,22 @@
         <p>Upload data balita dan monitoring secara massal via template Excel dengan validasi otomatis dan Z-Score
           calculation.</p>
       </div>
+
     </div>
+
+    <!-- MOBILE PWA BANNER -->
+    <section id="mobile-app" class="mobile-app-banner">
+      <div class="mobile-banner-content">
+        <h3>Akses Kapan Saja via Mobile App</h3>
+        <p>Aplikasi ini telah mendukung teknologi <strong>PWA (Progressive Web App)</strong>. Anda dapat masuk langsung layaknya aplikasi native dari smartphone Anda, memanfaatkan akses fitur yang responsif.</p>
+        <a href="https://pwa.pkmk-malangkab.app" class="btn-white">
+          📱 Masuk & Install PWA
+        </a>
+      </div>
+      <div class="mobile-banner-visual">
+        <img src="/SIGMA Logo_512.png" alt="PKMK Mobile App" />
+      </div>
+    </section>
 
     <div id="analytics" class="section-title" style="margin-top:20px;">
       <h3>Mengapa Data Itu Penting?</h3>
