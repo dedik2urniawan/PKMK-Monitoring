@@ -181,7 +181,13 @@ export default function BalitaList() {
         .page-container {
           max-width: 1440px;
           margin: 0 auto;
-          padding: 32px;
+          padding: 16px;
+          padding-bottom: 100px; /* Safe space for BottomNav */
+        }
+        @media (min-width: 768px) {
+          .page-container {
+            padding: 32px;
+          }
         }
         .page-header {
           display: flex;
