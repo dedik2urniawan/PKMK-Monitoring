@@ -69,56 +69,49 @@ export default function Header() {
 
     return (
         <>
-            <header style={{
-                position: 'sticky',
-                top: 0,
-                zIndex: 10,
-                background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
-                borderBottom: '1px solid #e2e8f0',
-                padding: '16px 32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-            }}>
+            <header 
+                className="sticky top-0 z-10 px-4 py-3 md:px-8 md:py-4 flex items-center justify-between bg-white border-b border-gray-200 shadow-sm"
+                style={{
+                    background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
+                }}
+            >
                 {/* Left Section - Branding */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{
-                        width: 48,
-                        height: 48,
+                        width: 40,
+                        height: 40,
                         background: 'linear-gradient(135deg, #10b981, #059669)',
-                        borderRadius: 14,
+                        borderRadius: 12,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                        flexShrink: 0
                     }}>
-                        <Image src="/tindik-anting-logo.png" alt="PKMK" width={28} height={28} style={{ filter: 'brightness(0) invert(1)' }} />
+                        <Image src="/tindik-anting-logo.png" alt="PKMK" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
                     </div>
                     <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
-                                Sistem Pelaporan PKMK
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
+                                PKMK Monitoring
                             </h2>
-                            <span style={{
-                                display: 'inline-flex',
+                            <span className="hidden sm:inline-flex" style={{
                                 alignItems: 'center',
                                 gap: 4,
-                                padding: '4px 10px',
+                                padding: '3px 8px',
                                 background: 'linear-gradient(135deg, #10b981, #059669)',
                                 color: 'white',
-                                borderRadius: 8,
-                                fontSize: 10,
+                                borderRadius: 6,
+                                fontSize: 9,
                                 fontWeight: 700,
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.05em',
-                                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
                             }}>
-                                <Sparkles size={10} />
+                                <Sparkles size={8} />
                                 Pro
                             </span>
                         </div>
-                        <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
+                        <span className="hidden md:block" style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>
                             Dinas Kesehatan Kabupaten Malang
                         </span>
                     </div>
@@ -138,21 +131,20 @@ export default function Header() {
                         borderLeft: '1px solid #e2e8f0',
                         position: 'relative',
                     }}>
-                        {/* Profile Info Card */}
-                        <div style={{
+                        {/* Profile Info Card - Hidden on Mobile */}
+                        <div className="hidden lg:block" style={{
                             background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
                             borderRadius: 14,
                             padding: '10px 16px',
                             border: '1px solid #e2e8f0',
-                            minWidth: 180,
+                            minWidth: 160,
                         }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                                <span style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
                                     {greeting.text}
                                 </span>
-                                <span style={{ fontSize: 16 }}>{greeting.emoji}</span>
                             </div>
-                            <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
+                            <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>
                                 {email || 'Loading...'}
                             </div>
                             {role && (
@@ -164,12 +156,11 @@ export default function Header() {
                                     background: roleBadge.bg,
                                     color: 'white',
                                     borderRadius: 6,
-                                    fontSize: 9,
+                                    fontSize: 8,
                                     fontWeight: 700,
                                     textTransform: 'uppercase',
-                                    letterSpacing: '0.05em',
                                 }}>
-                                    <RoleIcon size={10} />
+                                    <RoleIcon size={8} />
                                     {roleBadge.label}
                                 </div>
                             )}

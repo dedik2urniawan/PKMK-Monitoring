@@ -162,13 +162,48 @@ a:hover {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
+@layer utilities {
+  .pb-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
   }
-  body {
-    @apply bg-background text-foreground;
+  .pt-safe-area {
+    padding-top: env(safe-area-inset-top);
+  }
+  .h-safe-area {
+    height: env(safe-area-inset-bottom);
   }
 }
+
+/* PWA App Animations */
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-pwa-banner {
+  animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Mobile Optimized Cards */
+@media (max-width: 768px) {
+  .mobile-card {
+    @apply rounded-2xl border-none shadow-sm bg-white p-4 mb-4;
+  }
+  
+  /* Touch target optimization */
+  button, a {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+  
+  /* Hide scrollbar but keep functionality */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
 
 

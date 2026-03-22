@@ -1,9 +1,9 @@
 import Link from "next/link";
-import Image from "next/image";
 import SideNav from "@/components/SideNav";
 import Header from "@/components/Header";
 import IdleGuard from "@/components/IdleGuard";
 import AuthSessionSync from "@/components/AuthSessionSync";
+import BottomNav from "@/components/BottomNav";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -16,10 +16,10 @@ export default async function PrivateLayout({ children }: { children: React.Reac
 
 
   return (
-    <div className="grid grid-cols-[auto_1fr] min-h-screen max-h-screen overflow-hidden">
-      {/* Sidebar - Full height with internal scroll */}
+    <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] min-h-screen max-h-screen overflow-hidden">
+      {/* Sidebar - Desktop Only */}
       <aside
-        className="relative border-r border-gray-200 shadow-xl flex flex-col h-screen"
+        className="hidden md:flex relative border-r border-gray-200 shadow-xl flex-col h-screen"
         style={{
           background: 'linear-gradient(to bottom right, #ecfdf5, #f0fdfa, #ecfeff)'
         }}
@@ -35,7 +35,7 @@ export default async function PrivateLayout({ children }: { children: React.Reac
         <Header />
 
         {/* Content - Scrollable */}
-        <section className="flex-1 overflow-y-auto p-4 md:p-6 bg-[var(--background)]">
+        <section className="flex-1 overflow-y-auto p-4 md:p-6 bg-[var(--background)] pb-24 md:pb-6">
           {/* Auto sign-out on 1 hour idle */}
           <IdleGuard />
           {/* Sync Supabase session cookie for server APIs */}
@@ -67,6 +67,9 @@ export default async function PrivateLayout({ children }: { children: React.Reac
           </footer>
         </section>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNav />
     </div>
   );
 }

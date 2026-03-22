@@ -18,7 +18,12 @@ export default async function Dashboard() {
         .dashboard-container {
           max-width: 1400px;
           margin: 0 auto;
-          padding: 32px;
+          padding: 16px;
+        }
+        @media (min-width: 768px) {
+          .dashboard-container {
+            padding: 32px;
+          }
         }
         .page-header {
           display: flex;
@@ -224,9 +229,16 @@ export default async function Dashboard() {
           box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .quick-actions-grid {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 16px;
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        @media (min-width: 640px) {
+          .quick-actions-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+          }
         }
         .action-btn-primary {
           display: flex;
@@ -276,7 +288,12 @@ export default async function Dashboard() {
           font-size: 14px;
           text-decoration: none;
           transition: all 0.2s;
-          margin-left: auto;
+          margin-left: initial;
+        }
+        @media (min-width: 640px) {
+          .action-btn-secondary {
+            margin-left: auto;
+          }
         }
         .action-btn-secondary:hover {
           background: #f6f8f8;
