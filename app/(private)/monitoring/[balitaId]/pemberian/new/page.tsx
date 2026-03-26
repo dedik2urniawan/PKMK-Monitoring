@@ -111,7 +111,7 @@ export default function NewPemberian() {
   }
 
   return (
-    <div className="max-w-4xl">
+    <div className="w-full">
       {/* Breadcrumbs */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#607a8a', marginBottom: 8 }}>
         <span>Anak</span>
