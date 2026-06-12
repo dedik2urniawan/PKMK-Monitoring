@@ -1,12 +1,13 @@
-// lib/supabase/server.ts
 import 'server-only';
 
 import { createServerClient } from '@supabase/ssr';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 export async function createClient() {
   const cookieStore = await cookies();
+  const hdrs = await headers();
+  const authHeader = hdrs.get('authorization');
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,6 +33,11 @@ export async function createClient() {
           }
         },
       },
+      global: {
+        headers: {
+          ...(authHeader ? { Authorization: authHeader } : {})
+        }
+      }
     }
   );
 }
