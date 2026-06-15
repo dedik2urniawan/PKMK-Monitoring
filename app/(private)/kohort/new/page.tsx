@@ -21,6 +21,29 @@ export default function NewKohort() {
   const [puskesmasId, setPuskesmasId] = useState("");
   const [desa, setDesa] = useState("");
 
+  // pagination state
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const limit = 10;
+
+  async function fetchBalita(currentPage: number = 1, currentKec = kec, currentPkm = puskesmasId, currentDesa = desa) {
+    const params = new URLSearchParams();
+    if (currentPkm) params.set("puskesmas_id", currentPkm);
+    if (currentDesa) params.set("desa_kel", currentDesa);
+    if (currentKec) params.set("kecamatan", currentKec);
+    params.set("page", currentPage.toString());
+    params.set("limit", limit.toString());
+
+    await ensureServerSession();
+    const authHeaders = await getAuthHeaders();
+    const r = await fetch(`/api/monitoring/balita?${params.toString()}`, { credentials: 'include', headers: authHeaders });
+    const d = await r.json();
+    setBalita(d.items || []);
+    setTotalPages(d.pages || 1);
+    setTotalItems(d.total || 0);
+  }
+
   useEffect(() => {
     (async () => {
       try {
@@ -32,10 +55,8 @@ export default function NewKohort() {
         const data = await res.json();
         setKecList(data.items || []);
 
-        // Fetch balita with auth (FIXED - was missing authHeaders!)
-        const r = await fetch("/api/monitoring/balita", { credentials: 'include', headers: authHeaders });
-        const d = await r.json();
-        setBalita(d.items || []);
+        // Fetch balita with pagination
+        await fetchBalita(1, "", "", "");
       } catch (e) {
         console.error('[kohort/new] Error fetching initial data:', e);
       }
@@ -68,14 +89,8 @@ export default function NewKohort() {
 
   async function applyFilter(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    const params = new URLSearchParams();
-    if (puskesmasId) params.set("puskesmas_id", puskesmasId);
-    if (desa) params.set("desa_kel", desa);
-    await ensureServerSession();
-    const authHeaders = await getAuthHeaders();
-    const r = await fetch(`/api/monitoring/balita?${params.toString()}`, { credentials: 'include', headers: authHeaders });
-    const d = await r.json();
-    setBalita(d.items || []);
+    setPage(1);
+    await fetchBalita(1, kec, puskesmasId, desa);
     setSelected("");
   }
 
@@ -90,7 +105,7 @@ export default function NewKohort() {
     });
     if (!res.ok) return alert(await res.text());
     alert("Kohort dimulai!");
-    applyFilter(); // Refresh data
+    fetchBalita(page, kec, puskesmasId, desa); // Refresh data current page
   }
 
   // Helper to check redflag
@@ -146,6 +161,9 @@ export default function NewKohort() {
           </h1>
           <p style={{ color: '#61897c', fontSize: 15, marginTop: 8 }}>Kelola periode intervensi 12 minggu untuk setiap balita yang terindikasi stunting</p>
         </div>
+        <Link href="/import/kohort" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: 'white', borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: 'none', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)', transition: 'all 0.3s' }}>
+          <span style={{ fontSize: 18 }}>📥</span> Import Excel Kohort
+        </Link>
       </div>
 
       {/* Filter Section - Stitch Style */}
@@ -230,8 +248,8 @@ export default function NewKohort() {
         </div>
 
         {/* Right Column: Data Table - Stitch Style */}
-        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #dbe6e2', overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
+        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #dbe6e2', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ overflowX: 'auto', flex: 1 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: 'linear-gradient(to right, #10b981, #14b8a6)', color: 'white' }}>
@@ -315,9 +333,35 @@ export default function NewKohort() {
               </tbody>
             </table>
           </div>
-          {/* Footer Info */}
-          <div style={{ borderTop: '1px solid #f3f4f6', padding: 16, background: '#f9fafb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ fontSize: 12, color: '#6b7280', margin: 0 }}>Menampilkan <strong>{balita.length}</strong> data</p>
+          {/* Footer Info with Pagination */}
+          <div style={{ borderTop: '1px solid #f3f4f6', padding: '16px 20px', background: '#f9fafb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>
+              Menampilkan <strong>{balita.length > 0 ? (page - 1) * limit + 1 : 0}</strong> - <strong>{Math.min(page * limit, totalItems)}</strong> dari <strong>{totalItems}</strong> balita
+            </p>
+            
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button 
+                  onClick={() => { const p = page - 1; setPage(p); fetchBalita(p, kec, puskesmasId, desa); }} 
+                  disabled={page <= 1}
+                  style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: page <= 1 ? '#f3f4f6' : 'white', color: page <= 1 ? '#9ca3af' : '#374151', fontSize: 13, fontWeight: 600, cursor: page <= 1 ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}
+                >
+                  Sebelumnya
+                </button>
+                
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 40, height: 36, background: '#10b981', color: 'white', borderRadius: 8, fontSize: 13, fontWeight: 700 }}>
+                  {page}
+                </div>
+                
+                <button 
+                  onClick={() => { const p = page + 1; setPage(p); fetchBalita(p, kec, puskesmasId, desa); }} 
+                  disabled={page >= totalPages}
+                  style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: page >= totalPages ? '#f3f4f6' : 'white', color: page >= totalPages ? '#9ca3af' : '#374151', fontSize: 13, fontWeight: 600, cursor: page >= totalPages ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}
+                >
+                  Selanjutnya
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
