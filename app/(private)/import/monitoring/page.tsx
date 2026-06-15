@@ -182,7 +182,7 @@ export default function ImportMonitoringPage() {
                 toast.warning(`${data.failed} data gagal/skip`);
             }
 
-            return { success: data.success, failed: data.failed };
+            return { success: data.success, failed: data.failed, errors: data.errors };
         } catch (err) {
             toast.error("Gagal import data");
             return { success: 0, failed: validRows.length };

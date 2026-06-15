@@ -14,7 +14,7 @@ export type ImportRow = {
 type ExcelImporterProps = {
     templateColumns: { key: string; label: string; required: boolean }[];
     onValidate: (rows: Record<string, any>[]) => Promise<ImportRow[]>;
-    onImport: (validRows: ImportRow[]) => Promise<{ success: number; failed: number }>;
+    onImport: (validRows: ImportRow[]) => Promise<{ success: number; failed: number; errors?: { row: number; error: string }[] }>;
     templateName: string;
     disabled?: boolean;
 };
@@ -31,7 +31,7 @@ export default function ExcelImporter({
     const [previewRows, setPreviewRows] = useState<ImportRow[]>([]);
     const [importing, setImporting] = useState(false);
     const [validating, setValidating] = useState(false);
-    const [result, setResult] = useState<{ success: number; failed: number } | null>(null);
+    const [result, setResult] = useState<{ success: number; failed: number; errors?: { row: number; error: string }[] } | null>(null);
 
     const downloadTemplate = () => {
         const headers = templateColumns.map((c) => c.label);
@@ -511,6 +511,14 @@ export default function ExcelImporter({
                             <p style={{ fontSize: 13, color: result.failed > 0 ? '#a16207' : '#10b981', margin: '4px 0 0 0' }}>
                                 Data sudah tersimpan ke database.
                             </p>
+                        )}
+                        {result.errors && result.errors.length > 0 && (
+                            <div style={{ marginTop: 12, maxHeight: 150, overflowY: 'auto', fontSize: 12, color: '#991b1b', background: 'rgba(255,255,255,0.5)', padding: '8px 12px', borderRadius: 8 }}>
+                                <p style={{ margin: '0 0 4px 0', fontWeight: 600 }}>Detail Kegagalan:</p>
+                                {result.errors.map((e, idx) => (
+                                    <div key={idx} style={{ marginBottom: 4 }}><strong>Baris {e.row}:</strong> {e.error}</div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 </div>
