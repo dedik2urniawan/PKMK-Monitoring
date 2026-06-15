@@ -30,6 +30,10 @@ export default function ImportKohortPage() {
                     headers: authHeaders,
                 });
                 const data = await res.json();
+                if (!data.user) {
+                    window.location.href = "/login?redirectedFrom=" + encodeURIComponent(window.location.pathname);
+                    return;
+                }
                 setUser(data.user);
             } catch (err) {
                 console.error(err);

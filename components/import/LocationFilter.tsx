@@ -188,7 +188,7 @@ export default function LocationFilter({
                             onChange={(e) => setPuskesmasId(e.target.value)}
                             disabled={!kec}
                         >
-                            <option value="">-- Pilih Puskesmas --</option>
+                            <option value="">{kec ? "-- Pilih Puskesmas --" : "-- Pilih Kecamatan Dulu --"}</option>
                             {pkmList.map((p) => (
                                 <option key={p.id} value={p.id}>{p.nama}</option>
                             ))}
