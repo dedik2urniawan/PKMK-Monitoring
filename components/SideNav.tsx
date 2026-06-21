@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LayoutDashboard, Users, PlusCircle, Activity, BarChart3, ChevronLeft, ChevronRight, Upload, FileText, Package, LogOut, ClipboardList, Sparkles, Search, MapPin } from "lucide-react";
 import Image from "next/image";
+import LogoutModal from "./LogoutModal";
 
 type NavItem = { href: string; label: string; icon?: any; children?: NavItem[] };
 
@@ -56,6 +57,7 @@ export default function SideNav() {
   const pathname = usePathname();
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard" || pathname === "/";
@@ -422,9 +424,10 @@ export default function SideNav() {
         borderTop: '1px solid #e2e8f0',
         background: 'linear-gradient(180deg, #f8fafc, #f1f5f9)',
       }}>
-        <Link
-          href="/logout"
+        <button
+          onClick={() => setShowLogoutModal(true)}
           style={{
+            width: '100%',
             display: 'flex',
             alignItems: 'center',
             gap: 12,
@@ -435,6 +438,7 @@ export default function SideNav() {
             border: '1px solid #fecaca',
             transition: 'all 0.2s',
             justifyContent: isExpanded ? 'flex-start' : 'center',
+            cursor: 'pointer',
           }}
         >
           <div style={{
@@ -446,6 +450,7 @@ export default function SideNav() {
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)',
+            flexShrink: 0,
           }}>
             <LogOut size={18} color="white" />
           </div>
@@ -462,8 +467,13 @@ export default function SideNav() {
               }}>v1.2</span>
             </div>
           )}
-        </Link>
+        </button>
       </div>
+
+      <LogoutModal 
+        isOpen={showLogoutModal} 
+        onClose={() => setShowLogoutModal(false)} 
+      />
     </aside>
   );
 }
