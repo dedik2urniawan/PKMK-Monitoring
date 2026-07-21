@@ -18,7 +18,7 @@ export interface PkmkDose {
   kaloriHari: number;
   persenRda: number;
   jenisPkmk: string;
-  kaleng6Bulan: number;
+  kaleng3Bulan: number;
   proteinEnergyRatio: string;
   isStunting: boolean;
 }
@@ -34,7 +34,7 @@ export function calcPkmkDose(klas_tbu: string, klas_bbu: string, klas_bbtb: stri
       kaloriHari: 0,
       persenRda: 0,
       jenisPkmk: "-",
-      kaleng6Bulan: 0,
+      kaleng3Bulan: 0,
       proteinEnergyRatio: "-",
       isStunting: false,
     };
@@ -50,7 +50,7 @@ export function calcPkmkDose(klas_tbu: string, klas_bbu: string, klas_bbtb: stri
       kaloriHari: 600,
       persenRda: 50,
       jenisPkmk: "PKMK 1,5 kkal/ml",
-      kaleng6Bulan: 60,
+      kaleng3Bulan: 30,
       proteinEnergyRatio: "PER > 10%",
       isStunting: true,
     };
@@ -63,7 +63,7 @@ export function calcPkmkDose(klas_tbu: string, klas_bbu: string, klas_bbtb: stri
       kaloriHari: 450,
       persenRda: 30,
       jenisPkmk: "PKMK 1,5 kkal/ml",
-      kaleng6Bulan: 45,
+      kaleng3Bulan: 23,
       proteinEnergyRatio: "PER > 10%",
       isStunting: true,
     };
@@ -76,7 +76,7 @@ export function calcPkmkDose(klas_tbu: string, klas_bbu: string, klas_bbtb: stri
       kaloriHari: 400,
       persenRda: 30,
       jenisPkmk: "PKMK 1 kkal/ml",
-      kaleng6Bulan: 42,
+      kaleng3Bulan: 21,
       proteinEnergyRatio: "PER > 10%",
       isStunting: true,
     };
@@ -88,7 +88,7 @@ export function calcPkmkDose(klas_tbu: string, klas_bbu: string, klas_bbtb: stri
     kaloriHari: 400,
     persenRda: 30,
     jenisPkmk: "PKMK 1 kkal/ml",
-    kaleng6Bulan: 42,
+    kaleng3Bulan: 21,
     proteinEnergyRatio: "PER > 10%",
     isStunting: true,
   };
@@ -101,10 +101,10 @@ const SYSTEM_PROMPT = `Kamu adalah AI Nutrition Advisor dalam sistem PKMK Monito
 Kamu ahli dalam asuhan gizi balita stunting berdasarkan standar pediatric Kemenkes RI dan WHO.
 
 REFERENSI DOSIS PKMK (Tabel 3.2 & 4.1 Standar Pediatric):
-- Stunting + Gizi Buruk: 600 kkal/hari (50% RDA), PKMK 1,5 kkal/ml PER > 10%, 60 kaleng/6 bulan
-- Stunting + Gizi Kurang: 450 kkal/hari (30% RDA), PKMK 1,5 kkal/ml PER > 10%, 45 kaleng/6 bulan  
-- Stunting + BB Kurang/Underweight: 400 kkal/hari (30% RDA), PKMK 1 kkal/ml PER > 10%, 42 kaleng/6 bulan
-- Stunting + BB/TB Normal: 400 kkal/hari (30% RDA), PKMK 1 kkal/ml PER > 10%, 42 kaleng/6 bulan
+- Stunting + Gizi Buruk: 600 kkal/hari (50% RDA), PKMK 1,5 kkal/ml PER > 10%, 30 kaleng/3 bulan
+- Stunting + Gizi Kurang: 450 kkal/hari (30% RDA), PKMK 1,5 kkal/ml PER > 10%, 23 kaleng/3 bulan
+- Stunting + BB Kurang/Underweight: 400 kkal/hari (30% RDA), PKMK 1 kkal/ml PER > 10%, 21 kaleng/3 bulan
+- Stunting + BB/TB Normal: 400 kkal/hari (30% RDA), PKMK 1 kkal/ml PER > 10%, 21 kaleng/3 bulan
 
 FORMAT RESPONS: Gunakan format Markdown. Tulis dalam Bahasa Indonesia yang jelas dan profesional untuk tenaga kesehatan.
 Bagi respons menjadi 4 bagian dengan heading ## :
@@ -186,12 +186,12 @@ export async function POST(req: NextRequest) {
 **REKOMENDASI PKMK (Tabel Standar)**: 
 - Kalori/Hari: ${pkmkDose?.kaloriHari ?? "-"} kkal (${pkmkDose?.persenRda ?? "-"}% RDA)
 - Jenis PKMK: ${pkmkDose?.jenisPkmk ?? "-"} | ${pkmkDose?.proteinEnergyRatio ?? "-"}
-- Kebutuhan 6 Bulan: ${pkmkDose?.kaleng6Bulan ?? "-"} kaleng/kotak (400 gram)
+- Kebutuhan 3 Bulan: ${pkmkDose?.kaleng3Bulan ?? "-"} kaleng/kotak (400 gram)
 
 Berikan analisis dan rekomendasi asuhan gizi yang menyeluruh dan actionable.`;
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.0-flash-lite",
       systemInstruction: SYSTEM_PROMPT,
     });
 
@@ -201,9 +201,13 @@ Berikan analisis dan rekomendasi asuhan gizi yang menyeluruh dan actionable.`;
     return NextResponse.json({ recommendation: text, kondisiKlinis, pkmkDose });
   } catch (err: any) {
     console.error("AI Nutrition Advisor error:", err);
+    const status = err?.message?.includes('429') ? 429 : 500;
+    const friendlyMsg = status === 429
+      ? 'Kuota AI sementara habis (rate limit). Coba beberapa saat lagi atau gunakan API key dengan billing aktif.'
+      : (err?.message || 'Gagal menghubungi AI Advisor');
     return NextResponse.json(
-      { error: err?.message || "Gagal menghubungi AI Advisor" },
-      { status: 500 }
+      { error: friendlyMsg },
+      { status }
     );
   }
 }

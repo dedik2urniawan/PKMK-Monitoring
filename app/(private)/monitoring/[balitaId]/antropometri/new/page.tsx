@@ -905,19 +905,19 @@ export default function NewAntropometri() {
           const bbuLower = form.klas_bbu?.toLowerCase() ?? '';
           const bbtbLower = form.klas_bbtb?.toLowerCase() ?? '';
           let kondisi = '';
-          let kaloriHari = 0, persenRda = 0, jenisPkmk = '', kaleng6Bulan = 0, proteinEnergyRatio = '';
+          let kaloriHari = 0, persenRda = 0, jenisPkmk = '', kaleng3Bulan = 0, proteinEnergyRatio = '';
           if (isStunting) {
             if (bbuLower.includes('buruk') || bbtbLower.includes('buruk')) {
-              kondisi = 'Stunting + Gizi Buruk'; kaloriHari = 600; persenRda = 50; jenisPkmk = 'PKMK 1,5 kkal/ml'; kaleng6Bulan = 60; proteinEnergyRatio = 'PER > 10%';
+              kondisi = 'Stunting + Gizi Buruk'; kaloriHari = 600; persenRda = 50; jenisPkmk = 'PKMK 1,5 kkal/ml'; kaleng3Bulan = 30; proteinEnergyRatio = 'PER > 10%';
             } else if (bbtbLower.includes('kurus')) {
-              kondisi = 'Stunting + BB Kurang'; kaloriHari = 400; persenRda = 30; jenisPkmk = 'PKMK 1 kkal/ml'; kaleng6Bulan = 42; proteinEnergyRatio = 'PER > 10%';
+              kondisi = 'Stunting + BB Kurang'; kaloriHari = 400; persenRda = 30; jenisPkmk = 'PKMK 1 kkal/ml'; kaleng3Bulan = 21; proteinEnergyRatio = 'PER > 10%';
             } else if (bbuLower.includes('kurang')) {
-              kondisi = 'Stunting + Gizi Kurang'; kaloriHari = 450; persenRda = 30; jenisPkmk = 'PKMK 1,5 kkal/ml'; kaleng6Bulan = 45; proteinEnergyRatio = 'PER > 10%';
+              kondisi = 'Stunting + Gizi Kurang'; kaloriHari = 450; persenRda = 30; jenisPkmk = 'PKMK 1,5 kkal/ml'; kaleng3Bulan = 23; proteinEnergyRatio = 'PER > 10%';
             } else {
-              kondisi = 'Stunting + BB/TB Normal'; kaloriHari = 400; persenRda = 30; jenisPkmk = 'PKMK 1 kkal/ml'; kaleng6Bulan = 42; proteinEnergyRatio = 'PER > 10%';
+              kondisi = 'Stunting + BB/TB Normal'; kaloriHari = 400; persenRda = 30; jenisPkmk = 'PKMK 1 kkal/ml'; kaleng3Bulan = 21; proteinEnergyRatio = 'PER > 10%';
             }
           }
-          const pkmkDose = { kondisi, kaloriHari, persenRda, jenisPkmk, kaleng6Bulan, proteinEnergyRatio };
+          const pkmkDose = { kondisi, kaloriHari, persenRda, jenisPkmk, kaleng3Bulan, proteinEnergyRatio };
           const canAnalyze = !!(form.klas_tbu && form.klas_bbu && form.bb_kg && form.tb_corr_cm);
           const kondisiColor = kondisi.includes('Buruk') ? { bg: '#fef2f2', border: '#fecaca', text: '#991b1b', badge: '#fee2e2' }
             : kondisi.includes('Gizi Kurang') ? { bg: '#fffbeb', border: '#fde68a', text: '#92400e', badge: '#fef3c7' }
@@ -1007,7 +1007,7 @@ export default function NewAntropometri() {
                       { icon: '🔥', label: 'Kebutuhan Kalori', value: `${kaloriHari} kkal`, sub: `per hari` },
                       { icon: '📊', label: 'Persentase RDA', value: `${persenRda}%`, sub: `dari kebutuhan harian` },
                       { icon: '🥛', label: 'Jenis PKMK', value: jenisPkmk, sub: proteinEnergyRatio },
-                      { icon: '📦', label: 'Kebutuhan 6 Bulan', value: `${kaleng6Bulan} kaleng`, sub: `kotak 400 gram` },
+                      { icon: '📦', label: 'Kebutuhan 3 Bulan', value: `${kaleng3Bulan} kaleng`, sub: `kotak 400 gram` },
                     ].map((card, i) => (
                       <div key={i} style={{ background: 'white', padding: '16px', borderRadius: 12, border: `1px solid ${kondisiColor.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
                         <div style={{ fontSize: 22, marginBottom: 8 }}>{card.icon}</div>
