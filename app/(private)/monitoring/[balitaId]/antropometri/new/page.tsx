@@ -461,19 +461,25 @@ export default function NewAntropometri() {
     doc.line(margin, y - 2, pageW - margin, y - 2);
     y += 4;
 
-    const drawSoapBox = (label: string, val: string, x: number, cy: number) => {
+    const drawSoapBox = (label: string, val: string, x: number, cy: number, w: number, hBox: number = 24) => {
       doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(91, 33, 182);
       doc.text(label.toUpperCase(), x, cy);
       doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(17, 21, 24);
       doc.setDrawColor(209, 213, 219);
-      doc.rect(x, cy + 3, 85, 20);
-      if (val) doc.text(val, x + 2, cy + 8, { maxWidth: 81 });
+      // Use rounded rectangle for a more modern look
+      doc.roundedRect(x, cy + 3, w, hBox, 2, 2);
+      if (val) doc.text(val, x + 3, cy + 8, { maxWidth: w - 6 });
     };
 
-    drawSoapBox('Subjective', h.subjective, rf1, y);
-    drawSoapBox('Objective', h.objective, rf2, y); y += 28;
-    drawSoapBox('Assessment', h.assesment, rf1, y);
-    drawSoapBox('Plan', h.plan, rf2, y); y += 28;
+    const fullW = 178; // 210 - 16*2
+    drawSoapBox('Subjective', h.subjective, margin, y, fullW); y += 32;
+    drawSoapBox('Objective', h.objective, margin, y, fullW); y += 32;
+    
+    // Check if we need to wrap to next page for the rest of SOAP
+    if (y > 260) { doc.addPage(); y = 16; }
+    
+    drawSoapBox('Assessment', h.assesment, margin, y, fullW); y += 32;
+    drawSoapBox('Plan', h.plan, margin, y, fullW); y += 32;
 
     // Footer on all pages
     const pageCount = (doc as any).internal.getNumberOfPages();
