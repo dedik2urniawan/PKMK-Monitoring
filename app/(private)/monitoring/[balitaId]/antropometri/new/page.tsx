@@ -932,11 +932,11 @@ export default function NewAntropometri() {
             try {
               const res = await getAiNutritionAdvice({
                 namaBalita: balitaName || 'Balita',
-                usiaBulan: form.usia_bulan || 0,
+                usiaBulan: Number(form.usia_bulan) || 0,
                 jk: balita?.jk || 'L',
-                bbKg: form.bb_kg || 0,
-                tbCm: form.tb_corr_cm || 0,
-                lilaCm: form.lila_cm || undefined,
+                bbKg: Number(form.bb_kg) || 0,
+                tbCm: Number(form.tb_corr_cm) || 0,
+                lilaCm: form.lila_cm ? Number(form.lila_cm) : undefined,
                 bbIdeal: bbIdeal !== null ? bbIdeal.toString() : undefined,
                 deltaKg: form.delta_bb_kg !== null ? form.delta_bb_kg : undefined,
                 zsBbu: form.zs_bbu,
