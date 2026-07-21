@@ -1,7 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 // ============================================================
 // PKMK Dosing Rule Engine (Tabel 3.2 & 4.1 Standar Pediatric)
@@ -190,24 +187,49 @@ export async function POST(req: NextRequest) {
 
 Berikan analisis dan rekomendasi asuhan gizi yang menyeluruh dan actionable.`;
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-lite",
-      systemInstruction: SYSTEM_PROMPT,
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    const aiModel = process.env.GEMINI_MODEL || "gemini-2.0-flash-001";
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`;
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: {
+          parts: [{ text: SYSTEM_PROMPT }],
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: userPrompt }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1024,
+        },
+      }),
     });
 
-    const result = await model.generateContent(userPrompt);
-    const text = result.response.text();
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      const errMsg = errBody?.error?.message || `HTTP ${response.status}`;
+      const status = response.status === 429 ? 429 : 500;
+      const friendlyMsg = status === 429
+        ? "Kuota AI sementara habis (rate limit). Coba beberapa saat lagi."
+        : `Gagal menghubungi Gemini API: ${errMsg}`;
+      return NextResponse.json({ error: friendlyMsg }, { status });
+    }
+
+    const data = await response.json();
+    const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
     return NextResponse.json({ recommendation: text, kondisiKlinis, pkmkDose });
   } catch (err: any) {
     console.error("AI Nutrition Advisor error:", err);
-    const status = err?.message?.includes('429') ? 429 : 500;
-    const friendlyMsg = status === 429
-      ? 'Kuota AI sementara habis (rate limit). Coba beberapa saat lagi atau gunakan API key dengan billing aktif.'
-      : (err?.message || 'Gagal menghubungi AI Advisor');
     return NextResponse.json(
-      { error: friendlyMsg },
-      { status }
+      { error: err?.message || "Gagal menghubungi AI Advisor" },
+      { status: 500 }
     );
   }
 }
