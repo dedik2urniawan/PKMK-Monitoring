@@ -78,6 +78,13 @@ export default function NewAntropometri() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailItem, setDetailItem] = useState<any | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [aiAdvisor, setAiAdvisor] = useState<{
+    loading: boolean;
+    result: string | null;
+    error: string | null;
+    kondisi: string | null;
+    pkmkDose: any | null;
+  }>({ loading: false, result: null, error: null, kondisi: null, pkmkDose: null });
 
   useEffect(() => {
     (async () => {
@@ -891,7 +898,189 @@ export default function NewAntropometri() {
           </div>
         </div>
 
-        {/* Section 4: Pemeriksaan Medis Lanjutan Toggle */}
+        {/* Section 4: 🤖 AI Nutrition Advisor */}
+        {(() => {
+          // Rule Engine: determine PKMK condition from Z-Score classifications
+          const isStunting = form.klas_tbu?.toLowerCase().includes('pendek') || form.klas_tbu?.toLowerCase().includes('stunting');
+          const bbuLower = form.klas_bbu?.toLowerCase() ?? '';
+          const bbtbLower = form.klas_bbtb?.toLowerCase() ?? '';
+          let kondisi = '';
+          let kaloriHari = 0, persenRda = 0, jenisPkmk = '', kaleng6Bulan = 0, proteinEnergyRatio = '';
+          if (isStunting) {
+            if (bbuLower.includes('buruk') || bbtbLower.includes('buruk')) {
+              kondisi = 'Stunting + Gizi Buruk'; kaloriHari = 600; persenRda = 50; jenisPkmk = 'PKMK 1,5 kkal/ml'; kaleng6Bulan = 60; proteinEnergyRatio = 'PER > 10%';
+            } else if (bbtbLower.includes('kurus')) {
+              kondisi = 'Stunting + BB Kurang'; kaloriHari = 400; persenRda = 30; jenisPkmk = 'PKMK 1 kkal/ml'; kaleng6Bulan = 42; proteinEnergyRatio = 'PER > 10%';
+            } else if (bbuLower.includes('kurang')) {
+              kondisi = 'Stunting + Gizi Kurang'; kaloriHari = 450; persenRda = 30; jenisPkmk = 'PKMK 1,5 kkal/ml'; kaleng6Bulan = 45; proteinEnergyRatio = 'PER > 10%';
+            } else {
+              kondisi = 'Stunting + BB/TB Normal'; kaloriHari = 400; persenRda = 30; jenisPkmk = 'PKMK 1 kkal/ml'; kaleng6Bulan = 42; proteinEnergyRatio = 'PER > 10%';
+            }
+          }
+          const pkmkDose = { kondisi, kaloriHari, persenRda, jenisPkmk, kaleng6Bulan, proteinEnergyRatio };
+          const canAnalyze = !!(form.klas_tbu && form.klas_bbu && form.bb_kg && form.tb_corr_cm);
+          const kondisiColor = kondisi.includes('Buruk') ? { bg: '#fef2f2', border: '#fecaca', text: '#991b1b', badge: '#fee2e2' }
+            : kondisi.includes('Gizi Kurang') ? { bg: '#fffbeb', border: '#fde68a', text: '#92400e', badge: '#fef3c7' }
+            : kondisi.includes('BB Kurang') ? { bg: '#fff7ed', border: '#fed7aa', text: '#9a3412', badge: '#ffedd5' }
+            : kondisi.includes('Normal') ? { bg: '#f0fdf4', border: '#bbf7d0', text: '#166534', badge: '#dcfce7' }
+            : { bg: '#f8fafc', border: '#e5e7eb', text: '#374151', badge: '#f3f4f6' };
+
+          const triggerAi = async () => {
+            setAiAdvisor(prev => ({ ...prev, loading: true, error: null }));
+            try {
+              const res = await fetch('/api/ai/nutrition-advisor', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  namaBalita: balitaName,
+                  usiaBulan: form.usia_bulan,
+                  jk: balita?.jk,
+                  bbKg: form.bb_kg,
+                  tbCm: form.tb_corr_cm,
+                  zsBbu: form.zs_bbu,
+                  klasBbu: form.klas_bbu,
+                  zsTbu: form.zs_tbu,
+                  klasTbu: form.klas_tbu,
+                  zsBbtb: form.zs_bbtb,
+                  klasBbtb: form.klas_bbtb,
+                  deltaKg: form.delta_bb_kg,
+                  probableStunting: probableStunting?.result,
+                  weightAge: probableStunting?.weightAge,
+                  lengthAge: probableStunting?.lengthAge,
+                  bbIdeal,
+                  lilaCm: form.lila_cm,
+                  kondisiKlinis: kondisi || 'Tidak terdeteksi stunting',
+                  pkmkDose,
+                }),
+              });
+              const d = await res.json();
+              if (!res.ok) throw new Error(d.error || 'Gagal');
+              setAiAdvisor({ loading: false, result: d.recommendation, error: null, kondisi, pkmkDose });
+            } catch (e: any) {
+              setAiAdvisor(prev => ({ ...prev, loading: false, error: e.message || 'Gagal menghubungi AI Advisor' }));
+            }
+          };
+
+          return (
+            <div style={{ padding: '28px 32px', borderBottom: '1px solid #f0f3f5', background: 'linear-gradient(135deg, #f0f9ff 0%, #faf5ff 100%)' }}>
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}>🤖</div>
+                  <div>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111518', margin: 0 }}>AI Nutrition Advisor</h3>
+                    <p style={{ fontSize: 12, color: '#6b7280', margin: 0 }}>Powered by Gemini AI · Standar Pediatric Kemenkes RI</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={triggerAi}
+                  disabled={!canAnalyze || aiAdvisor.loading}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: canAnalyze ? 'pointer' : 'not-allowed',
+                    background: canAnalyze ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : '#e5e7eb',
+                    color: canAnalyze ? 'white' : '#9ca3af', border: 'none',
+                    boxShadow: canAnalyze ? '0 2px 8px rgba(99,102,241,0.35)' : 'none',
+                    transition: 'all 0.2s ease',
+                    opacity: aiAdvisor.loading ? 0.75 : 1,
+                  }}
+                >
+                  {aiAdvisor.loading ? (
+                    <><span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid rgba(255,255,255,0.5)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />{' '}Menganalisis...</>
+                  ) : (
+                    <>{aiAdvisor.result ? '🔄 Analisis Ulang' : '✨ Analisis AI'}</>
+                  )}
+                </button>
+              </div>
+
+              {/* PKMK Dosing Cards — Rule Engine (selalu tampil jika stunting) */}
+              {isStunting && kondisi ? (
+                <div style={{ marginBottom: 20 }}>
+                  {/* Kondisi Badge */}
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: kondisiColor.badge, color: kondisiColor.text, border: `1px solid ${kondisiColor.border}`, padding: '6px 14px', borderRadius: 9999, fontSize: 13, fontWeight: 700, marginBottom: 16 }}>
+                    <span>🏷️</span> {kondisi}
+                  </div>
+                  {/* 4-column dose grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }} className="form-grid-responsive">
+                    {[
+                      { icon: '🔥', label: 'Kebutuhan Kalori', value: `${kaloriHari} kkal`, sub: `per hari` },
+                      { icon: '📊', label: 'Persentase RDA', value: `${persenRda}%`, sub: `dari kebutuhan harian` },
+                      { icon: '🥛', label: 'Jenis PKMK', value: jenisPkmk, sub: proteinEnergyRatio },
+                      { icon: '📦', label: 'Kebutuhan 6 Bulan', value: `${kaleng6Bulan} kaleng`, sub: `kotak 400 gram` },
+                    ].map((card, i) => (
+                      <div key={i} style={{ background: 'white', padding: '16px', borderRadius: 12, border: `1px solid ${kondisiColor.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                        <div style={{ fontSize: 22, marginBottom: 8 }}>{card.icon}</div>
+                        <p style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{card.label}</p>
+                        <p style={{ fontSize: 20, fontWeight: 800, color: kondisiColor.text, marginBottom: 2 }}>{card.value}</p>
+                        <p style={{ fontSize: 11, color: '#9ca3af' }}>{card.sub}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 10, fontStyle: 'italic' }}>Referensi: Tabel 3.2 & 4.1 Standar Pediatric Kemenkes RI — Pemberian PKMK untuk balita stunting usia ≥ 1 tahun</p>
+                </div>
+              ) : !isStunting && form.klas_tbu ? (
+                <div style={{ padding: '16px', background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0', marginBottom: 20 }}>
+                  <p style={{ fontSize: 14, color: '#166534', fontWeight: 600 }}>✅ Tidak terdeteksi stunting</p>
+                  <p style={{ fontSize: 12, color: '#4ade80', marginTop: 4 }}>Klasifikasi TB/U: <strong>{form.klas_tbu}</strong> — Tidak memerlukan intervensi PKMK saat ini.</p>
+                </div>
+              ) : (
+                <div style={{ padding: '16px', background: '#f8fafc', borderRadius: 10, border: '1px dashed #d1d5db', marginBottom: 20 }}>
+                  <p style={{ fontSize: 13, color: '#9ca3af', fontStyle: 'italic' }}>💡 Lengkapi data BB, TB, dan tanggal pengukuran untuk melihat rekomendasi PKMK otomatis.</p>
+                </div>
+              )}
+
+              {/* AI Result Panel */}
+              {(aiAdvisor.loading || aiAdvisor.result || aiAdvisor.error) && (
+                <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                  <div style={{ padding: '12px 20px', background: 'linear-gradient(90deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 14 }}>✨</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>Rekomendasi AI Nutrition Advisor</span>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', marginLeft: 'auto' }}>Gemini AI · Hanya sebagai referensi klinis</span>
+                  </div>
+                  <div style={{ padding: '20px' }}>
+                    {aiAdvisor.loading && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {[100, 80, 90, 70, 85].map((w, i) => (
+                          <div key={i} style={{ height: 12, background: `linear-gradient(90deg, #f3f4f6, #e5e7eb, #f3f4f6)`, borderRadius: 6, width: `${w}%`, animation: 'shimmer 1.5s ease-in-out infinite' }} />
+                        ))}
+                        <p style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center', marginTop: 8 }}>Menganalisis data klinis dengan Gemini AI...</p>
+                      </div>
+                    )}
+                    {aiAdvisor.error && (
+                      <div style={{ padding: 14, background: '#fef2f2', borderRadius: 8, border: '1px solid #fecaca' }}>
+                        <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 600 }}>⚠️ Gagal menghubungi AI Advisor</p>
+                        <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>{aiAdvisor.error}</p>
+                      </div>
+                    )}
+                    {aiAdvisor.result && !aiAdvisor.loading && (
+                      <div style={{ fontSize: 13, lineHeight: 1.75, color: '#374151' }}>
+                        {aiAdvisor.result.split('\n').map((line, i) => {
+                          if (line.startsWith('## ')) return <h4 key={i} style={{ fontSize: 14, fontWeight: 700, color: '#4f46e5', margin: '16px 0 8px', borderBottom: '1px solid #e5e7eb', paddingBottom: 6 }}>{line.replace('## ', '')}</h4>;
+                          if (line.startsWith('**') && line.endsWith('**')) return <p key={i} style={{ fontWeight: 700, color: '#111518', margin: '8px 0 4px' }}>{line.replace(/\*\*/g, '')}</p>;
+                          if (line.startsWith('- ')) return <li key={i} style={{ marginLeft: 16, marginBottom: 4, listStyleType: 'disc' }}>{line.replace('- ', '')}</li>;
+                          if (line.startsWith('* ')) return <li key={i} style={{ marginLeft: 16, marginBottom: 4, listStyleType: 'disc' }}>{line.replace('* ', '')}</li>;
+                          if (line.trim() === '') return <div key={i} style={{ height: 8 }} />;
+                          // Handle bold inline **text**
+                          const parts = line.split(/(\*\*.*?\*\*)/g);
+                          return <p key={i} style={{ margin: '2px 0' }}>{parts.map((p, j) => p.startsWith('**') ? <strong key={j}>{p.replace(/\*\*/g, '')}</strong> : p)}</p>;
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Shimmer CSS */}
+              <style>{`
+                @keyframes spin { to { transform: rotate(360deg); } }
+                @keyframes shimmer { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+              `}</style>
+            </div>
+          );
+        })()}
+
+        {/* Section 5: Pemeriksaan Medis Lanjutan Toggle */}
         <div style={{ padding: '20px 32px', borderBottom: '1px dashed #e5e7eb' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <input
