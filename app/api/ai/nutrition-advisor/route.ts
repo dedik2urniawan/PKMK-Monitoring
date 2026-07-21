@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 // ============================================================
 // PKMK Dosing Rule Engine (Tabel 3.2 & 4.1 Standar Pediatric)
 // ============================================================

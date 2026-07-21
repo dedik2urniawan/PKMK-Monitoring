@@ -969,7 +969,7 @@ export default function NewAntropometri() {
                   <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}>🤖</div>
                   <div>
                     <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111518', margin: 0 }}>AI Nutrition Advisor</h3>
-                    <p style={{ fontSize: 12, color: '#6b7280', margin: 0 }}>Powered by Gemini AI · Standar Pediatric Kemenkes RI</p>
+                    <p style={{ fontSize: 12, color: '#6b7280', margin: 0 }}>Powered by SIGMA Ai Advisor · Standar Pediatric Kemenkes RI</p>
                   </div>
                 </div>
                 <button
@@ -1036,7 +1036,7 @@ export default function NewAntropometri() {
                   <div style={{ padding: '12px 20px', background: 'linear-gradient(90deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 14 }}>✨</span>
                     <span style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>Rekomendasi AI Nutrition Advisor</span>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', marginLeft: 'auto' }}>Gemini AI · Hanya sebagai referensi klinis</span>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', marginLeft: 'auto' }}>SIGMA Ai Advisor · Hanya sebagai referensi klinis</span>
                   </div>
                   <div style={{ padding: '20px' }}>
                     {aiAdvisor.loading && (
@@ -1044,7 +1044,7 @@ export default function NewAntropometri() {
                         {[100, 80, 90, 70, 85].map((w, i) => (
                           <div key={i} style={{ height: 12, background: `linear-gradient(90deg, #f3f4f6, #e5e7eb, #f3f4f6)`, borderRadius: 6, width: `${w}%`, animation: 'shimmer 1.5s ease-in-out infinite' }} />
                         ))}
-                        <p style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center', marginTop: 8 }}>Menganalisis data klinis dengan Gemini AI...</p>
+                        <p style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center', marginTop: 8 }}>Menganalisis data klinis dengan SIGMA Ai Advisor...</p>
                       </div>
                     )}
                     {aiAdvisor.error && (
