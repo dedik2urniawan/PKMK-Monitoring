@@ -188,6 +188,12 @@ export async function POST(req: NextRequest) {
 Berikan analisis dan rekomendasi asuhan gizi yang menyeluruh dan actionable.`;
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "API Key belum dikonfigurasi. Pastikan GEMINI_API_KEY sudah ada di .env.local dan restart server." },
+        { status: 401 }
+      );
+    }
     const aiModel = process.env.GEMINI_MODEL || "gemini-2.0-flash-001";
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`;
 
