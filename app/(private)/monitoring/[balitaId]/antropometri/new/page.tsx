@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { getAuthHeaders } from "@/lib/clientSession";
 
+import { getAiNutritionAdvice } from '@/app/actions/ai-advisor';
+
 type Kohort = { id: string; periode_mulai?: string } | null;
 
 export default function NewAntropometri() {
@@ -928,34 +930,39 @@ export default function NewAntropometri() {
           const triggerAi = async () => {
             setAiAdvisor(prev => ({ ...prev, loading: true, error: null }));
             try {
-              const res = await fetch('/api/ai/nutrition-advisor', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  namaBalita: balitaName,
-                  usiaBulan: form.usia_bulan,
-                  jk: balita?.jk,
-                  bbKg: form.bb_kg,
-                  tbCm: form.tb_corr_cm,
-                  zsBbu: form.zs_bbu,
-                  klasBbu: form.klas_bbu,
-                  zsTbu: form.zs_tbu,
-                  klasTbu: form.klas_tbu,
-                  zsBbtb: form.zs_bbtb,
-                  klasBbtb: form.klas_bbtb,
-                  deltaKg: form.delta_bb_kg,
-                  probableStunting: probableStunting?.result,
-                  weightAge: probableStunting?.weightAge,
-                  lengthAge: probableStunting?.lengthAge,
-                  bbIdeal,
-                  lilaCm: form.lila_cm,
-                  kondisiKlinis: kondisi || 'Tidak terdeteksi stunting',
-                  pkmkDose,
-                }),
+              const res = await getAiNutritionAdvice({
+                namaBalita: balitaName || 'Balita',
+                usiaBulan: form.usia_bulan || 0,
+                jk: balita?.jk || 'L',
+                bbKg: form.bb_kg || 0,
+                tbCm: form.tb_corr_cm || 0,
+                lilaCm: form.lila_cm || undefined,
+                bbIdeal: bbIdeal !== null ? bbIdeal.toString() : undefined,
+                deltaKg: form.delta_bb_kg !== null ? form.delta_bb_kg : undefined,
+                zsBbu: form.zs_bbu,
+                zsTbu: form.zs_tbu,
+                zsBbtb: form.zs_bbtb,
+                klasBbu: form.klas_bbu,
+                klasTbu: form.klas_tbu,
+                klasBbtb: form.klas_bbtb,
+                weightAge: probableStunting?.weightAge,
+                lengthAge: probableStunting?.lengthAge,
+                probableStunting: probableStunting?.result,
+                kondisiKlinis: kondisi || 'Tidak terdeteksi stunting',
+                pkmkDose
               });
-              const d = await res.json();
-              if (!res.ok) throw new Error(d.error || 'Gagal');
-              setAiAdvisor({ loading: false, result: d.recommendation, error: null, kondisi, pkmkDose });
+
+              if (!res.success) {
+                setAiAdvisor(prev => ({ ...prev, loading: false, error: res.error || 'Gagal menghubungi AI Advisor' }));
+                return;
+              }
+
+              setAiAdvisor(prev => ({
+                ...prev,
+                loading: false,
+                result: res.data || '',
+                error: null
+              }));
             } catch (e: any) {
               setAiAdvisor(prev => ({ ...prev, loading: false, error: e.message || 'Gagal menghubungi AI Advisor' }));
             }
