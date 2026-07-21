@@ -194,7 +194,7 @@ Berikan analisis dan rekomendasi asuhan gizi yang menyeluruh dan actionable.`;
         { status: 401 }
       );
     }
-    const aiModel = process.env.GEMINI_MODEL || "gemini-2.0-flash-001";
+    const aiModel = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`;
 
     const response = await fetch(endpoint, {
@@ -222,7 +222,7 @@ Berikan analisis dan rekomendasi asuhan gizi yang menyeluruh dan actionable.`;
       const errMsg = errBody?.error?.message || `HTTP ${response.status}`;
       const status = response.status === 429 ? 429 : 500;
       const friendlyMsg = status === 429
-        ? "Kuota AI sementara habis (rate limit). Coba beberapa saat lagi."
+        ? `Kuota AI habis. Detail dari Google: ${errMsg}`
         : `Gagal menghubungi Gemini API: ${errMsg}`;
       return NextResponse.json({ error: friendlyMsg }, { status });
     }
