@@ -424,26 +424,64 @@ export default function NewAntropometri() {
     addLine('BB Ideal (Median WHO)', bbIdealRow !== null ? `${bbIdealRow} kg` : '-');
     y += 4;
 
-    // Red Flag (if any)
-    if (hasMedis(h)) {
-      doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-      doc.text('RED FLAG & SOAP', margin, y); y += 8;
-      doc.line(margin, y - 2, pageW - margin, y - 2);
-      doc.setFont('helvetica', 'normal');
-      if (h.bb_tidak_adekuat) addLine('Kenaikan BB Tidak Adekuat', h.bb_tidak_adekuat);
-      if (h.murmur_edema) addLine('Murmur/Edema', h.murmur_edema);
-      if (h.delayed_development) addLine('Keterlambatan Perkembangan', h.delayed_development);
-      if (h.wajah_dismorfik) addLine('Wajah Dismorfik', h.wajah_dismorfik);
-      if (h.diagnosa_penyakit_penyerta) addLine('Diagnosa Penyerta', h.diagnosa_penyakit_penyerta);
-      if (h.subjective) addLine('Subjective (SOAP)', h.subjective);
-      if (h.objective) addLine('Objective (SOAP)', h.objective);
-      if (h.assesment) addLine('Assessment (SOAP)', h.assesment);
-      if (h.plan) addLine('Plan (SOAP)', h.plan);
-    }
+    // Red Flag Assessment (always shown for manual writing if empty)
+    if (y > 170) { doc.addPage(); y = 16; }
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+    doc.setTextColor(153, 27, 27);
+    doc.text('RED FLAG ASSESSMENT', margin, y); y += 8;
+    doc.setDrawColor(229, 231, 235);
+    doc.line(margin, y - 2, pageW - margin, y - 2);
+    y += 4;
 
-    // Footer
+    const drawRedFlagBox = (label: string, val: string, x: number, cy: number) => {
+      doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(153, 27, 27);
+      doc.text(label.toUpperCase(), x, cy);
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(17, 21, 24);
+      doc.setDrawColor(209, 213, 219);
+      doc.rect(x, cy + 3, 85, 10);
+      if (val) doc.text(val, x + 2, cy + 8, { maxWidth: 81 });
+    };
+
+    const rf1 = margin; const rf2 = margin + 90;
+    drawRedFlagBox('Kenaikan BB Tidak Adekuat', h.bb_tidak_adekuat, rf1, y);
+    drawRedFlagBox('Murmur / Edema', h.murmur_edema, rf2, y); y += 18;
+    drawRedFlagBox('Keterlambatan Perkembangan', h.delayed_development, rf1, y);
+    drawRedFlagBox('Wajah Dismorfik', h.wajah_dismorfik, rf2, y); y += 18;
+    drawRedFlagBox('Organomegali / Limfadenopati', h.organomegali_limfadenopati, rf1, y);
+    drawRedFlagBox('ISPA / Infeksi Berulang', h.ispa_cystitis, rf2, y); y += 18;
+    drawRedFlagBox('Muntah / Diare Berulang', h.muntah_diare_berulang, rf1, y);
+    drawRedFlagBox('Diagnosa Penyakit Penyerta', h.diagnosa_penyakit_penyerta, rf2, y); y += 18;
+
+    // SOAP Notes (always shown for manual writing if empty)
+    if (y > 220) { doc.addPage(); y = 16; }
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+    doc.setTextColor(91, 33, 182);
+    doc.text('SOAP NOTES', margin, y); y += 8;
+    doc.setDrawColor(229, 231, 235);
+    doc.line(margin, y - 2, pageW - margin, y - 2);
+    y += 4;
+
+    const drawSoapBox = (label: string, val: string, x: number, cy: number) => {
+      doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(91, 33, 182);
+      doc.text(label.toUpperCase(), x, cy);
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(17, 21, 24);
+      doc.setDrawColor(209, 213, 219);
+      doc.rect(x, cy + 3, 85, 20);
+      if (val) doc.text(val, x + 2, cy + 8, { maxWidth: 81 });
+    };
+
+    drawSoapBox('Subjective', h.subjective, rf1, y);
+    drawSoapBox('Objective', h.objective, rf2, y); y += 28;
+    drawSoapBox('Assessment', h.assesment, rf1, y);
+    drawSoapBox('Plan', h.plan, rf2, y); y += 28;
+
+    // Footer on all pages
+    const pageCount = (doc as any).internal.getNumberOfPages();
     doc.setFontSize(8); doc.setTextColor(156, 163, 175);
-    doc.text(`Dicetak: ${new Date().toLocaleString('id-ID')}  |  Sistem PKMK Monitoring`, margin, 290);
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.text(`Dicetak: ${new Date().toLocaleString('id-ID')}  |  Sistem PKMK Monitoring`, margin, 290);
+    }
 
     const fileName = `Antropometri_${balitaName.replace(/\s+/g, '_')}_Mg${h.minggu_ke}.pdf`;
     doc.save(fileName);
