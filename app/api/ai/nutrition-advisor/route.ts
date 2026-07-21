@@ -189,15 +189,15 @@ export async function POST(req: NextRequest) {
 
 Berikan analisis dan rekomendasi asuhan gizi yang menyeluruh dan actionable.`;
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       const availableKeys = Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('GOOGLE')).join(', ');
       return NextResponse.json(
-        { error: `API Key belum dikonfigurasi. Vercel Env terlihat: [${availableKeys}]. Pastikan GEMINI_API_KEY sudah disimpan dan Redeploy TANPA cache.` },
+        { error: `API Key belum dikonfigurasi. Vercel Env terlihat: [${availableKeys}]. Pastikan NEXT_PUBLIC_GEMINI_API_KEY sudah disimpan dan Redeploy.` },
         { status: 401 }
       );
     }
-    const aiModel = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+    const aiModel = process.env.NEXT_PUBLIC_GEMINI_MODEL || process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`;
 
     const response = await fetch(endpoint, {
