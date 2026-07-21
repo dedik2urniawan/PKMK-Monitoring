@@ -52,6 +52,15 @@ export default function NewAntropometri() {
   const [lmsWarn, setLmsWarn] = useState<{ bbu?: boolean; tbu?: boolean; bbtb?: boolean }>({});
   const [outlier, setOutlier] = useState<{ bbu?: boolean; tbu?: boolean; bbtb?: boolean }>({});
   const [deltaInfo, setDeltaInfo] = useState<{ low: number; high: number; status: 'kurang' | 'sesuai' | 'lebih' | null } | null>(null);
+  const [lmsCache, setLmsCache] = useState<{ bbu: any[]; tbu: any[] } | null>(null);
+  const [probableStunting, setProbableStunting] = useState<{
+    result: boolean | null;
+    weightAge: number | null;
+    lengthAge: number | null;
+    chronologicalAge: number | null;
+  } | null>(null);
+  const [bbIdeal, setBbIdeal] = useState<number | null>(null);
+  const [printItem, setPrintItem] = useState<any | null>(null);
   const hasMedis = (h: any) => !!(
     h?.bb_tidak_adekuat ||
     h?.murmur_edema ||
@@ -243,6 +252,202 @@ export default function NewAntropometri() {
       } catch { }
     })();
   }, [balita, form.usia_bulan, form.bb_kg, form.tb_corr_cm, form.tanggal]);
+
+  // Pre-fetch LMS BBU + TBU range data (0-60 months) once when balita changes
+  useEffect(() => {
+    if (!balita) return;
+    (async () => {
+      const jkNum = balita.jk === 'L' ? 1 : 2;
+      try {
+        const [rb, rt] = await Promise.all([
+          fetch(`/api/ref/lms-bbu?jk=${jkNum}&min_month=0&max_month=60`),
+          fetch(`/api/ref/lms-tbu?jk=${jkNum}&min_month=0&max_month=60`),
+        ]);
+        const [db, dt] = await Promise.all([rb.json(), rt.json()]);
+        setLmsCache({
+          bbu: db.items || [],
+          tbu: dt.items || [],
+        });
+      } catch { }
+    })();
+  }, [balita]);
+
+  // Compute Probable Stunting (Age Equivalent method) and BB Ideal whenever inputs or cache change
+  useEffect(() => {
+    if (!lmsCache || !form.bb_kg || !form.tb_corr_cm || !form.usia_bulan) {
+      setProbableStunting(null);
+      setBbIdeal(null);
+      return;
+    }
+    const bb = Number(form.bb_kg);
+    const tb = Number(form.tb_corr_cm);
+    const ca = Number(form.usia_bulan); // Chronological Age
+    if (isNaN(bb) || isNaN(tb) || isNaN(ca)) { setProbableStunting(null); setBbIdeal(null); return; }
+
+    // Weight Age: find month whose median BB (M) is closest to actual bb
+    let waMonth: number | null = null;
+    let waDiff = Infinity;
+    for (const row of lmsCache.bbu) {
+      const diff = Math.abs(row.M - bb);
+      if (diff < waDiff) { waDiff = diff; waMonth = row.umur_bulan; }
+    }
+
+    // Length Age: find month whose median TB (M) is closest to actual tb
+    let laMonth: number | null = null;
+    let laDiff = Infinity;
+    for (const row of lmsCache.tbu) {
+      const diff = Math.abs(row.M - tb);
+      if (diff < laDiff) { laDiff = diff; laMonth = row.umur_bulan; }
+    }
+
+    // BB Ideal: median (M) of BBU at chronological age
+    const bbIdealRow = lmsCache.bbu.find((r: any) => r.umur_bulan === ca)
+      || lmsCache.bbu.reduce((prev: any, curr: any) =>
+          Math.abs(curr.umur_bulan - ca) < Math.abs(prev.umur_bulan - ca) ? curr : prev, lmsCache.bbu[0]);
+    setBbIdeal(bbIdealRow ? Number(bbIdealRow.M.toFixed(2)) : null);
+
+    // Probable Stunting: WA < LA && LA < CA
+    if (waMonth !== null && laMonth !== null) {
+      setProbableStunting({
+        result: waMonth < laMonth && laMonth < ca,
+        weightAge: waMonth,
+        lengthAge: laMonth,
+        chronologicalAge: ca,
+      });
+    } else {
+      setProbableStunting(null);
+    }
+  }, [lmsCache, form.bb_kg, form.tb_corr_cm, form.usia_bulan]);
+
+  // Helper: compute probable stunting for a history row using lmsCache
+  function calcProbableStuntingForRow(h: any): { result: boolean | null; weightAge: number | null; lengthAge: number | null } {
+    if (!lmsCache || h.bb_kg == null || h.tb_corr_cm == null || h.usia_bulan == null) return { result: null, weightAge: null, lengthAge: null };
+    const bb = Number(h.bb_kg);
+    const tb = Number(h.tb_corr_cm);
+    const ca = Number(h.usia_bulan);
+    let waMonth: number | null = null; let waDiff = Infinity;
+    for (const row of lmsCache.bbu) { const d = Math.abs(row.M - bb); if (d < waDiff) { waDiff = d; waMonth = row.umur_bulan; } }
+    let laMonth: number | null = null; let laDiff = Infinity;
+    for (const row of lmsCache.tbu) { const d = Math.abs(row.M - tb); if (d < laDiff) { laDiff = d; laMonth = row.umur_bulan; } }
+    if (waMonth !== null && laMonth !== null) return { result: waMonth < laMonth && laMonth < ca, weightAge: waMonth, lengthAge: laMonth };
+    return { result: null, weightAge: null, lengthAge: null };
+  }
+
+  function calcBbIdealForRow(h: any): number | null {
+    if (!lmsCache || h.usia_bulan == null) return null;
+    const ca = Number(h.usia_bulan);
+    const row = lmsCache.bbu.find((r: any) => r.umur_bulan === ca)
+      || lmsCache.bbu.reduce((prev: any, curr: any) =>
+          Math.abs(curr.umur_bulan - ca) < Math.abs(prev.umur_bulan - ca) ? curr : prev, lmsCache.bbu[0]);
+    return row ? Number(row.M.toFixed(2)) : null;
+  }
+
+  // Print PDF for a single monitoring record
+  async function handlePrintPDF(h: any) {
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = 210;
+    const margin = 16;
+    let y = 16;
+
+    const addLine = (label: string, value: string, indent = 0) => {
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text(label, margin + indent, y);
+      doc.setTextColor(17, 21, 24);
+      doc.setFontSize(10);
+      doc.text(value || '-', margin + indent + 52, y);
+      y += 7;
+    };
+
+    // Header
+    doc.setFillColor(16, 185, 129);
+    doc.rect(0, 0, pageW, 18, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('LAPORAN PEMERIKSAAN ANTROPOMETRI', margin, 11);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Dinas Kesehatan  |  Sistem PKMK Monitoring`, margin, 16);
+    y = 26;
+
+    // Anak Info
+    doc.setTextColor(17, 21, 24);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DATA ANAK', margin, y); y += 8;
+    doc.setDrawColor(229, 231, 235);
+    doc.line(margin, y - 2, pageW - margin, y - 2);
+    doc.setFont('helvetica', 'normal');
+    addLine('Nama Anak', balitaName);
+    addLine('Jenis Kelamin', balita?.jk === 'L' ? 'Laki-laki' : 'Perempuan');
+    addLine('Usia Saat Ukur', `${h.usia_bulan} bulan`);
+    y += 4;
+
+    // Pengukuran
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+    doc.text('DATA PENGUKURAN', margin, y); y += 8;
+    doc.line(margin, y - 2, pageW - margin, y - 2);
+    doc.setFont('helvetica', 'normal');
+    addLine('Minggu Ke-', `${h.minggu_ke}`);
+    addLine('Tanggal', new Date(h.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }));
+    addLine('Cara Ukur', h.cara_ukur || '-');
+    addLine('Berat Badan (BB)', `${h.bb_kg ?? '-'} kg`);
+    addLine('Tinggi Badan (TB)', `${h.tb_cm ?? '-'} cm`);
+    addLine('TB Koreksi', `${h.tb_corr_cm ?? '-'} cm`);
+    addLine('LILA', `${h.lila_cm ?? '-'} cm`);
+    y += 4;
+
+    // Z-Score
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+    doc.text('Z-SCORE & KLASIFIKASI', margin, y); y += 8;
+    doc.line(margin, y - 2, pageW - margin, y - 2);
+    doc.setFont('helvetica', 'normal');
+    addLine('ZS BB/U', `${h.zs_bbu != null ? Number(h.zs_bbu).toFixed(2) + ' SD' : '-'}  →  ${h.klas_bbu || '-'}`);
+    addLine('ZS TB/U', `${h.zs_tbu != null ? Number(h.zs_tbu).toFixed(2) + ' SD' : '-'}  →  ${h.klas_tbu || '-'}`);
+    addLine('ZS BB/TB', `${h.zs_bbtb != null ? Number(h.zs_bbtb).toFixed(2) + ' SD' : '-'}  →  ${h.klas_bbtb || '-'}`);
+    addLine('Kenaikan BB (ΔBB)', h.delta_bb_kg != null ? `${h.delta_bb_kg > 0 ? '+' : ''}${(h.delta_bb_kg * 1000).toFixed(0)} gr` : '-');
+    y += 4;
+
+    // Probable Stunting
+    const psRow = calcProbableStuntingForRow(h);
+    const bbIdealRow = calcBbIdealForRow(h);
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+    doc.text('ANALISIS PROBABLE STUNTING', margin, y); y += 8;
+    doc.line(margin, y - 2, pageW - margin, y - 2);
+    doc.setFont('helvetica', 'normal');
+    addLine('Probable Stunting', psRow.result === null ? 'Data tidak lengkap' : psRow.result ? 'YA — Probable Stunting Terdeteksi' : 'TIDAK');
+    addLine('Weight Age (WA)', psRow.weightAge !== null ? `${psRow.weightAge} bulan` : '-');
+    addLine('Length Age (LA)', psRow.lengthAge !== null ? `${psRow.lengthAge} bulan` : '-');
+    addLine('Chronological Age (CA)', h.usia_bulan != null ? `${h.usia_bulan} bulan` : '-');
+    addLine('BB Ideal (Median WHO)', bbIdealRow !== null ? `${bbIdealRow} kg` : '-');
+    y += 4;
+
+    // Red Flag (if any)
+    if (hasMedis(h)) {
+      doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.text('RED FLAG & SOAP', margin, y); y += 8;
+      doc.line(margin, y - 2, pageW - margin, y - 2);
+      doc.setFont('helvetica', 'normal');
+      if (h.bb_tidak_adekuat) addLine('Kenaikan BB Tidak Adekuat', h.bb_tidak_adekuat);
+      if (h.murmur_edema) addLine('Murmur/Edema', h.murmur_edema);
+      if (h.delayed_development) addLine('Keterlambatan Perkembangan', h.delayed_development);
+      if (h.wajah_dismorfik) addLine('Wajah Dismorfik', h.wajah_dismorfik);
+      if (h.diagnosa_penyakit_penyerta) addLine('Diagnosa Penyerta', h.diagnosa_penyakit_penyerta);
+      if (h.subjective) addLine('Subjective (SOAP)', h.subjective);
+      if (h.objective) addLine('Objective (SOAP)', h.objective);
+      if (h.assesment) addLine('Assessment (SOAP)', h.assesment);
+      if (h.plan) addLine('Plan (SOAP)', h.plan);
+    }
+
+    // Footer
+    doc.setFontSize(8); doc.setTextColor(156, 163, 175);
+    doc.text(`Dicetak: ${new Date().toLocaleString('id-ID')}  |  Sistem PKMK Monitoring`, margin, 290);
+
+    const fileName = `Antropometri_${balitaName.replace(/\s+/g, '_')}_Mg${h.minggu_ke}.pdf`;
+    doc.save(fileName);
+  }
 
   // Recalculate delta BB and recommendation when BB or minggu_ke changes
   useEffect(() => {
@@ -556,6 +761,90 @@ export default function NewAntropometri() {
               )}
             </div>
           </div>
+
+          {/* Row 2: Probable Stunting + BB Ideal Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20, marginTop: 20 }} className="form-grid-responsive">
+            {/* Probable Stunting Card */}
+            <div style={{
+              background: 'white', padding: 20, borderRadius: 12, border: `2px solid ${probableStunting?.result === true ? '#fecaca' : probableStunting?.result === false ? '#bbf7d0' : '#e5e7eb'}`,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden'
+            }}>
+              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: probableStunting?.result === true ? '#ef4444' : probableStunting?.result === false ? '#22c55e' : '#d1d5db' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 18 }}>🔬</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: '#374151' }}>Probable Stunting</span>
+                </div>
+                {probableStunting !== null && (
+                  <span style={{
+                    background: probableStunting.result === true ? '#fee2e2' : probableStunting.result === false ? '#dcfce7' : '#f3f4f6',
+                    color: probableStunting.result === true ? '#991b1b' : probableStunting.result === false ? '#166534' : '#6b7280',
+                    fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 9999,
+                    border: probableStunting.result === true ? '1px solid #fecaca' : probableStunting.result === false ? '1px solid #bbf7d0' : '1px solid #e5e7eb',
+                    letterSpacing: '0.03em'
+                  }}>
+                    {probableStunting.result === true ? '⚠ YA — Probable Stunting' : probableStunting.result === false ? '✓ TIDAK' : 'Data kurang'}
+                  </span>
+                )}
+              </div>
+              {probableStunting && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: 8, textAlign: 'center' }}>
+                    <p style={{ fontSize: 10, color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>Weight Age</p>
+                    <p style={{ fontSize: 18, fontWeight: 700, color: '#3b82f6' }}>{probableStunting.weightAge ?? '-'}</p>
+                    <p style={{ fontSize: 10, color: '#9ca3af' }}>bulan</p>
+                  </div>
+                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: 8, textAlign: 'center' }}>
+                    <p style={{ fontSize: 10, color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>Length Age</p>
+                    <p style={{ fontSize: 18, fontWeight: 700, color: '#8b5cf6' }}>{probableStunting.lengthAge ?? '-'}</p>
+                    <p style={{ fontSize: 10, color: '#9ca3af' }}>bulan</p>
+                  </div>
+                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: 8, textAlign: 'center' }}>
+                    <p style={{ fontSize: 10, color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>Chron. Age</p>
+                    <p style={{ fontSize: 18, fontWeight: 700, color: '#0f172a' }}>{probableStunting.chronologicalAge ?? '-'}</p>
+                    <p style={{ fontSize: 10, color: '#9ca3af' }}>bulan</p>
+                  </div>
+                </div>
+              )}
+              {!probableStunting && (
+                <p style={{ fontSize: 12, color: '#9ca3af', fontStyle: 'italic' }}>Isi BB, TB, dan tanggal pengukuran untuk melihat analisis.</p>
+              )}
+              <p style={{ fontSize: 10, color: '#94a3b8', marginTop: 10, fontStyle: 'italic' }}>Kriteria: WA &lt; LA &lt; CA (Age Equivalent Method)</p>
+            </div>
+
+            {/* BB Ideal Card */}
+            <div style={{ background: 'white', padding: 20, borderRadius: 12, border: '1px solid #e5e7eb', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: 'linear-gradient(180deg, #10b981, #059669)' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 18 }}>⚖️</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: '#374151' }}>BB Ideal (Median WHO)</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 36, fontWeight: 800, color: '#059669', fontFamily: 'ui-monospace, monospace' }}>
+                  {bbIdeal !== null ? bbIdeal.toFixed(1) : '-'}
+                </span>
+                <span style={{ fontSize: 16, color: '#6b7280', marginBottom: 6 }}>kg</span>
+              </div>
+              {bbIdeal !== null && form.bb_kg && (
+                <>
+                  <div style={{ width: '100%', height: 8, background: '#e5e7eb', borderRadius: 4, marginBottom: 8, position: 'relative' }}>
+                    <div style={{
+                      width: `${Math.min(100, Math.max(0, (Number(form.bb_kg) / bbIdeal) * 100))}%`,
+                      height: 8, background: Number(form.bb_kg) >= bbIdeal ? '#10b981' : Number(form.bb_kg) >= bbIdeal * 0.8 ? '#f59e0b' : '#ef4444',
+                      borderRadius: 4, transition: 'width 0.4s ease'
+                    }} />
+                  </div>
+                  <p style={{ fontSize: 12, color: '#6b7280' }}>
+                    BB saat ini <strong style={{ color: Number(form.bb_kg) >= bbIdeal ? '#059669' : '#dc2626' }}>{form.bb_kg} kg</strong>
+                    {' '}({Number(form.bb_kg) >= bbIdeal ? '+' : ''}{((Number(form.bb_kg) - bbIdeal) * 1000).toFixed(0)} gr dari ideal)
+                  </p>
+                </>
+              )}
+              <p style={{ fontSize: 10, color: '#94a3b8', marginTop: 8, fontStyle: 'italic' }}>Referensi: Median (P50) tabel WHO ref_lms_bbu usia {form.usia_bulan || '-'} bulan</p>
+            </div>
+          </div>
         </div>
 
         {/* Section 4: Pemeriksaan Medis Lanjutan Toggle */}
@@ -753,6 +1042,8 @@ export default function NewAntropometri() {
                 <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', background: '#f9fafb' }}>ZS BBTB</th>
                 <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', background: '#f9fafb' }}>KLAS BBTB</th>
                 <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', background: '#f9fafb' }}>Δ BB</th>
+                <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', background: '#f9fafb', whiteSpace: 'nowrap' }}>PROB. STUNTING</th>
+                <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', background: '#f9fafb' }}>BB IDEAL</th>
                 <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#6b7280', textAlign: 'right', background: '#f9fafb' }}>AKSI</th>
               </tr>
             </thead>
@@ -810,6 +1101,31 @@ export default function NewAntropometri() {
                     <td style={{ padding: '16px', fontSize: 14, fontWeight: 600, color: h.delta_bb_kg > 0 ? '#16a34a' : h.delta_bb_kg < 0 ? '#dc2626' : '#6b7280' }}>
                       {h.delta_bb_kg != null ? `${h.delta_bb_kg > 0 ? '+' : ''}${(h.delta_bb_kg * 1000).toFixed(0)} gr` : '-'}
                     </td>
+                    {/* Probable Stunting Column */}
+                    <td style={{ padding: '16px' }}>
+                      {(() => {
+                        const ps = calcProbableStuntingForRow(h);
+                        if (ps.result === null) return <span style={{ color: '#9ca3af', fontSize: 12 }}>-</span>;
+                        return (
+                          <span style={{
+                            display: 'inline-block', padding: '4px 10px', borderRadius: 9999, fontSize: 12, fontWeight: 600,
+                            background: ps.result ? '#fee2e2' : '#dcfce7',
+                            color: ps.result ? '#991b1b' : '#166534',
+                            border: `1px solid ${ps.result ? '#fecaca' : '#bbf7d0'}`,
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {ps.result ? '⚠ Ya' : '✓ Tidak'}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    {/* BB Ideal Column */}
+                    <td style={{ padding: '16px', fontSize: 14, fontWeight: 600, color: '#059669' }}>
+                      {(() => {
+                        const ideal = calcBbIdealForRow(h);
+                        return ideal !== null ? `${ideal.toFixed(1)} kg` : '-';
+                      })()}
+                    </td>
                     <td style={{ padding: '16px', textAlign: 'right' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
                         <button
@@ -862,6 +1178,12 @@ export default function NewAntropometri() {
                           title="Hapus"
                           style={{ width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fee2e2', color: '#dc2626', border: 'none', cursor: 'pointer', fontSize: 14 }}
                         >🗑️</button>
+                        <button
+                          type="button"
+                          onClick={() => handlePrintPDF(h)}
+                          title="Print / Download PDF"
+                          style={{ width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', cursor: 'pointer', fontSize: 14 }}
+                        >🖨️</button>
                       </div>
                     </td>
                   </tr>
