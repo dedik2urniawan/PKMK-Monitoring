@@ -189,8 +189,9 @@ Berikan analisis dan rekomendasi asuhan gizi yang menyeluruh dan actionable.`;
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) {
+      const availableKeys = Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('GOOGLE')).join(', ');
       return NextResponse.json(
-        { error: "API Key belum dikonfigurasi. Pastikan GEMINI_API_KEY sudah ada di .env.local dan restart server." },
+        { error: `API Key belum dikonfigurasi. Vercel Env terlihat: [${availableKeys}]. Pastikan GEMINI_API_KEY sudah disimpan dan Redeploy TANPA cache.` },
         { status: 401 }
       );
     }
