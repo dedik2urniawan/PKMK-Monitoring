@@ -124,13 +124,66 @@ export default function NewKohort() {
     return flags.length > 0 ? "Ya" : "Tidak";
   };
 
+  // Edit Kohort state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingKohort, setEditingKohort] = useState<{ id: string; namaBalita: string; currentStartDate: string; rawDate: string } | null>(null);
+  const [editStartDate, setEditStartDate] = useState("");
+  const [updatingKohort, setUpdatingKohort] = useState(false);
+
   const getCohortStatus = (b: any) => {
-    if (!b.kohort || b.kohort.length === 0) return { status: "Belum", date: "-" };
+    if (!b.kohort || b.kohort.length === 0) return { status: "Belum", date: "-", id: null, rawDate: "" };
     const last = b.kohort[b.kohort.length - 1];
+    let rawDate = "";
+    if (last.periode_mulai) {
+      try {
+        rawDate = new Date(last.periode_mulai).toISOString().split('T')[0];
+      } catch (e) {
+        rawDate = last.periode_mulai;
+      }
+    }
     return {
       status: "Ya",
-      date: new Date(last.periode_mulai).toLocaleDateString('id-ID')
+      date: last.periode_mulai ? new Date(last.periode_mulai).toLocaleDateString('id-ID') : "-",
+      id: last.id,
+      rawDate
     };
+  };
+
+  const handleOpenEditModal = (kohortId: string, namaBalita: string, rawDate: string, formattedDate: string) => {
+    setEditingKohort({ id: kohortId, namaBalita, currentStartDate: formattedDate, rawDate });
+    setEditStartDate(rawDate);
+    setEditModalOpen(true);
+  };
+
+  const handleSaveEditKohort = async () => {
+    if (!editingKohort || !editStartDate) return;
+    setUpdatingKohort(true);
+    try {
+      await ensureServerSession();
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch("/api/kohort", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        credentials: "include",
+        body: JSON.stringify({ kohort_id: editingKohort.id, periode_mulai: editStartDate }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        alert("Gagal memperbarui tanggal kohort: " + errText);
+        setUpdatingKohort(false);
+        return;
+      }
+
+      alert("Tanggal mulai kohort berhasil diperbarui!");
+      setEditModalOpen(false);
+      setEditingKohort(null);
+      await fetchBalita(page, kec, puskesmasId, desa);
+    } catch (err: any) {
+      alert("Terjadi kesalahan: " + (err.message || "Gagal meng-update data"));
+    } finally {
+      setUpdatingKohort(false);
+    }
   };
 
   if (loading) {
@@ -259,12 +312,13 @@ export default function NewKohort() {
                   <th style={{ padding: '16px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left' }}>Lokasi</th>
                   <th style={{ padding: '16px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Redflag</th>
                   <th style={{ padding: '16px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left' }}>Kohort Status</th>
+                  <th style={{ padding: '16px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
                 {balita.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ padding: 64, textAlign: 'center' }}>
+                    <td colSpan={7} style={{ padding: 64, textAlign: 'center' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#9ca3af' }}>
                         <div style={{ width: 64, height: 64, borderRadius: 999, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
                           <span style={{ fontSize: 32 }}>📭</span>
@@ -326,6 +380,25 @@ export default function NewKohort() {
                             )}
                           </div>
                         </td>
+                        <td style={{ padding: 16, textAlign: 'center' }}>
+                          {cohort.status === 'Ya' && cohort.id ? (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditModal(cohort.id!, b.nama_balita, cohort.rawDate, cohort.date)}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 4,
+                                padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                                background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe',
+                                cursor: 'pointer', transition: 'all 0.2s'
+                              }}
+                              title="Edit Tanggal Mulai Kohort"
+                            >
+                              ✏️ Edit Tgl
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: 12, color: '#9ca3af' }}>-</span>
+                          )}
+                        </td>
                       </tr>
                     );
                   })
@@ -365,6 +438,79 @@ export default function NewKohort() {
           </div>
         </div>
       </div>
+
+      {/* Modal Edit Tanggal Mulai Kohort */}
+      {editModalOpen && editingKohort && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 16
+        }}>
+          <div style={{
+            background: 'white', borderRadius: 20, maxWidth: 440, width: '100%',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
+            border: '1px solid #e2e8f0', overflow: 'hidden'
+          }}>
+            <div style={{ padding: '20px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 22 }}>📅</span>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>Edit Tanggal Mulai Kohort</h3>
+              </div>
+              <button onClick={() => setEditModalOpen(false)} style={{ background: 'none', border: 'none', color: 'white', fontSize: 20, cursor: 'pointer', opacity: 0.8 }}>✕</button>
+            </div>
+            
+            <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div style={{ background: '#f8fafc', padding: 14, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+                <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Nama Balita</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginTop: 2 }}>{editingKohort.namaBalita}</div>
+                <div style={{ fontSize: 13, color: '#10b981', fontWeight: 600, marginTop: 4 }}>Tgl Saat Ini: {editingKohort.currentStartDate}</div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6, display: 'block' }}>
+                  Pilih Tanggal Mulai Baru
+                </label>
+                <input
+                  type="date"
+                  value={editStartDate}
+                  onChange={(e) => setEditStartDate(e.target.value)}
+                  style={{
+                    width: '100%', height: 44, borderRadius: 10,
+                    border: '1.5px solid #cbd5e1', padding: '0 12px', fontSize: 14,
+                    color: '#0f172a', background: 'white', outline: 'none'
+                  }}
+                />
+                <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, margin: 0 }}>
+                  Perubahan tanggal ini akan memperbarui tanggal awal perhitungan intervensi 12 minggu.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(false)}
+                  style={{ flex: 1, height: 44, borderRadius: 10, border: '1px solid #cbd5e1', background: 'white', color: '#475569', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEditKohort}
+                  disabled={updatingKohort || !editStartDate}
+                  style={{
+                    flex: 1.5, height: 44, borderRadius: 10, border: 'none',
+                    background: updatingKohort || !editStartDate ? '#94a3b8' : '#10b981',
+                    color: 'white', fontWeight: 700, fontSize: 14, cursor: updatingKohort || !editStartDate ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 2px 8px rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                  }}
+                >
+                  {updatingKohort ? 'Memperbarui...' : '💾 Simpan Perubahan'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @media (max-width: 1024px) {

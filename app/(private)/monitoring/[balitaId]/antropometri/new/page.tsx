@@ -96,6 +96,8 @@ export default function NewAntropometri() {
     })();
   }, [params.balitaId]);
 
+  const [balitaRaw, setBalitaRaw] = useState<any | null>(null);
+
   useEffect(() => {
     (async () => {
       const rb = await fetch(`/api/monitoring/balita?balita_id=${params.balitaId}`);
@@ -103,8 +105,29 @@ export default function NewAntropometri() {
       const it = db.items?.[0];
       setBalitaName(it?.nama_balita || "");
       if (it?.jk && it?.tgl_lahir) setBalita({ jk: it.jk as 'L' | 'P', tgl_lahir: it.tgl_lahir });
+      setBalitaRaw(it || null);
     })();
   }, [params.balitaId]);
+
+  const handleImportInitialRedflag = () => {
+    if (!balitaRaw) {
+      toast.error("Data awal balita tidak ditemukan");
+      return;
+    }
+    setForm((prev) => ({
+      ...prev,
+      medis_lanjutan: true,
+      bb_tidak_adekuat: balitaRaw.bb_tidak_adekuat || "",
+      murmur_edema: balitaRaw.murmur_edema || "",
+      delayed_development: balitaRaw.delayed_development || "",
+      wajah_dismorfik: balitaRaw.wajah_dismorfik || "",
+      organomegali_limfadenopati: balitaRaw.organomegali_limfadenopati || "",
+      ispa_cystitis: balitaRaw.ispa_cystitis || "",
+      muntah_diare_berulang: balitaRaw.muntah_diare_berulang || "",
+      diagnosa_penyakit_penyerta: balitaRaw.diagnosa_penyakit_penyerta || "",
+    }));
+    toast.success("Data Red Flag awal balita berhasil di-import!");
+  };
 
   useEffect(() => {
     if (!kohort) return;
@@ -1127,9 +1150,28 @@ export default function NewAntropometri() {
           <>
             {/* Redflag Section */}
             <div style={{ padding: '28px 32px', background: 'rgba(254,242,242,0.5)', borderBottom: '1px solid #fecaca' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                <div style={{ width: 40, height: 40, background: '#fee2e2', color: '#dc2626', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🚩</div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#991b1b' }}>Red Flag Assessment</h3>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, background: '#fee2e2', color: '#dc2626', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🚩</div>
+                  <div>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#991b1b', margin: 0 }}>Red Flag Assessment</h3>
+                    <p style={{ fontSize: 12, color: '#b91c1c', margin: 0, marginTop: 2 }}>Pemeriksaan indikator klinis & rujukan lanjutan</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleImportInitialRedflag}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700,
+                    background: '#ffffff', color: '#dc2626', border: '1px solid #fca5a5',
+                    cursor: 'pointer', boxShadow: '0 1px 3px rgba(220,38,38,0.1)',
+                    transition: 'all 0.2s'
+                  }}
+                  title="Salin data Red Flag yang sudah diisikan saat pendaftaran awal/import balita"
+                >
+                  📥 Import Data Redflag Awal Balita
+                </button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }} className="form-grid-responsive">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

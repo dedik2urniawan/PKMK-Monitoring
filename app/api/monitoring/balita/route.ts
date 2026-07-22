@@ -63,6 +63,10 @@ export async function GET(req: NextRequest) {
 
   console.log('[monitoring/balita] User:', { role: appUser?.role, puskesmas_id: appUser?.puskesmas_id });
 
+  const created_from = req.nextUrl.searchParams.get("created_from");
+  const created_to = req.nextUrl.searchParams.get("created_to");
+  const sort_order = req.nextUrl.searchParams.get("sort_order") || "nama";
+
   // Base query builder
   const base = supabase.from("balita");
   let qFilter = base.select("id", { count: 'exact', head: true });
@@ -74,8 +78,16 @@ export async function GET(req: NextRequest) {
       monitoring_pkmk_konsumsi (*),
       monitoring_pkmk_pemberian (*)
     )
-  `)
-    .order("nama_balita");
+  `);
+
+  // Apply order based on sort_order parameter
+  if (sort_order === "newest") {
+    qData = qData.order("created_at", { ascending: false, nullsFirst: false });
+  } else if (sort_order === "oldest") {
+    qData = qData.order("created_at", { ascending: true, nullsFirst: false });
+  } else {
+    qData = qData.order("nama_balita", { ascending: true });
+  }
 
   // Apply balita_id filter first (specific lookup)
   if (balita_id) { qFilter = qFilter.eq("id", balita_id); qData = qData.eq("id", balita_id); }
@@ -102,6 +114,15 @@ export async function GET(req: NextRequest) {
   if (kec) { qFilter = qFilter.eq("kec", kec); qData = qData.eq("kec", kec); }
   if (desa_kel) { qFilter = qFilter.eq("desa_kel", desa_kel); qData = qData.eq("desa_kel", desa_kel); }
   if (nik) { qFilter = qFilter.ilike("nik", `%${nik}%`); qData = qData.ilike("nik", `%${nik}%`); }
+  if (created_from) {
+    qFilter = qFilter.gte("created_at", created_from);
+    qData = qData.gte("created_at", created_from);
+  }
+  if (created_to) {
+    const endOfDay = `${created_to}T23:59:59.999Z`;
+    qFilter = qFilter.lte("created_at", endOfDay);
+    qData = qData.lte("created_at", endOfDay);
+  }
 
   const from = (page - 1) * limit;
   const to = from + limit - 1;

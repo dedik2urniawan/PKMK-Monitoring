@@ -63,6 +63,9 @@ export default function BalitaList() {
   const [puskesmasId, setPuskesmasId] = useState("");
   const [desa, setDesa] = useState("");
   const [nik, setNik] = useState("");
+  const [createdFrom, setCreatedFrom] = useState("");
+  const [createdTo, setCreatedTo] = useState("");
+  const [sortOrder, setSortOrder] = useState("newest");
   const [items, setItems] = useState<Balita[]>([]);
   const [compact, setCompact] = useState(true);
   const [page, setPage] = useState(1);
@@ -155,6 +158,9 @@ export default function BalitaList() {
     if (puskesmasId) params.set("puskesmas_id", puskesmasId);
     if (desa) params.set("desa_kel", desa);
     if (nik) params.set("nik", nik);
+    if (createdFrom) params.set("created_from", createdFrom);
+    if (createdTo) params.set("created_to", createdTo);
+    if (sortOrder) params.set("sort_order", sortOrder);
     params.set('page', String(e ? 1 : page));
     params.set('limit', String(limit));
     await ensureServerSession();
@@ -268,12 +274,12 @@ export default function BalitaList() {
         }
         @media (min-width: 768px) {
           .filter-grid {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
           }
         }
-        @media (min-width: 1024px) {
+        @media (min-width: 1200px) {
           .filter-grid {
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(4, 1fr);
           }
         }
         .filter-group {
@@ -290,21 +296,27 @@ export default function BalitaList() {
         }
         .filter-select {
           width: 100%;
-          padding: 10px 12px;
-          border: 1px solid #e2e8f0;
+          height: 42px;
+          padding: 0 12px;
+          border: 1px solid #cbd5e1;
           border-radius: 8px;
-          font-size: 14px;
-          color: #374151;
+          font-size: 13.5px;
+          color: #334155;
           background: white;
           cursor: pointer;
+          box-sizing: border-box;
+          transition: all 0.2s;
         }
         .filter-select:focus {
           outline: none;
           border-color: #14b8a6;
-          box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+          box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
         }
         .filter-input-wrapper {
           position: relative;
+          display: flex;
+          align-items: center;
+          width: 100%;
         }
         .filter-input-icon {
           position: absolute;
@@ -312,19 +324,24 @@ export default function BalitaList() {
           top: 50%;
           transform: translateY(-50%);
           color: #94a3b8;
+          pointer-events: none;
+          z-index: 2;
         }
         .filter-input {
           width: 100%;
-          padding: 10px 12px 10px 40px;
-          border: 1px solid #e2e8f0;
+          height: 42px;
+          padding: 0 12px 0 38px;
+          border: 1px solid #cbd5e1;
           border-radius: 8px;
-          font-size: 14px;
-          color: #374151;
+          font-size: 13.5px;
+          color: #334155;
+          box-sizing: border-box;
+          transition: all 0.2s;
         }
         .filter-input:focus {
           outline: none;
           border-color: #14b8a6;
-          box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+          box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
         }
         .filter-input::placeholder {
           color: #94a3b8;
@@ -335,7 +352,8 @@ export default function BalitaList() {
           justify-content: center;
           gap: 8px;
           width: 100%;
-          padding: 10px 16px;
+          height: 42px;
+          padding: 0 16px;
           background: #14b8a6;
           color: white;
           border: none;
@@ -344,6 +362,7 @@ export default function BalitaList() {
           font-weight: 700;
           cursor: pointer;
           transition: background 0.2s;
+          box-sizing: border-box;
         }
         .btn-filter:hover {
           background: #0d9488;
@@ -588,7 +607,7 @@ export default function BalitaList() {
               </select>
             </div>
             <div className="filter-group">
-              <label className="filter-label">Pencarian</label>
+              <label className="filter-label">Pencarian NIK / Nama</label>
               <div className="filter-input-wrapper">
                 <Search size={16} className="filter-input-icon" />
                 <input
@@ -599,7 +618,36 @@ export default function BalitaList() {
                 />
               </div>
             </div>
-            <div className="filter-group" style={{ justifyContent: 'flex-end' }}>
+
+            <div className="filter-group">
+              <label className="filter-label">Tgl Terdaftar (Mulai)</label>
+              <input
+                type="date"
+                className="filter-select"
+                value={createdFrom}
+                onChange={(e) => setCreatedFrom(e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">Tgl Terdaftar (Selesai)</label>
+              <input
+                type="date"
+                className="filter-select"
+                value={createdTo}
+                onChange={(e) => setCreatedTo(e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">Urutkan Data</label>
+              <select className="filter-select" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+                <option value="newest">📅 Terdaftar Terbaru</option>
+                <option value="oldest">⌛ Terdaftar Terlama</option>
+                <option value="nama">🔤 Nama (A-Z)</option>
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label className="filter-label" style={{ opacity: 0, userSelect: 'none' }}>Aksi</label>
               <button type="submit" className="btn-filter">
                 <Filter size={16} />
                 Filter Data
@@ -621,6 +669,7 @@ export default function BalitaList() {
                     <th>Tgl Lahir</th>
                     <th>Kecamatan</th>
                     <th>Desa/Kel</th>
+                    <th>Tgl Terdaftar</th>
                     <th style={{ textAlign: 'center' }}>Redflag?</th>
                     <th style={{ textAlign: 'right' }}>Aksi</th>
                   </tr>
@@ -638,6 +687,7 @@ export default function BalitaList() {
                     <th>Posyandu</th>
                     <th>Alamat</th>
                     <th>Sumber</th>
+                    <th>Tgl Terdaftar</th>
                     <th style={{ textAlign: 'center' }}>Redflag?</th>
                     <th style={{ textAlign: 'right' }}>Aksi</th>
                   </tr>
@@ -661,6 +711,11 @@ export default function BalitaList() {
                         <td>{formatTanggal(d.tgl_lahir)}</td>
                         <td>{d.kec ?? "-"}</td>
                         <td>{d.desa_kel ?? "-"}</td>
+                        <td>
+                          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>
+                            {formatTanggal(d.created_at)}
+                          </span>
+                        </td>
                         <td style={{ textAlign: 'center' }}>
                           <span className={`badge ${d.redflag_any ? 'red' : 'green'}`}>
                             {d.redflag_any ? 'Ya' : 'Tidak'}
@@ -697,6 +752,11 @@ export default function BalitaList() {
                         <td>{d.posyandu ?? "-"}</td>
                         <td>{d.alamat ?? "-"}</td>
                         <td>{d.sumber_data ?? "-"}</td>
+                        <td>
+                          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>
+                            {formatTanggal(d.created_at)}
+                          </span>
+                        </td>
                         <td style={{ textAlign: 'center' }}>
                           <span className={`badge ${d.redflag_any ? 'red' : 'green'}`}>
                             {d.redflag_any ? 'Ya' : 'Tidak'}

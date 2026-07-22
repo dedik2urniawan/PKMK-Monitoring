@@ -111,3 +111,45 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true });
 }
+
+export async function PATCH(req: NextRequest) {
+  const supabase = await createClient();
+  const appUser = await getAppUser();
+  if (!appUser) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const body = await req.json().catch(() => ({} as any));
+  const { kohort_id, periode_mulai } = body;
+  if (!kohort_id || !periode_mulai) {
+    return new Response("Data kurang (kohort_id dan periode_mulai wajib diisi)", { status: 400 });
+  }
+
+  // Check existence & permissions
+  const { data: kohort, error: fetchErr } = await supabase
+    .from("kohort")
+    .select("id, puskesmas_id")
+    .eq("id", kohort_id)
+    .maybeSingle();
+
+  if (fetchErr || !kohort) {
+    return new Response("Kohort tidak ditemukan", { status: 444 });
+  }
+
+  if (appUser.role === 'admin_puskesmas' && appUser.puskesmas_id) {
+    if (kohort.puskesmas_id !== appUser.puskesmas_id) {
+      return new Response("Akses ditolak (Puskesmas berbeda)", { status: 403 });
+    }
+  }
+
+  const { error: updateErr } = await supabase
+    .from("kohort")
+    .update({ periode_mulai })
+    .eq("id", kohort_id);
+
+  if (updateErr) {
+    return new Response(updateErr.message, { status: 400 });
+  }
+
+  return NextResponse.json({ ok: true, message: "Tanggal mulai kohort berhasil diperbarui" });
+}
