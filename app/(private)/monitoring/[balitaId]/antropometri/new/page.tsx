@@ -54,7 +54,7 @@ export default function NewAntropometri() {
   const [lmsWarn, setLmsWarn] = useState<{ bbu?: boolean; tbu?: boolean; bbtb?: boolean }>({});
   const [outlier, setOutlier] = useState<{ bbu?: boolean; tbu?: boolean; bbtb?: boolean }>({});
   const [deltaInfo, setDeltaInfo] = useState<{ low: number; high: number; status: 'kurang' | 'sesuai' | 'lebih' | null } | null>(null);
-  const [lmsCache, setLmsCache] = useState<{ bbu: any[]; tbu: any[] } | null>(null);
+  const [lmsCache, setLmsCache] = useState<{ bbu: any[]; tbu: any[]; bbtb: any[] } | null>(null);
   const [probableStunting, setProbableStunting] = useState<{
     result: boolean | null;
     weightAge: number | null;
@@ -285,36 +285,54 @@ export default function NewAntropometri() {
     })();
   }, [balita, form.usia_bulan, form.bb_kg, form.tb_corr_cm, form.tanggal]);
 
-  // Pre-fetch LMS BBU + TBU range data (0-60 months) once when balita changes
+  // Pre-fetch LMS BBU + TBU + BBTB range data once when balita changes
   useEffect(() => {
     if (!balita) return;
     (async () => {
       const jkNum = balita.jk === 'L' ? 1 : 2;
       try {
-        const [rb, rt] = await Promise.all([
+        const [rb, rt, rbt] = await Promise.all([
           fetch(`/api/ref/lms-bbu?jk=${jkNum}&min_month=0&max_month=60`),
           fetch(`/api/ref/lms-tbu?jk=${jkNum}&min_month=0&max_month=60`),
+          fetch(`/api/ref/lms-bbtb?jk=${jkNum}&min_length=40&max_length=120`),
         ]);
-        const [db, dt] = await Promise.all([rb.json(), rt.json()]);
+        const [db, dt, dbt] = await Promise.all([rb.json(), rt.json(), rbt.json()]);
         setLmsCache({
           bbu: db.items || [],
           tbu: dt.items || [],
+          bbtb: dbt.items || [],
         });
       } catch { }
     })();
   }, [balita]);
 
-  // Compute Probable Stunting (Age Equivalent method) and BB Ideal whenever inputs or cache change
+  // Compute Probable Stunting (Age Equivalent method) and BB Ideal (WHZ/BBTB) whenever inputs or cache change
   useEffect(() => {
-    if (!lmsCache || !form.bb_kg || !form.tb_corr_cm || !form.usia_bulan) {
+    if (!lmsCache) {
       setProbableStunting(null);
       setBbIdeal(null);
       return;
     }
+
+    const tb = Number(form.tb_corr_cm || form.tb_cm);
+
+    // BB Ideal (WHZ): median (M) of ref_lms_bbtb at current height/length (tb)
+    if (!isNaN(tb) && tb > 0 && lmsCache.bbtb && lmsCache.bbtb.length > 0) {
+      const bbIdealRow = lmsCache.bbtb.find((r: any) => Math.abs(r.tb_cm - tb) < 0.25)
+        || lmsCache.bbtb.reduce((prev: any, curr: any) =>
+            Math.abs(curr.tb_cm - tb) < Math.abs(prev.tb_cm - tb) ? curr : prev, lmsCache.bbtb[0]);
+      setBbIdeal(bbIdealRow ? Number(bbIdealRow.M.toFixed(2)) : null);
+    } else {
+      setBbIdeal(null);
+    }
+
+    if (!form.bb_kg || !form.tb_corr_cm || !form.usia_bulan) {
+      setProbableStunting(null);
+      return;
+    }
     const bb = Number(form.bb_kg);
-    const tb = Number(form.tb_corr_cm);
     const ca = Number(form.usia_bulan); // Chronological Age
-    if (isNaN(bb) || isNaN(tb) || isNaN(ca)) { setProbableStunting(null); setBbIdeal(null); return; }
+    if (isNaN(bb) || isNaN(tb) || isNaN(ca)) { setProbableStunting(null); return; }
 
     // Weight Age: find month whose median BB (M) is closest to actual bb
     let waMonth: number | null = null;
@@ -332,12 +350,6 @@ export default function NewAntropometri() {
       if (diff < laDiff) { laDiff = diff; laMonth = row.umur_bulan; }
     }
 
-    // BB Ideal: median (M) of BBU at chronological age
-    const bbIdealRow = lmsCache.bbu.find((r: any) => r.umur_bulan === ca)
-      || lmsCache.bbu.reduce((prev: any, curr: any) =>
-          Math.abs(curr.umur_bulan - ca) < Math.abs(prev.umur_bulan - ca) ? curr : prev, lmsCache.bbu[0]);
-    setBbIdeal(bbIdealRow ? Number(bbIdealRow.M.toFixed(2)) : null);
-
     // Probable Stunting: WA < LA && LA < CA
     if (waMonth !== null && laMonth !== null) {
       setProbableStunting({
@@ -349,7 +361,7 @@ export default function NewAntropometri() {
     } else {
       setProbableStunting(null);
     }
-  }, [lmsCache, form.bb_kg, form.tb_corr_cm, form.usia_bulan]);
+  }, [lmsCache, form.bb_kg, form.tb_corr_cm, form.tb_cm, form.usia_bulan]);
 
   // Helper: compute probable stunting for a history row using lmsCache
   function calcProbableStuntingForRow(h: any): { result: boolean | null; weightAge: number | null; lengthAge: number | null } {
@@ -365,12 +377,14 @@ export default function NewAntropometri() {
     return { result: null, weightAge: null, lengthAge: null };
   }
 
+  // Helper: compute BB Ideal (WHZ median from ref_lms_bbtb) for a history row
   function calcBbIdealForRow(h: any): number | null {
-    if (!lmsCache || h.usia_bulan == null) return null;
-    const ca = Number(h.usia_bulan);
-    const row = lmsCache.bbu.find((r: any) => r.umur_bulan === ca)
-      || lmsCache.bbu.reduce((prev: any, curr: any) =>
-          Math.abs(curr.umur_bulan - ca) < Math.abs(prev.umur_bulan - ca) ? curr : prev, lmsCache.bbu[0]);
+    if (!lmsCache || !lmsCache.bbtb || lmsCache.bbtb.length === 0) return null;
+    const tb = Number(h.tb_corr_cm || h.tb_cm);
+    if (isNaN(tb) || tb <= 0) return null;
+    const row = lmsCache.bbtb.find((r: any) => Math.abs(r.tb_cm - tb) < 0.25)
+      || lmsCache.bbtb.reduce((prev: any, curr: any) =>
+          Math.abs(curr.tb_cm - tb) < Math.abs(prev.tb_cm - tb) ? curr : prev, lmsCache.bbtb[0]);
     return row ? Number(row.M.toFixed(2)) : null;
   }
 
@@ -918,7 +932,7 @@ export default function NewAntropometri() {
                   </p>
                 </>
               )}
-              <p style={{ fontSize: 10, color: '#94a3b8', marginTop: 8, fontStyle: 'italic' }}>Referensi: Median (P50) tabel WHO ref_lms_bbu usia {form.usia_bulan || '-'} bulan</p>
+              <p style={{ fontSize: 10, color: '#94a3b8', marginTop: 8, fontStyle: 'italic' }}>Referensi: Median (P50) tabel WHO ref_lms_bbtb TB {form.tb_corr_cm || form.tb_cm || '-'} cm</p>
             </div>
           </div>
         </div>
