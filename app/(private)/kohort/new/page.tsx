@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ensureServerSession, getAuthHeaders } from "@/lib/clientSession";
 
-type Balita = { id: string; nama_balita: string };
+type Balita = { id: string; nama_balita: string; nik?: string; kohort?: any[] };
 type Pkm = { id: string; nama: string };
 type Desa = { id: string; desa_kel: string };
 
@@ -20,6 +20,7 @@ export default function NewKohort() {
   const [kec, setKec] = useState("");
   const [puskesmasId, setPuskesmasId] = useState("");
   const [desa, setDesa] = useState("");
+  const [nik, setNik] = useState("");
 
   // pagination state
   const [page, setPage] = useState(1);
@@ -27,11 +28,18 @@ export default function NewKohort() {
   const [totalItems, setTotalItems] = useState(0);
   const limit = 10;
 
-  async function fetchBalita(currentPage: number = 1, currentKec = kec, currentPkm = puskesmasId, currentDesa = desa) {
+  async function fetchBalita(
+    currentPage: number = 1,
+    currentKec = kec,
+    currentPkm = puskesmasId,
+    currentDesa = desa,
+    currentNik = nik
+  ) {
     const params = new URLSearchParams();
     if (currentPkm) params.set("puskesmas_id", currentPkm);
     if (currentDesa) params.set("desa_kel", currentDesa);
     if (currentKec) params.set("kecamatan", currentKec);
+    if (currentNik) params.set("nik", currentNik);
     params.set("page", currentPage.toString());
     params.set("limit", limit.toString());
 
@@ -56,7 +64,7 @@ export default function NewKohort() {
         setKecList(data.items || []);
 
         // Fetch balita with pagination
-        await fetchBalita(1, "", "", "");
+        await fetchBalita(1, "", "", "", "");
       } catch (e) {
         console.error('[kohort/new] Error fetching initial data:', e);
       }
@@ -90,7 +98,7 @@ export default function NewKohort() {
   async function applyFilter(e?: React.FormEvent) {
     if (e) e.preventDefault();
     setPage(1);
-    await fetchBalita(1, kec, puskesmasId, desa);
+    await fetchBalita(1, kec, puskesmasId, desa, nik);
     setSelected("");
   }
 
@@ -104,8 +112,8 @@ export default function NewKohort() {
       body: JSON.stringify({ balita_id: selected, periode_mulai: start }),
     });
     if (!res.ok) return alert(await res.text());
-    alert("Kohort dimulai!");
-    fetchBalita(page, kec, puskesmasId, desa); // Refresh data current page
+    alert("Kohort berhasil dimulai!");
+    fetchBalita(page, kec, puskesmasId, desa, nik); // Refresh data current page
   }
 
   // Helper to check redflag
@@ -131,8 +139,13 @@ export default function NewKohort() {
   const [updatingKohort, setUpdatingKohort] = useState(false);
 
   const getCohortStatus = (b: any) => {
-    if (!b.kohort || b.kohort.length === 0) return { status: "Belum", date: "-", id: null, rawDate: "" };
-    const last = b.kohort[b.kohort.length - 1];
+    if (!b.kohort || b.kohort.length === 0) {
+      return { status: "Belum", date: "-", id: null, rawDate: "", cycle: 1, isCompleted: false };
+    }
+    const sorted = [...b.kohort].sort((c1: any, c2: any) =>
+      new Date(c1.periode_mulai || c1.created_at).getTime() - new Date(c2.periode_mulai || c2.created_at).getTime()
+    );
+    const last = sorted[sorted.length - 1];
     let rawDate = "";
     if (last.periode_mulai) {
       try {
@@ -142,10 +155,12 @@ export default function NewKohort() {
       }
     }
     return {
-      status: "Ya",
+      status: last.status === "selesai" ? "Selesai" : "Ya",
       date: last.periode_mulai ? new Date(last.periode_mulai).toLocaleDateString('id-ID') : "-",
       id: last.id,
-      rawDate
+      rawDate,
+      cycle: sorted.length,
+      isCompleted: last.status === "selesai",
     };
   };
 
@@ -178,7 +193,7 @@ export default function NewKohort() {
       alert("Tanggal mulai kohort berhasil diperbarui!");
       setEditModalOpen(false);
       setEditingKohort(null);
-      await fetchBalita(page, kec, puskesmasId, desa);
+      await fetchBalita(page, kec, puskesmasId, desa, nik);
     } catch (err: any) {
       alert("Terjadi kesalahan: " + (err.message || "Gagal meng-update data"));
     } finally {
@@ -219,13 +234,13 @@ export default function NewKohort() {
         </Link>
       </div>
 
-      {/* Filter Section - Stitch Style */}
+      {/* Filter Section - Modern Style with NIK Search */}
       <form onSubmit={applyFilter} style={{ background: 'white', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #dbe6e2', padding: 24, marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <span style={{ fontSize: 20 }}>🔍</span>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111816', margin: 0 }}>Filter Data Balita</h3>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, alignItems: 'flex-end' }} className="filter-grid">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, alignItems: 'flex-end' }} className="filter-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Kecamatan</label>
             <select value={kec} onChange={(e) => setKec(e.target.value)} style={{ width: '100%', height: 44, borderRadius: 8, border: '1px solid #e5e7eb', background: '#f9fafb', padding: '0 12px', fontSize: 14, color: '#111816' }}>
@@ -246,6 +261,16 @@ export default function NewKohort() {
               <option value="">Semua Desa</option>
               {desaList.map((d) => (<option key={d.id} value={d.desa_kel}>{d.desa_kel}</option>))}
             </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cari NIK / Nama</label>
+            <input
+              type="text"
+              placeholder="Masukkan NIK atau Nama..."
+              value={nik}
+              onChange={(e) => setNik(e.target.value)}
+              style={{ width: '100%', height: 44, borderRadius: 8, border: '1px solid #e5e7eb', background: '#f9fafb', padding: '0 12px', fontSize: 14, color: '#111816', outline: 'none' }}
+            />
           </div>
           <button type="submit" style={{ height: 44, background: '#10b981', color: 'white', borderRadius: 8, border: 'none', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 2px 8px rgba(16,185,129,0.3)' }}>
             🔎 Terapkan Filter
@@ -268,9 +293,16 @@ export default function NewKohort() {
               <label style={{ fontSize: 14, fontWeight: 600, color: '#111816', marginBottom: 8, display: 'block' }}>Pilih Balita</label>
               <select value={selected} onChange={(e) => setSelected(e.target.value)} style={{ width: '100%', height: 44, borderRadius: 8, border: '1px solid #e5e7eb', background: '#f9fafb', padding: '0 12px', fontSize: 14, color: '#111816' }}>
                 <option value="">-- Pilih Balita --</option>
-                {balita.map((b: any) => (
-                  <option key={b.id} value={b.id}>{b.nama_balita}</option>
-                ))}
+                {balita.map((b: any) => {
+                  const cStatus = getCohortStatus(b);
+                  const nextCycle = cStatus.isCompleted ? cStatus.cycle + 1 : (cStatus.status === 'Belum' ? 1 : cStatus.cycle);
+                  const isDisableSelect = cStatus.status === 'Ya' && !cStatus.isCompleted;
+                  return (
+                    <option key={b.id} value={b.id} disabled={isDisableSelect}>
+                      {b.nama_balita} {cStatus.isCompleted ? `(Lanjut Siklus ${nextCycle})` : isDisableSelect ? `(Siklus ${cStatus.cycle} Aktif)` : ''}
+                    </option>
+                  );
+                })}
               </select>
               <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 6 }}>Hanya menampilkan balita dengan status stunting.</p>
             </div>
@@ -281,7 +313,7 @@ export default function NewKohort() {
             <div style={{ background: '#eff6ff', borderRadius: 8, padding: 12, border: '1px solid #dbeafe', display: 'flex', gap: 10 }}>
               <span style={{ fontSize: 18 }}>ℹ️</span>
               <p style={{ fontSize: 12, color: '#1e40af', lineHeight: 1.5, margin: 0 }}>
-                Program intervensi akan berlangsung selama <strong>12 minggu</strong>. Pastikan data balita sudah benar sebelum memulai.
+                Program intervensi akan berlangsung selama <strong>12 minggu per siklus</strong>. Pastikan data balita sudah benar sebelum memulai.
               </p>
             </div>
             <button
@@ -295,7 +327,7 @@ export default function NewKohort() {
                 boxShadow: !selected || !start ? 'none' : '0 2px 8px rgba(16,185,129,0.3)'
               }}
             >
-              ▶️ Mulai Kohort (12 Minggu)
+              ▶️ Mulai Kohort Intervensi
             </button>
           </div>
         </div>
@@ -324,7 +356,7 @@ export default function NewKohort() {
                           <span style={{ fontSize: 32 }}>📭</span>
                         </div>
                         <p style={{ fontWeight: 700, fontSize: 16, color: '#374151', margin: 0 }}>Tidak ada data balita</p>
-                        <p style={{ fontSize: 14, color: '#9ca3af', marginTop: 4 }}>Coba sesuaikan filter lokasi untuk menemukan data yang Anda cari.</p>
+                        <p style={{ fontSize: 14, color: '#9ca3af', marginTop: 4 }}>Coba sesuaikan filter lokasi atau NIK untuk menemukan data yang Anda cari.</p>
                       </div>
                     </td>
                   </tr>
@@ -368,35 +400,36 @@ export default function NewKohort() {
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                             <span style={{
                               display: 'inline-flex', width: 'fit-content', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 700,
-                              background: cohort.status === 'Ya' ? 'linear-gradient(to right, #ecfdf5, #d1fae5)' : 'linear-gradient(to right, #fffbeb, #fef3c7)',
-                              color: cohort.status === 'Ya' ? '#047857' : '#b45309',
-                              border: cohort.status === 'Ya' ? '1px solid #a7f3d0' : '1px solid #fcd34d',
+                              background: cohort.isCompleted
+                                ? 'linear-gradient(to right, #ecfdf5, #d1fae5)'
+                                : cohort.status === 'Ya'
+                                ? 'linear-gradient(to right, #eff6ff, #dbeafe)'
+                                : 'linear-gradient(to right, #fffbeb, #fef3c7)',
+                              color: cohort.isCompleted ? '#047857' : cohort.status === 'Ya' ? '#1d4ed8' : '#b45309',
+                              border: cohort.isCompleted ? '1px solid #a7f3d0' : cohort.status === 'Ya' ? '1px solid #bfdbfe' : '1px solid #fcd34d',
                               boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                             }}>
-                              {cohort.status === 'Ya' ? '✓ Aktif' : '⏱️ Belum'}
+                              {cohort.isCompleted ? `✓ Selesai (Siklus ${cohort.cycle})` : cohort.status === 'Ya' ? `✓ Siklus ${cohort.cycle} Aktif` : '⏱️ Belum'}
                             </span>
-                            {cohort.status === 'Ya' && (
+                            {cohort.status !== 'Belum' && (
                               <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 500 }}>Sejak {cohort.date}</span>
                             )}
                           </div>
                         </td>
                         <td style={{ padding: 16, textAlign: 'center' }}>
-                          {cohort.status === 'Ya' && cohort.id ? (
+                          {cohort.status !== 'Belum' && cohort.id ? (
                             <button
-                              type="button"
-                              onClick={() => handleOpenEditModal(cohort.id!, b.nama_balita, cohort.rawDate, cohort.date)}
+                              onClick={() => handleOpenEditModal(cohort.id, b.nama_balita, cohort.rawDate, cohort.date)}
                               style={{
-                                display: 'inline-flex', alignItems: 'center', gap: 4,
-                                padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                                background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe',
+                                padding: '6px 12px', borderRadius: 8, border: '1px solid #cbd5e1',
+                                background: '#f8fafc', color: '#334155', fontWeight: 600, fontSize: 12,
                                 cursor: 'pointer', transition: 'all 0.2s'
                               }}
-                              title="Edit Tanggal Mulai Kohort"
                             >
                               ✏️ Edit Tgl
                             </button>
                           ) : (
-                            <span style={{ fontSize: 12, color: '#9ca3af' }}>-</span>
+                            <span style={{ color: '#9ca3af', fontSize: 12 }}>-</span>
                           )}
                         </td>
                       </tr>
@@ -406,64 +439,60 @@ export default function NewKohort() {
               </tbody>
             </table>
           </div>
-          {/* Footer Info with Pagination */}
-          <div style={{ borderTop: '1px solid #f3f4f6', padding: '16px 20px', background: '#f9fafb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-            <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>
-              Menampilkan <strong>{balita.length > 0 ? (page - 1) * limit + 1 : 0}</strong> - <strong>{Math.min(page * limit, totalItems)}</strong> dari <strong>{totalItems}</strong> balita
-            </p>
-            
-            {totalPages > 1 && (
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button 
-                  onClick={() => { const p = page - 1; setPage(p); fetchBalita(p, kec, puskesmasId, desa); }} 
-                  disabled={page <= 1}
-                  style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: page <= 1 ? '#f3f4f6' : 'white', color: page <= 1 ? '#9ca3af' : '#374151', fontSize: 13, fontWeight: 600, cursor: page <= 1 ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}
-                >
-                  Sebelumnya
-                </button>
-                
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 40, height: 36, background: '#10b981', color: 'white', borderRadius: 8, fontSize: 13, fontWeight: 700 }}>
-                  {page}
-                </div>
-                
-                <button 
-                  onClick={() => { const p = page + 1; setPage(p); fetchBalita(p, kec, puskesmasId, desa); }} 
-                  disabled={page >= totalPages}
-                  style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: page >= totalPages ? '#f3f4f6' : 'white', color: page >= totalPages ? '#9ca3af' : '#374151', fontSize: 13, fontWeight: 600, cursor: page >= totalPages ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}
-                >
-                  Selanjutnya
-                </button>
-              </div>
-            )}
+
+          {/* Pagination */}
+          <div style={{ padding: '16px 24px', background: '#f9fafb', borderTop: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 13, color: '#6b7280' }}>
+              Menampilkan Halaman <strong>{page}</strong> dari <strong>{totalPages}</strong> ({totalItems} Balita)
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                disabled={page <= 1}
+                onClick={() => { const p = Math.max(1, page - 1); setPage(p); fetchBalita(p, kec, puskesmasId, desa, nik); }}
+                style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid #d1d5db', background: page <= 1 ? '#f3f4f6' : 'white', color: page <= 1 ? '#9ca3af' : '#374151', cursor: page <= 1 ? 'not-allowed' : 'pointer', fontSize: 13 }}
+              >
+                ◀ Sebelum
+              </button>
+              <button
+                disabled={page >= totalPages}
+                onClick={() => { const p = Math.min(totalPages, page + 1); setPage(p); fetchBalita(p, kec, puskesmasId, desa, nik); }}
+                style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid #d1d5db', background: page >= totalPages ? '#f3f4f6' : 'white', color: page >= totalPages ? '#9ca3af' : '#374151', cursor: page >= totalPages ? 'not-allowed' : 'pointer', fontSize: 13 }}
+              >
+                Selanjutnya ▶
+              </button>
+            </div>
           </div>
         </div>
+
       </div>
 
-      {/* Modal Edit Tanggal Mulai Kohort */}
+      {/* Edit Kohort Modal */}
       {editModalOpen && editingKohort && (
         <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 16
+          position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
         }}>
           <div style={{
-            background: 'white', borderRadius: 20, maxWidth: 440, width: '100%',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
-            border: '1px solid #e2e8f0', overflow: 'hidden'
+            background: 'white', borderRadius: 16, maxWidth: 440, width: '100%',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+            overflow: 'hidden', border: '1px solid #e2e8f0'
           }}>
-            <div style={{ padding: '20px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 22 }}>📅</span>
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>Edit Tanggal Mulai Kohort</h3>
-              </div>
-              <button onClick={() => setEditModalOpen(false)} style={{ background: 'none', border: 'none', color: 'white', fontSize: 20, cursor: 'pointer', opacity: 0.8 }}>✕</button>
+            <div style={{ background: '#f8fafc', padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                ✏️ Edit Tanggal Kohort
+              </h3>
+              <button
+                onClick={() => setEditModalOpen(false)}
+                style={{ background: 'none', border: 'none', fontSize: 18, color: '#64748b', cursor: 'pointer', padding: 4 }}
+              >
+                ✕
+              </button>
             </div>
-            
-            <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18 }}>
-              <div style={{ background: '#f8fafc', padding: 14, borderRadius: 12, border: '1px solid #e2e8f0' }}>
-                <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Nama Balita</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginTop: 2 }}>{editingKohort.namaBalita}</div>
-                <div style={{ fontSize: 13, color: '#10b981', fontWeight: 600, marginTop: 4 }}>Tgl Saat Ini: {editingKohort.currentStartDate}</div>
+
+            <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Nama Balita</span>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', margin: '2px 0 0 0' }}>{editingKohort.namaBalita}</p>
               </div>
 
               <div>
@@ -514,11 +543,17 @@ export default function NewKohort() {
 
       <style jsx>{`
         @media (max-width: 1024px) {
-          .main-grid { grid-template-columns: 1fr !important; }
-          .filter-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .main-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .filter-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
         }
         @media (max-width: 640px) {
-          .filter-grid { grid-template-columns: 1fr !important; }
+          .filter-grid {
+            grid-template-columns: 1fr !important;
+          }
         }
       `}</style>
     </div>

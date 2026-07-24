@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   // CONSTRAINT VALIDATION: Check for existing cohorts
   const { data: existingKohorts, error: kohortError } = await supabase
     .from("kohort")
-    .select("id, periode_mulai")
+    .select("id, periode_mulai, status")
     .eq("balita_id", balita_id)
     .order("periode_mulai", { ascending: false });
 
@@ -69,32 +69,14 @@ export async function POST(req: NextRequest) {
     return new Response("Error memeriksa cohort yang ada: " + kohortError.message, { status: 500 });
   }
 
-  // CONSTRAINT: Check if balita has completed Week 12 of latest cohort
+  // CONSTRAINT: If latest cohort is still active ('berjalan' and not marked 'selesai'), block creation
   if (existingKohorts && existingKohorts.length > 0) {
     const latestKohort = existingKohorts[0];
 
-    // Fetch monitoring records for the latest cohort
-    const { data: monitoringRecords } = await supabase
-      .from("monitoring_antropometri")
-      .select("current_week")
-      .eq("kohort_id", latestKohort.id)
-      .order("current_week", { ascending: false })
-      .limit(1);
-
-    if (monitoringRecords && monitoringRecords.length > 0) {
-      const currentWeek = monitoringRecords[0].current_week || 0;
-
-      // If current week < 12, cohort is still active
-      if (currentWeek < 12) {
-        return new Response(
-          `Balita masih dalam intervensi aktif (minggu ke-${currentWeek}). Silakan selesaikan hingga minggu ke-12 terlebih dahulu sebelum memulai kohort baru.`,
-          { status: 400 }
-        );
-      }
-    } else {
-      // No monitoring data means cohort just started
+    // If latest cohort status is NOT 'selesai', check if it can be unblocked
+    if (latestKohort.status !== 'selesai') {
       return new Response(
-        "Balita sudah memiliki kohort yang sedang berjalan. Silakan selesaikan intervensi saat ini terlebih dahulu sebelum memulai kohort baru.",
+        "Balita masih memiliki intervensi kohort yang sedang berjalan. Silakan tandai 'Selesai Intervensi' (minimal 10 minggu terpantau) terlebih dahulu di menu Monitoring PKMK sebelum memulai siklus intervensi berikutnya.",
         { status: 400 }
       );
     }

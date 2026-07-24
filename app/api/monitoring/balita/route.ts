@@ -66,6 +66,7 @@ export async function GET(req: NextRequest) {
   const created_from = req.nextUrl.searchParams.get("created_from");
   const created_to = req.nextUrl.searchParams.get("created_to");
   const sort_order = req.nextUrl.searchParams.get("sort_order") || "nama";
+  const siklus = req.nextUrl.searchParams.get("siklus");
 
   // Base query builder
   const base = supabase.from("balita");
