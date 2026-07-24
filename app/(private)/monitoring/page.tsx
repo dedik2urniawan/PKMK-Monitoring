@@ -1356,12 +1356,52 @@ export default function MonitoringIndex() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, display: 'block' }}>
-                    Catatan Evaluasi Intervensi (Opsional)
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                      Catatan Evaluasi Intervensi
+                    </label>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!finishModalData) return;
+                        setSubmittingFinish(true);
+                        try {
+                          const { getAiDischargeSummary } = await import("@/app/actions/ai-advisor");
+                          const res = await getAiDischargeSummary({
+                            namaBalita: finishModalData.balitaName,
+                            nik: finishModalData.nik,
+                            desa: finishModalData.desa,
+                            cycleNum: finishModalData.cycleNum,
+                            antroCount: finishModalData.antroCount,
+                            konsumsiCount: finishModalData.konsumsiCount,
+                            pemberianCount: finishModalData.pemberianCount,
+                          });
+                          if (res.success && res.data) {
+                            setCompletionNotes(res.data);
+                          } else {
+                            alert("AI Info: " + (res.error || "Gagal menghubungi Gemini API"));
+                          }
+                        } catch (err: any) {
+                          alert("Error: " + err.message);
+                        } finally {
+                          setSubmittingFinish(false);
+                        }
+                      }}
+                      disabled={submittingFinish}
+                      style={{
+                        padding: '4px 10px', borderRadius: 6, border: 'none',
+                        background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: 'white',
+                        fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                        boxShadow: '0 2px 6px rgba(99,102,241,0.3)'
+                      }}
+                    >
+                      <Sparkles size={13} />
+                      {submittingFinish ? 'Memproses AI...' : '✨ Generasi Evaluasi AI'}
+                    </button>
+                  </div>
                   <textarea
-                    rows={3}
-                    placeholder="Tuliskan catatan evaluasi klinis akhir siklus..."
+                    rows={4}
+                    placeholder="Tuliskan catatan evaluasi klinis akhir siklus atau klik tombol Generasi Evaluasi AI..."
                     value={completionNotes}
                     onChange={(e) => setCompletionNotes(e.target.value)}
                     style={{ width: '100%', borderRadius: 8, border: '1px solid #cbd5e1', padding: 10, fontSize: 13, outline: 'none', resize: 'vertical' }}
@@ -1373,7 +1413,7 @@ export default function MonitoringIndex() {
                     <Sparkles size={16} /> AI Executive Clinical Summary
                   </div>
                   <p style={{ fontSize: 12, color: '#475569', margin: 0, lineHeight: 1.5 }}>
-                    Setelah ditandai Selesai, balita ini akan di-unblock sehingga dapat didaftarkan untuk <strong>Siklus 2</strong> di Daftar Kohort jika terapi PKMK berlanjut.
+                    Setelah ditandai Selesai, balita ini akan di-unblock sehingga dapat didaftarkan untuk <strong>Siklus {finishModalData.cycleNum + 1}</strong> di Daftar Kohort jika terapi PKMK berlanjut.
                   </p>
                 </div>
               </div>

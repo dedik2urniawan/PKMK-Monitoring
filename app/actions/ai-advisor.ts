@@ -118,3 +118,65 @@ Di bagian paling bawah, tambahkan teks miring berikut persis seperti ini:
     return { success: false, error: err?.message || "Gagal menghubungi AI Advisor" };
   }
 }
+
+export async function getAiDischargeSummary(payload: {
+  namaBalita: string;
+  nik?: string;
+  desa?: string;
+  cycleNum: number;
+  antroCount: number;
+  konsumsiCount: number;
+  pemberianCount: number;
+}) {
+  try {
+    const { namaBalita, nik, desa, cycleNum, antroCount, konsumsiCount, pemberianCount } = payload;
+
+    const userPrompt = `Analisis hasil evaluasi penyelesaian intervensi PKMK untuk balita berikut:
+
+**IDENTITAS BALITA**
+- Nama: ${namaBalita}
+- NIK: ${nik || "-"}
+- Desa/Kel: ${desa || "-"}
+- Siklus Pemberian: Siklus ${cycleNum} (12 Minggu)
+
+**KEPATUHAN PEMANTAUAN**
+- Antropometri terpantau: ${antroCount} dari 12 minggu
+- Konsumsi PKMK terpantau: ${konsumsiCount} dari 12 minggu
+- Pemberian PKMK terpantau: ${pemberianCount} dari 12 minggu
+
+Berikan Rangkuman Evaluasi Klinis Selesai Intervensi PKMK yang profesional, ringkas (2-3 paragraf padat) untuk tenaga kesehatan Puskesmas. Sertakan evaluasi trajektori pertumbuhan dan rekomendasi apakah perlu Lanjut Siklus ${cycleNum + 1} atau Edukasi PMT Lokal.`;
+
+    const SYSTEM_PROMPT = `Kamu adalah SIGMA Ai Advisor, Dokter Spesialis Anak & Konsultan Nutrisi Klinis Kemenkes RI.
+Berikan Rangkuman Evaluasi Klinis Selesai Intervensi PKMK yang ringkas, ilmiah, dan actionable.`;
+
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      return { success: false, error: "API Key Gemini belum diset pada environment Vercel." };
+    }
+
+    const aiModel = process.env.NEXT_PUBLIC_GEMINI_MODEL || process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`;
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 512 },
+      }),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      return { success: false, error: errBody?.error?.message || `HTTP ${response.status}` };
+    }
+
+    const data = await response.json();
+    const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+
+    return { success: true, data: text };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Gagal menghubungi AI Advisor" };
+  }
+}
