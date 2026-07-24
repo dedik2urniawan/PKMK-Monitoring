@@ -127,7 +127,21 @@ export async function GET(req: NextRequest) {
 
   const from = (page - 1) * limit;
   const to = from + limit - 1;
-  // Count first, then fetch page
+
+  if (siklus) {
+    const targetSiklus = Number(siklus);
+    if (!isNaN(targetSiklus) && targetSiklus > 0) {
+      const { data: allData, error: allErr } = await qData;
+      if (allErr) return new Response(allErr.message, { status: 400 });
+      const filtered = (allData || []).filter((b: any) => (b.kohort || []).length >= targetSiklus);
+      const total = filtered.length;
+      const pages = Math.max(1, Math.ceil(total / limit));
+      const items = filtered.slice(from, from + limit);
+      return NextResponse.json({ items, page, pages, total, limit });
+    }
+  }
+
+  // Default pagination without siklus filter
   const { count, error: cErr } = await qFilter;
   if (cErr) return new Response(cErr.message, { status: 400 });
   const total = count ?? 0;

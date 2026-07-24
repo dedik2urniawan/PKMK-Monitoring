@@ -986,11 +986,13 @@ export default function MonitoringIndex() {
                     const reqSiklusIndex = Number(siklus) - 1;
                     if (reqSiklusIndex >= 0 && reqSiklusIndex < cohorts.length) {
                       targetCohortIndex = reqSiklusIndex;
+                    } else {
+                      targetCohortIndex = -1;
                     }
                   }
 
                   const targetCohort = targetCohortIndex >= 0 ? cohorts[targetCohortIndex] : null;
-                  const cycleNum = targetCohortIndex >= 0 ? targetCohortIndex + 1 : 1;
+                  const cycleNum = targetCohortIndex >= 0 ? targetCohortIndex + 1 : (siklus ? Number(siklus) : 1);
 
                   const antroWeeks: number[] = targetCohort
                     ? Array.from(new Set((targetCohort.monitoring_antropometri || []).map((m: any) => Number(m.minggu_ke)).filter((w: number) => !isNaN(w))))
