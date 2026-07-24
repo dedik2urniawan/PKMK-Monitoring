@@ -43,13 +43,19 @@ export default function NewKohort() {
     params.set("page", currentPage.toString());
     params.set("limit", limit.toString());
 
-    await ensureServerSession();
-    const authHeaders = await getAuthHeaders();
-    const r = await fetch(`/api/monitoring/balita?${params.toString()}`, { credentials: 'include', headers: authHeaders });
-    const d = await r.json();
-    setBalita(d.items || []);
-    setTotalPages(d.pages || 1);
-    setTotalItems(d.total || 0);
+    try {
+      await ensureServerSession();
+      const authHeaders = await getAuthHeaders();
+      const r = await fetch(`/api/monitoring/balita?${params.toString()}`, { credentials: 'include', headers: authHeaders });
+      if (!r.ok) return;
+      const text = await r.text();
+      const d = text ? JSON.parse(text) : {};
+      setBalita(d.items || []);
+      setTotalPages(d.pages || 1);
+      setTotalItems(d.total || 0);
+    } catch (err) {
+      console.error("Error fetching balita:", err);
+    }
   }
 
   useEffect(() => {
@@ -60,8 +66,11 @@ export default function NewKohort() {
 
         // Fetch kecamatan with auth
         const res = await fetch("/api/ref/kecamatan", { credentials: 'include', headers: authHeaders });
-        const data = await res.json();
-        setKecList(data.items || []);
+        if (res.ok) {
+          const text = await res.text();
+          const data = text ? JSON.parse(text) : {};
+          setKecList(data.items || []);
+        }
 
         // Fetch balita with pagination
         await fetchBalita(1, "", "", "", "");
@@ -75,23 +84,35 @@ export default function NewKohort() {
   useEffect(() => {
     if (!kec) return;
     (async () => {
-      await ensureServerSession();
-      const authHeaders = await getAuthHeaders();
-      const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(kec)}`, { credentials: 'include', headers: authHeaders });
-      const p = await rp.json();
-      setPkmList((p.items || []).map((r: any) => ({ id: r.id, nama: r.nama })));
-      setDesaList([]); setDesa(""); setPuskesmasId("");
+      try {
+        await ensureServerSession();
+        const authHeaders = await getAuthHeaders();
+        const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(kec)}`, { credentials: 'include', headers: authHeaders });
+        if (!rp.ok) return;
+        const text = await rp.text();
+        const p = text ? JSON.parse(text) : {};
+        setPkmList((p.items || []).map((r: any) => ({ id: r.id, nama: r.nama })));
+        setDesaList([]); setDesa(""); setPuskesmasId("");
+      } catch (err) {
+        console.error("Error fetching puskesmas:", err);
+      }
     })();
   }, [kec]);
 
   useEffect(() => {
     if (!puskesmasId) return;
     (async () => {
-      await ensureServerSession();
-      const authHeaders = await getAuthHeaders();
-      const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(puskesmasId)}`, { credentials: 'include', headers: authHeaders });
-      const d = await rd.json();
-      setDesaList((d.items || []).map((r: any) => ({ id: r.id, desa_kel: r.desa_kel })));
+      try {
+        await ensureServerSession();
+        const authHeaders = await getAuthHeaders();
+        const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(puskesmasId)}`, { credentials: 'include', headers: authHeaders });
+        if (!rd.ok) return;
+        const text = await rd.text();
+        const d = text ? JSON.parse(text) : {};
+        setDesaList((d.items || []).map((r: any) => ({ id: r.id, desa_kel: r.desa_kel })));
+      } catch (err) {
+        console.error("Error fetching desa:", err);
+      }
     })();
   }, [puskesmasId]);
 
