@@ -22,6 +22,7 @@ type Balita = {
     rt: string | null;
     rw: string | null;
     alamat: string | null;
+    puskesmas_id?: string | null;
     redflag_any: boolean | null;
     bb_tidak_adekuat: string | null;
     murmur_edema: string | null;
@@ -57,6 +58,9 @@ export default function BalitaActionsNew({ balita, onDeleted, onUpdated }: Balit
         bb_lahir_kg: balita.bb_lahir_kg?.toString() || '',
         tb_lahir_cm: balita.tb_lahir_cm?.toString() || '',
         nama_ortu: balita.nama_ortu || '',
+        kab_kota: balita.kab_kota || 'MALANG',
+        kec: balita.kec || '',
+        puskesmas_id: balita.puskesmas_id || '',
         desa_kel: balita.desa_kel || '',
         posyandu: balita.posyandu || '',
         rt: balita.rt || '',
@@ -73,7 +77,101 @@ export default function BalitaActionsNew({ balita, onDeleted, onUpdated }: Balit
         keterangan_redflag: balita.keterangan_redflag || ''
     });
 
+    // Region dropdown states
+    const [kecList, setKecList] = useState<string[]>([]);
+    const [pkmList, setPkmList] = useState<Array<{ id: string; nama: string }>>([]);
+    const [desaList, setDesaList] = useState<Array<{ id: string; desa_kel: string }>>([]);
+    const [puskesmasNama, setPuskesmasNama] = useState<string>('');
+
     useEffect(() => { setMounted(true); }, []);
+
+    // Load region options when Edit Modal opens
+    useEffect(() => {
+        if (!showEditModal) return;
+        (async () => {
+            try {
+                const authHeaders = await getAuthHeaders();
+                // 1. Fetch Kecamatan list
+                const kecRes = await fetch("/api/ref/kecamatan", { credentials: "include", headers: authHeaders });
+                if (kecRes.ok) {
+                    const kecData = await kecRes.json();
+                    setKecList(kecData.items || []);
+                }
+
+                // 2. Fetch Puskesmas list
+                const pkmRes = await fetch("/api/ref/puskesmas", { credentials: "include", headers: authHeaders });
+                if (pkmRes.ok) {
+                    const pkmData = await pkmRes.json();
+                    const items = pkmData.items || [];
+                    setPkmList(items);
+                    const currentPkmId = editForm.puskesmas_id || balita.puskesmas_id;
+                    if (currentPkmId) {
+                        const foundPkm = items.find((p: any) => p.id === currentPkmId);
+                        if (foundPkm) setPuskesmasNama(foundPkm.nama);
+                    }
+                }
+
+                // 3. Fetch Desa list for current Puskesmas
+                const pkmId = editForm.puskesmas_id || balita.puskesmas_id;
+                if (pkmId) {
+                    const desaRes = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(pkmId)}`, { credentials: "include", headers: authHeaders });
+                    if (desaRes.ok) {
+                        const desaData = await desaRes.json();
+                        setDesaList(desaData.items || []);
+                    }
+                } else {
+                    const desaRes = await fetch("/api/ref/desa", { credentials: "include", headers: authHeaders });
+                    if (desaRes.ok) {
+                        const desaData = await desaRes.json();
+                        setDesaList(desaData.items || []);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load region refs for edit modal", err);
+            }
+        })();
+    }, [showEditModal]);
+
+    // Handle Kecamatan change
+    const handleKecChange = async (newKec: string) => {
+        setEditForm(f => ({ ...f, kec: newKec, desa_kel: '' }));
+        if (!newKec) return;
+        try {
+            const authHeaders = await getAuthHeaders();
+            const rp = await fetch(`/api/ref/puskesmas?kecamatan=${encodeURIComponent(newKec)}`, { credentials: "include", headers: authHeaders });
+            if (rp.ok) {
+                const p = await rp.json();
+                const items = p.items || [];
+                setPkmList(items);
+                if (items.length === 1) {
+                    const newPkmId = items[0].id;
+                    setPuskesmasNama(items[0].nama);
+                    setEditForm(f => ({ ...f, puskesmas_id: newPkmId }));
+                    const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(newPkmId)}`, { credentials: "include", headers: authHeaders });
+                    if (rd.ok) {
+                        const d = await rd.json();
+                        setDesaList(d.items || []);
+                    }
+                }
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    // Handle Puskesmas change
+    const handlePuskesmasChange = async (newPkmId: string) => {
+        setEditForm(f => ({ ...f, puskesmas_id: newPkmId, desa_kel: '' }));
+        const found = pkmList.find(p => p.id === newPkmId);
+        if (found) setPuskesmasNama(found.nama);
+        if (!newPkmId) return;
+        try {
+            const authHeaders = await getAuthHeaders();
+            const rd = await fetch(`/api/ref/desa?puskesmas_id=${encodeURIComponent(newPkmId)}`, { credentials: "include", headers: authHeaders });
+            if (rd.ok) {
+                const d = await rd.json();
+                setDesaList(d.items || []);
+            }
+        } catch (e) { console.error(e); }
+    };
 
     function formatTanggal(s: string | null): string {
         if (!s) return "-";
@@ -121,6 +219,9 @@ export default function BalitaActionsNew({ balita, onDeleted, onUpdated }: Balit
             bb_lahir_kg: editForm.bb_lahir_kg === '' ? null : Number(editForm.bb_lahir_kg),
             tb_lahir_cm: editForm.tb_lahir_cm === '' ? null : Number(editForm.tb_lahir_cm),
             nama_ortu: editForm.nama_ortu,
+            kab_kota: editForm.kab_kota,
+            kec: editForm.kec,
+            puskesmas_id: editForm.puskesmas_id,
             desa_kel: editForm.desa_kel,
             posyandu: editForm.posyandu,
             rt: editForm.rt,
@@ -326,17 +427,76 @@ export default function BalitaActionsNew({ balita, onDeleted, onUpdated }: Balit
                                 {/* Data Orang Tua & Alamat */}
                                 <div style={{ marginBottom: '16px' }}>
                                     <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', margin: '0 0 12px 0', paddingBottom: '8px', borderBottom: '1px solid #e5e7eb' }}>👨‍👩‍👧 Orang Tua & Alamat</h4>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                        <div><label style={labelStyle}>Nama Orang Tua</label><input type="text" style={inputStyle} value={editForm.nama_ortu} onChange={(e) => setEditForm({ ...editForm, nama_ortu: e.target.value })} /></div>
-                                        <div><label style={labelStyle}>Desa / Kelurahan</label><input type="text" style={inputStyle} placeholder="Masukkan Desa/Kelurahan" value={editForm.desa_kel} onChange={(e) => setEditForm({ ...editForm, desa_kel: e.target.value })} /></div>
-                                        <div><label style={labelStyle}>Posyandu</label><input type="text" style={inputStyle} value={editForm.posyandu} onChange={(e) => setEditForm({ ...editForm, posyandu: e.target.value })} /></div>
-                                        <div><label style={labelStyle}>RT / RW</label>
+                                    
+                                    <div style={{ marginBottom: '12px' }}>
+                                        <label style={labelStyle}>Nama Ibu/Ayah</label>
+                                        <input type="text" style={inputStyle} placeholder="Nama lengkap orang tua" value={editForm.nama_ortu} onChange={(e) => setEditForm({ ...editForm, nama_ortu: e.target.value })} />
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                                        <div>
+                                            <label style={labelStyle}>Kabupaten / Kota</label>
+                                            <input type="text" style={{ ...inputStyle, backgroundColor: '#f9fafb', color: '#6b7280' }} value={editForm.kab_kota} readOnly />
+                                        </div>
+                                        <div>
+                                            <label style={labelStyle}>Kecamatan *</label>
+                                            <select style={selectStyle} value={editForm.kec} onChange={(e) => handleKecChange(e.target.value)}>
+                                                <option value="">-- Pilih Kecamatan --</option>
+                                                {kecList.map((k) => (
+                                                    <option key={k} value={k}>{k}</option>
+                                                ))}
+                                                {editForm.kec && !kecList.includes(editForm.kec) && (
+                                                    <option value={editForm.kec}>{editForm.kec}</option>
+                                                )}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                                        <div>
+                                            <label style={labelStyle}>Puskesmas *</label>
+                                            {pkmList.length > 0 ? (
+                                                <select style={selectStyle} value={editForm.puskesmas_id} onChange={(e) => handlePuskesmasChange(e.target.value)}>
+                                                    <option value="">-- Pilih Puskesmas --</option>
+                                                    {pkmList.map((p) => (
+                                                        <option key={p.id} value={p.id}>{p.nama}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <input type="text" style={{ ...inputStyle, backgroundColor: '#f9fafb', color: '#6b7280' }} value={puskesmasNama || '-'} readOnly />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label style={labelStyle}>Desa / Kelurahan *</label>
+                                            <select style={selectStyle} value={editForm.desa_kel} onChange={(e) => setEditForm({ ...editForm, desa_kel: e.target.value })}>
+                                                <option value="">-- Pilih Desa/Kel --</option>
+                                                {desaList.map((d) => (
+                                                    <option key={d.id} value={d.desa_kel}>{d.desa_kel}</option>
+                                                ))}
+                                                {editForm.desa_kel && !desaList.some(d => d.desa_kel === editForm.desa_kel) && (
+                                                    <option value={editForm.desa_kel}>{editForm.desa_kel}</option>
+                                                )}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                                        <div>
+                                            <label style={labelStyle}>Posyandu</label>
+                                            <input type="text" style={inputStyle} placeholder="Nama Posyandu" value={editForm.posyandu} onChange={(e) => setEditForm({ ...editForm, posyandu: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label style={labelStyle}>RT / RW</label>
                                             <div style={{ display: 'flex', gap: '8px' }}>
                                                 <input type="text" placeholder="RT" style={inputStyle} value={editForm.rt} onChange={(e) => setEditForm({ ...editForm, rt: e.target.value })} />
                                                 <input type="text" placeholder="RW" style={inputStyle} value={editForm.rw} onChange={(e) => setEditForm({ ...editForm, rw: e.target.value })} />
                                             </div>
                                         </div>
-                                        <div style={{ gridColumn: '1 / -1' }}><label style={labelStyle}>Alamat Lengkap</label><input type="text" style={inputStyle} value={editForm.alamat} onChange={(e) => setEditForm({ ...editForm, alamat: e.target.value })} /></div>
+                                    </div>
+
+                                    <div>
+                                        <label style={labelStyle}>Alamat Lengkap</label>
+                                        <input type="text" style={inputStyle} placeholder="Jalan, No. Rumah" value={editForm.alamat} onChange={(e) => setEditForm({ ...editForm, alamat: e.target.value })} />
                                     </div>
                                 </div>
 
