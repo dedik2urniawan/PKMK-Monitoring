@@ -70,8 +70,7 @@ export async function GET(req: NextRequest) {
         updated_at,
         ref_puskesmas:puskesmas_id (nama),
         ref_jenis_pkmk:jenis_pkmk_id (nama_merk)
-      `)
-            .or('stok_tersedia.eq.0,stok_tersedia.lte.stok_minimum');
+      `);
 
         if (user.role === 'admin_puskesmas' && user.puskesmas_id) {
             stokQuery = stokQuery.eq('puskesmas_id', user.puskesmas_id);
@@ -79,18 +78,20 @@ export async function GET(req: NextRequest) {
 
         const { data: stokItems } = await stokQuery;
 
-        (stokItems || []).forEach((item: any) => {
-            const isHabis = item.stok_tersedia <= 0;
-            notifications.push({
-                id: `stok-${item.id}`,
-                type: isHabis ? 'stok_habis' : 'stok_menipis',
-                title: isHabis ? '🚨 Stok Habis' : '⚠️ Stok Menipis',
-                message: `${item.ref_jenis_pkmk?.nama_merk || 'PKMK'} di ${item.ref_puskesmas?.nama || 'Puskesmas'} (${item.stok_tersedia} tersisa)`,
-                priority: isHabis ? 'high' : 'medium',
-                link: '/logistik',
-                timestamp: item.updated_at
+        (stokItems || [])
+            .filter((item: any) => item.stok_tersedia <= 0 || item.stok_tersedia <= (item.stok_minimum ?? 10))
+            .forEach((item: any) => {
+                const isHabis = item.stok_tersedia <= 0;
+                notifications.push({
+                    id: `stok-${item.id}`,
+                    type: isHabis ? 'stok_habis' : 'stok_menipis',
+                    title: isHabis ? '🚨 Stok Habis' : '⚠️ Stok Menipis',
+                    message: `${item.ref_jenis_pkmk?.nama_merk || 'PKMK'} di ${item.ref_puskesmas?.nama || 'Puskesmas'} (${item.stok_tersedia} tersisa)`,
+                    priority: isHabis ? 'high' : 'medium',
+                    link: '/logistik',
+                    timestamp: item.updated_at
+                });
             });
-        });
     } catch (e) { console.error('[notifications] stok error:', e); }
 
     // 2. MONITORING OVERDUE (kohort aktif tanpa monitoring 7 hari terakhir)

@@ -57,6 +57,7 @@ export default function BalitaActionsNew({ balita, onDeleted, onUpdated }: Balit
         bb_lahir_kg: balita.bb_lahir_kg?.toString() || '',
         tb_lahir_cm: balita.tb_lahir_cm?.toString() || '',
         nama_ortu: balita.nama_ortu || '',
+        desa_kel: balita.desa_kel || '',
         posyandu: balita.posyandu || '',
         rt: balita.rt || '',
         rw: balita.rw || '',
@@ -120,6 +121,7 @@ export default function BalitaActionsNew({ balita, onDeleted, onUpdated }: Balit
             bb_lahir_kg: editForm.bb_lahir_kg === '' ? null : Number(editForm.bb_lahir_kg),
             tb_lahir_cm: editForm.tb_lahir_cm === '' ? null : Number(editForm.tb_lahir_cm),
             nama_ortu: editForm.nama_ortu,
+            desa_kel: editForm.desa_kel,
             posyandu: editForm.posyandu,
             rt: editForm.rt,
             rw: editForm.rw,
@@ -326,10 +328,15 @@ export default function BalitaActionsNew({ balita, onDeleted, onUpdated }: Balit
                                     <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', margin: '0 0 12px 0', paddingBottom: '8px', borderBottom: '1px solid #e5e7eb' }}>👨‍👩‍👧 Orang Tua & Alamat</h4>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                         <div><label style={labelStyle}>Nama Orang Tua</label><input type="text" style={inputStyle} value={editForm.nama_ortu} onChange={(e) => setEditForm({ ...editForm, nama_ortu: e.target.value })} /></div>
+                                        <div><label style={labelStyle}>Desa / Kelurahan</label><input type="text" style={inputStyle} placeholder="Masukkan Desa/Kelurahan" value={editForm.desa_kel} onChange={(e) => setEditForm({ ...editForm, desa_kel: e.target.value })} /></div>
                                         <div><label style={labelStyle}>Posyandu</label><input type="text" style={inputStyle} value={editForm.posyandu} onChange={(e) => setEditForm({ ...editForm, posyandu: e.target.value })} /></div>
-                                        <div><label style={labelStyle}>RT</label><input type="text" style={inputStyle} value={editForm.rt} onChange={(e) => setEditForm({ ...editForm, rt: e.target.value })} /></div>
-                                        <div><label style={labelStyle}>RW</label><input type="text" style={inputStyle} value={editForm.rw} onChange={(e) => setEditForm({ ...editForm, rw: e.target.value })} /></div>
-                                        <div style={{ gridColumn: '1 / -1' }}><label style={labelStyle}>Alamat</label><input type="text" style={inputStyle} value={editForm.alamat} onChange={(e) => setEditForm({ ...editForm, alamat: e.target.value })} /></div>
+                                        <div><label style={labelStyle}>RT / RW</label>
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <input type="text" placeholder="RT" style={inputStyle} value={editForm.rt} onChange={(e) => setEditForm({ ...editForm, rt: e.target.value })} />
+                                                <input type="text" placeholder="RW" style={inputStyle} value={editForm.rw} onChange={(e) => setEditForm({ ...editForm, rw: e.target.value })} />
+                                            </div>
+                                        </div>
+                                        <div style={{ gridColumn: '1 / -1' }}><label style={labelStyle}>Alamat Lengkap</label><input type="text" style={inputStyle} value={editForm.alamat} onChange={(e) => setEditForm({ ...editForm, alamat: e.target.value })} /></div>
                                     </div>
                                 </div>
 
