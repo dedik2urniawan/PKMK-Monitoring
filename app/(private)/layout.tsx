@@ -62,7 +62,7 @@ export default async function PrivateLayout({ children }: { children: React.Reac
                 DK
               </a>
               <span style={{ margin: '0 6px', opacity: 0.5 }}>|</span>
-              <span style={{ opacity: 0.8 }}>v1.2.0</span>
+              <span style={{ opacity: 0.8 }}>v2.0.0</span>
             </p>
           </footer>
         </section>

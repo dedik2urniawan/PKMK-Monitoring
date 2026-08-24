@@ -49,6 +49,10 @@ export async function POST(req: NextRequest) {
     muntah_diare_berulang: body.muntah_diare_berulang ?? undefined,
     diagnosa_penyakit_penyerta: body.diagnosa_penyakit_penyerta ?? undefined,
     keterangan_redflag: body.keterangan_redflag ?? undefined,
+    latitude: body.latitude === '' || body.latitude == null ? undefined : Number(body.latitude),
+    longitude: body.longitude === '' || body.longitude == null ? undefined : Number(body.longitude),
+    tb_ayah_cm: body.tb_ayah_cm === '' || body.tb_ayah_cm == null ? undefined : Number(body.tb_ayah_cm),
+    tb_ibu_cm: body.tb_ibu_cm === '' || body.tb_ibu_cm == null ? undefined : Number(body.tb_ibu_cm),
   };
   if (appUser?.role !== 'admin_puskesmas' && body.puskesmas_id) {
     payload.puskesmas_id = body.puskesmas_id;
@@ -61,7 +65,25 @@ export async function POST(req: NextRequest) {
   if (appUser?.role === 'admin_puskesmas' && appUser.puskesmas_id) {
     q = q.eq('puskesmas_id', appUser.puskesmas_id);
   }
-  const { error } = await q;
+  let { error } = await q;
+  if (error && error.message?.includes('schema cache')) {
+    console.warn('[POST /api/balita/update] Column missing in schema cache, retrying without new columns:', error.message);
+    delete payload.tb_ayah_cm;
+    delete payload.tb_ibu_cm;
+    delete payload.latitude;
+    delete payload.longitude;
+
+    let retryQ = supabase.from('balita').update(payload);
+    if (isUuid(id)) retryQ = retryQ.eq('id', id as string);
+    else if (nik) retryQ = retryQ.eq('nik', nik);
+    if (appUser?.role === 'admin_puskesmas' && appUser.puskesmas_id) {
+      retryQ = retryQ.eq('puskesmas_id', appUser.puskesmas_id);
+    }
+    const { error: retryError } = await retryQ;
+    if (retryError) return new Response(retryError.message, { status: 400 });
+    return NextResponse.json({ ok: true, warning: 'Database schema update pending for TPG/Geotag columns' });
+  }
+
   if (error) return new Response(error.message, { status: 400 });
   return NextResponse.json({ ok: true });
 }

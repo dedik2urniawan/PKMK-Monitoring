@@ -1,17 +1,6 @@
-import Link from "next/link";
-import { Plus, FileText, List, Calendar, Zap, ClipboardList } from "lucide-react";
-import AnalyticsSection from "./components/AnalyticsSection";
-import WelcomeModal from "./components/WelcomeModal";
-import UserInfoBadge from "@/components/UserInfoBadge";
-import DashboardStats from "./components/DashboardStats";
+import DashboardTabContainer from "./components/DashboardTabContainer";
 
 export default async function Dashboard() {
-  const today = new Date().toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
-
   return (
     <>
       <style>{`
@@ -29,7 +18,7 @@ export default async function Dashboard() {
           display: flex;
           flex-direction: column;
           gap: 16px;
-          margin-bottom: 32px;
+          margin-bottom: 24px;
         }
         @media (min-width: 768px) {
           .page-header {
@@ -331,68 +320,7 @@ export default async function Dashboard() {
         }
       `}</style>
 
-      <div className="dashboard-container">
-        <WelcomeModal />
-
-        {/* Page Header */}
-        <div className="page-header">
-          <div>
-            <h1 className="page-title">Dashboard</h1>
-            <p className="page-subtitle">
-              <UserInfoBadge fallbackText="Ringkasan data pemantauan dan intervensi gizi." />
-            </p>
-          </div>
-          <div className="date-badge">
-            <Calendar size={16} />
-            <span>Update Terakhir: {today}</span>
-          </div>
-        </div>
-
-        {/* Statistics Grid - Client Component for proper auth */}
-        <DashboardStats />
-
-        {/* Quick Actions */}
-        <section className="quick-actions-section">
-          <h3 className="section-title">
-            <Zap size={20} className="section-title-icon" />
-            Quick Actions
-          </h3>
-          <div className="quick-actions-card">
-            <div className="quick-actions-grid">
-              <Link href="/balita/new" className="action-btn-primary">
-                <Plus size={20} />
-                Tambah Balita
-              </Link>
-              <Link href="/kohort/new" className="action-btn-outline">
-                <ClipboardList size={20} />
-                Buat Kohort
-              </Link>
-              <Link href="/rekap-laporan" className="action-btn-secondary">
-                <FileText size={20} />
-                Download Laporan Bulanan
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* Analytics Section */}
-        <AnalyticsSection />
-
-        {/* Info Panel - Tentang Sistem PKMK */}
-        <div className="info-panel">
-          <div className="info-icon">
-            <FileText size={24} />
-          </div>
-          <div>
-            <h3 className="info-title">Tentang Sistem PKMK</h3>
-            <p className="info-text">
-              Aplikasi Intervensi Stunting dan Monitoring Evaluasi menggunakan formula ONS (Oral Nutrition Supplement)
-              atau PKMK (Pangan Olahan untuk Keperluan Medis Khusus) dengan pendampingan dan asistensi medis oleh
-              Dokter Pediatrik Dinas Kesehatan Kabupaten Malang.
-            </p>
-          </div>
-        </div>
-      </div>
+      <DashboardTabContainer />
     </>
   );
 }

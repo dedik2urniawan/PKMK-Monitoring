@@ -194,46 +194,60 @@ export function AntropometriTable({ data }: { data: AntropometriItem[] }) {
                     gap: 6px;
                 }
                 .action-btn {
-                    display: flex;
+                    display: inline-flex;
                     align-items: center;
                     justify-content: center;
-                    padding: 8px;
-                    border-radius: 8px;
-                    border: none;
+                    width: 34px;
+                    height: 34px;
+                    border-radius: 9px;
                     cursor: pointer;
-                    transition: all 0.15s;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                     text-decoration: none;
+                    box-sizing: border-box;
+                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                }
+                .action-btn:hover {
+                    transform: translateY(-1.5px);
+                    box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
                 }
                 .action-btn.view {
-                    background: #f1f5f9;
+                    background: #f8fafc;
                     color: #475569;
+                    border: 1px solid #cbd5e1;
                 }
                 .action-btn.view:hover {
-                    background: #e2e8f0;
+                    background: #f1f5f9;
+                    border-color: #94a3b8;
                     color: #1e293b;
                 }
                 .action-btn.blue {
                     background: #eff6ff;
                     color: #2563eb;
+                    border: 1px solid #bfdbfe;
                 }
                 .action-btn.blue:hover {
                     background: #dbeafe;
+                    border-color: #93c5fd;
                     color: #1d4ed8;
                 }
                 .action-btn.amber {
                     background: #fef3c7;
                     color: #d97706;
+                    border: 1px solid #fde68a;
                 }
                 .action-btn.amber:hover {
                     background: #fde68a;
+                    border-color: #fcd34d;
                     color: #b45309;
                 }
                 .action-btn.purple {
                     background: #faf5ff;
                     color: #9333ea;
+                    border: 1px solid #e9d5ff;
                 }
                 .action-btn.purple:hover {
                     background: #f3e8ff;
+                    border-color: #d8b4fe;
                     color: #7c3aed;
                 }
             `}</style>

@@ -464,7 +464,7 @@ export default function SideNav() {
                 borderRadius: 6,
                 fontSize: 10,
                 fontWeight: 600,
-              }}>v1.2</span>
+              }}>v2.0</span>
             </div>
           )}
         </button>

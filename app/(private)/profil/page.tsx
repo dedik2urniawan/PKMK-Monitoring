@@ -185,7 +185,7 @@ export default function ProfilPage() {
                             <div className="menu-content">
                                 <div className="menu-title">Tentang Aplikasi</div>
                             </div>
-                            <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-md">v1.2</span>
+                            <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-md">v2.0</span>
                         </div>
                     </div>
                 </div>

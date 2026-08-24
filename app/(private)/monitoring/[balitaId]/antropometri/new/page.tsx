@@ -98,6 +98,10 @@ export default function NewAntropometri() {
 
   const [balitaRaw, setBalitaRaw] = useState<any | null>(null);
 
+  const [geoLat, setGeoLat] = useState<string>("");
+  const [geoLng, setGeoLng] = useState<string>("");
+  const [detectingGps, setDetectingGps] = useState<boolean>(false);
+
   useEffect(() => {
     (async () => {
       const rb = await fetch(`/api/monitoring/balita?balita_id=${params.balitaId}`);
@@ -106,8 +110,31 @@ export default function NewAntropometri() {
       setBalitaName(it?.nama_balita || "");
       if (it?.jk && it?.tgl_lahir) setBalita({ jk: it.jk as 'L' | 'P', tgl_lahir: it.tgl_lahir });
       setBalitaRaw(it || null);
+      if (it?.latitude != null) setGeoLat(String(it.latitude));
+      if (it?.longitude != null) setGeoLng(String(it.longitude));
     })();
   }, [params.balitaId]);
+
+  const handleGetGpsLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Browser tidak mendukung Geolocation");
+      return;
+    }
+    setDetectingGps(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeoLat(pos.coords.latitude.toFixed(7));
+        setGeoLng(pos.coords.longitude.toFixed(7));
+        setDetectingGps(false);
+        toast.success("Koordinat GPS berhasil diperoleh!");
+      },
+      (err) => {
+        setDetectingGps(false);
+        toast.error("Gagal mendeteksi lokasi GPS. Pastikan izin lokasi diberikan.");
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  };
 
   const handleImportInitialRedflag = () => {
     if (!balitaRaw) {
@@ -610,6 +637,23 @@ export default function NewAntropometri() {
       plan: form.medis_lanjutan && form.plan ? form.plan : undefined,
     };
     const authHeaders = await getAuthHeaders();
+    if (geoLat && geoLng && params.balitaId) {
+      try {
+        await fetch("/api/balita/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders },
+          credentials: "include",
+          body: JSON.stringify({
+            id: params.balitaId,
+            latitude: Number(geoLat),
+            longitude: Number(geoLng),
+          }),
+        });
+      } catch (e) {
+        console.warn("Geotag save error:", e);
+      }
+    }
+
     const res = await fetch("/api/monitoring/antropometri", {
       method: editingId ? "PATCH" : "POST",
       credentials: "include",
@@ -686,6 +730,56 @@ export default function NewAntropometri() {
 
       {/* Main Form Card */}
       <form onSubmit={onSubmit} style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+
+        {/* Section 0: Geotag Lokasi Tempat Tinggal (Cukup 1x Akses) */}
+        <div style={{ padding: '24px 32px', borderBottom: '1px solid #f0f3f5', background: '#f0f9ff' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 40, height: 40, background: '#e0f2fe', color: '#0284c7', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📍</div>
+              <div>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0369a1', margin: 0 }}>Geotag Lokasi Tempat Tinggal Balita</h3>
+                <p style={{ fontSize: 12, color: '#0284c7', margin: 0, marginTop: 2 }}>Ambil koordinat GPS lokasi rumah balita (cukup 1 kali saja untuk pemetaan Geo AI).</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleGetGpsLocation}
+              disabled={detectingGps}
+              style={{
+                padding: '8px 16px', background: '#0284c7', color: 'white', border: 'none', borderRadius: 8,
+                fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+              }}
+            >
+              {detectingGps ? '⏱️ Mendeteksi...' : '🛰️ Ambil Lokasi GPS (1-Klik)'}
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }} className="form-grid-responsive">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', textTransform: 'uppercase' }}>Latitude (Lintang)</label>
+              <input
+                className="input"
+                type="number"
+                step="any"
+                placeholder="Contoh: -8.13335"
+                value={geoLat}
+                onChange={(e) => setGeoLat(e.target.value)}
+                style={{ fontSize: 13, fontFamily: 'monospace' }}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', textTransform: 'uppercase' }}>Longitude (Bujur)</label>
+              <input
+                className="input"
+                type="number"
+                step="any"
+                placeholder="Contoh: 112.56672"
+                value={geoLng}
+                onChange={(e) => setGeoLng(e.target.value)}
+                style={{ fontSize: 13, fontFamily: 'monospace' }}
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Section 1: Data Pengukuran Dasar */}
         <div style={{ padding: '28px 32px', borderBottom: '1px solid #f0f3f5' }}>

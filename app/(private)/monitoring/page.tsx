@@ -1,8 +1,12 @@
 "use client";
-import { X, Ruler, UtensilsCrossed, HandHeart, Filter, Search, Info, CheckCircle2, Award, AlertCircle, Sparkles, Check } from "lucide-react";
+
+import { X, Ruler, UtensilsCrossed, HandHeart, Filter, Search, Info, CheckCircle2, Award, AlertCircle, Sparkles, Check, Dna, MapPin, Brain } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ensureServerSession, getAuthHeaders } from "@/lib/clientSession";
 import Link from "next/link";
+import TinggiPotensiGenetikModal from "@/components/monitoring/TinggiPotensiGenetikModal";
+import GeotagModal from "@/components/monitoring/GeotagModal";
+import SdidtkModal from "@/components/monitoring/SdidtkModal";
 
 type Balita = { id: string; nik: string | null; nama_balita: string; desa_kel: string | null; puskesmas_id: string; kohort?: any[] };
 type Pkm = { id: string; nama: string };
@@ -96,6 +100,18 @@ export default function MonitoringIndex() {
   // Modal for Completed Cohort Details
   const [completedDetailModalOpen, setCompletedDetailModalOpen] = useState(false);
   const [completedDetailData, setCompletedDetailData] = useState<any>(null);
+
+  // Modal for TPG (Tinggi Potensi Genetik)
+  const [tpgModalOpen, setTpgModalOpen] = useState(false);
+  const [tpgBalitaData, setTpgBalitaData] = useState<any>(null);
+
+  // Modal for Geotag Lokasi
+  const [geotagModalOpen, setGeotagModalOpen] = useState(false);
+  const [geotagBalitaData, setGeotagBalitaData] = useState<any>(null);
+
+  // Modal for SDIDTK (Stimulasi, Deteksi, Intervensi Dini Tumbuh Kembang)
+  const [sdidtkModalOpen, setSdidtkModalOpen] = useState(false);
+  const [sdidtkBalitaData, setSdidtkBalitaData] = useState<any>(null);
 
   useEffect(() => {
     (async () => {
@@ -509,64 +525,117 @@ export default function MonitoringIndex() {
           justify-content: center;
           gap: 6px;
         }
-        .action-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 36px;
-          height: 36px;
-          border-radius: 8px;
-          border: none;
-          cursor: pointer;
-          transition: all 0.2s;
-          text-decoration: none;
-          box-sizing: border-box;
+        :global(.action-btn) {
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          width: 34px !important;
+          height: 34px !important;
+          min-width: 34px !important;
+          min-height: 34px !important;
+          border-radius: 9px !important;
+          cursor: pointer !important;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          text-decoration: none !important;
+          box-sizing: border-box !important;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+          position: relative !important;
         }
-        .action-btn.blue {
-          background: #eff6ff;
-          color: #2563eb;
-          border: 1px solid #bfdbfe;
+        :global(.action-btn:hover) {
+          transform: translateY(-1.5px) !important;
+          box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06) !important;
         }
-        .action-btn.blue:hover { background: #dbeafe; }
-        .action-btn.green {
-          background: #ecfdf5;
-          color: #059669;
-          border: 1px solid #a7f3d0;
+        :global(.action-btn:active) {
+          transform: translateY(0) !important;
         }
-        .action-btn.green:hover { background: #d1fae5; }
-        .action-btn.purple {
-          background: #faf5ff;
-          color: #9333ea;
-          border: 1px solid #e9d5ff;
+        :global(.action-btn.blue) {
+          background: #eff6ff !important;
+          color: #2563eb !important;
+          border: 1px solid #bfdbfe !important;
         }
-        .action-btn.purple:hover { background: #f3e8ff; }
+        :global(.action-btn.blue:hover) {
+          background: #dbeafe !important;
+          border-color: #93c5fd !important;
+          color: #1d4ed8 !important;
+        }
+        :global(.action-btn.green) {
+          background: #ecfdf5 !important;
+          color: #059669 !important;
+          border: 1px solid #a7f3d0 !important;
+        }
+        :global(.action-btn.green:hover) {
+          background: #d1fae5 !important;
+          border-color: #6ee7b7 !important;
+          color: #047857 !important;
+        }
+        :global(.action-btn.purple) {
+          background: #faf5ff !important;
+          color: #9333ea !important;
+          border: 1px solid #e9d5ff !important;
+        }
+        :global(.action-btn.purple:hover) {
+          background: #f3e8ff !important;
+          border-color: #d8b4fe !important;
+          color: #7e22ce !important;
+        }
+        :global(.action-btn.teal) {
+          background: #f0fdf4 !important;
+          color: #0d9488 !important;
+          border: 1px solid #99f6e4 !important;
+        }
+        :global(.action-btn.teal:hover) {
+          background: #ccfbf1 !important;
+          border-color: #5eead4 !important;
+          color: #0f766e !important;
+        }
+        :global(.action-btn.sky) {
+          background: #f0f9ff !important;
+          color: #0284c7 !important;
+          border: 1px solid #bae6fd !important;
+        }
+        :global(.action-btn.sky:hover) {
+          background: #e0f2fe !important;
+          border-color: #7dd3fc !important;
+          color: #0369a1 !important;
+        }
+        :global(.action-btn.indigo) {
+          background: #eef2ff !important;
+          color: #4f46e5 !important;
+          border: 1px solid #c7d2fe !important;
+        }
+        :global(.action-btn.indigo:hover) {
+          background: #e0e7ff !important;
+          border-color: #a5b4fc !important;
+          color: #4338ca !important;
+        }
 
         /* 4th Action Button Styling */
-        .action-btn.slate-default {
-          background: #f1f5f9;
-          color: #64748b;
-          border: 1px solid #cbd5e1;
+        :global(.action-btn.slate-default) {
+          background: #f8fafc !important;
+          color: #64748b !important;
+          border: 1px solid #cbd5e1 !important;
         }
-        .action-btn.slate-default:hover {
-          background: #e2e8f0;
-          color: #334155;
+        :global(.action-btn.slate-default:hover) {
+          background: #f1f5f9 !important;
+          border-color: #94a3b8 !important;
+          color: #334155 !important;
         }
-        .action-btn.emerald-qualified {
-          background: #ecfdf5;
-          color: #059669;
-          border: 1px solid #6ee7b7;
-          animation: pulseEmerald 2s infinite;
+        :global(.action-btn.emerald-qualified) {
+          background: #ecfdf5 !important;
+          color: #059669 !important;
+          border: 1.5px solid #10b981 !important;
+          animation: pulseEmerald 2s infinite !important;
         }
         @keyframes pulseEmerald {
           0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
           70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
           100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
-        .action-btn.emerald-completed {
-          background: #10b981;
-          color: white;
-          border: 1px solid #059669;
-          box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+        :global(.action-btn.emerald-completed) {
+          background: #10b981 !important;
+          color: white !important;
+          border: 1px solid #059669 !important;
+          box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
         }
 
         .badge-siklus {
@@ -1058,13 +1127,25 @@ export default function MonitoringIndex() {
                       </td>
                       <td>
                         <div className="actions-cell">
-                          <Link className="action-btn blue" href={`/monitoring/${b.id}/antropometri/new`} title="Input Antropometri">
+                          <Link 
+                            className="action-btn blue inline-flex items-center justify-center w-[34px] h-[34px] min-w-[34px] min-h-[34px] rounded-[9px] bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 hover:text-blue-700 transition shadow-sm" 
+                            href={`/monitoring/${b.id}/antropometri/new`} 
+                            title="Input Antropometri"
+                          >
                             <Ruler size={18} />
                           </Link>
-                          <Link className="action-btn green" href={`/monitoring/${b.id}/konsumsi/new`} title="Input Konsumsi">
+                          <Link 
+                            className="action-btn green inline-flex items-center justify-center w-[34px] h-[34px] min-w-[34px] min-h-[34px] rounded-[9px] bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 hover:text-emerald-700 transition shadow-sm" 
+                            href={`/monitoring/${b.id}/konsumsi/new`} 
+                            title="Input Konsumsi"
+                          >
                             <UtensilsCrossed size={18} />
                           </Link>
-                          <Link className="action-btn purple" href={`/monitoring/${b.id}/pemberian/new`} title="Input Pemberian">
+                          <Link 
+                            className="action-btn purple inline-flex items-center justify-center w-[34px] h-[34px] min-w-[34px] min-h-[34px] rounded-[9px] bg-purple-50 text-purple-600 border border-purple-200 hover:bg-purple-100 hover:border-purple-300 hover:text-purple-700 transition shadow-sm" 
+                            href={`/monitoring/${b.id}/pemberian/new`} 
+                            title="Input Pemberian"
+                          >
                             <HandHeart size={18} />
                           </Link>
 
@@ -1072,7 +1153,7 @@ export default function MonitoringIndex() {
                           <button
                             type="button"
                             onClick={() => handleFinishActionClick(b, targetCohort, antroWeeks.length, konsumsiWeeks.length, pemberianWeeks.length, cycleNum)}
-                            className={`action-btn ${isCompleted ? 'emerald-completed' : isQualified ? 'emerald-qualified' : 'slate-default'}`}
+                            className={`action-btn ${isCompleted ? 'emerald-completed' : isQualified ? 'emerald-qualified' : 'slate-default'} inline-flex items-center justify-center w-[34px] h-[34px] min-w-[34px] min-h-[34px] rounded-[9px] transition shadow-sm`}
                             title={
                               isCompleted
                                 ? `✓ Intervensi Siklus ${cycleNum} Selesai (Klik untuk lihat detail)`
@@ -1082,6 +1163,45 @@ export default function MonitoringIndex() {
                             }
                           >
                             <CheckCircle2 size={18} />
+                          </button>
+
+                          {/* 5th Action Icon: Analisis Tinggi Potensi Genetik (TPG) */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTpgBalitaData(b);
+                              setTpgModalOpen(true);
+                            }}
+                            className="action-btn teal inline-flex items-center justify-center w-[34px] h-[34px] min-w-[34px] min-h-[34px] rounded-[9px] bg-teal-50 text-teal-600 border border-teal-200 hover:bg-teal-100 hover:border-teal-300 hover:text-teal-700 transition shadow-sm"
+                            title="🧬 Analisis Tinggi Potensi Genetik (TPG / Mid-Parental Height)"
+                          >
+                            <Dna size={18} />
+                          </button>
+
+                          {/* 6th Action Icon: Geotag Lokasi Balita */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setGeotagBalitaData(b);
+                              setGeotagModalOpen(true);
+                            }}
+                            className="action-btn sky inline-flex items-center justify-center w-[34px] h-[34px] min-w-[34px] min-h-[34px] rounded-[9px] bg-sky-50 text-sky-600 border border-sky-200 hover:bg-sky-100 hover:border-sky-300 hover:text-sky-700 transition shadow-sm"
+                            title="📍 Geotag Lokasi Tempat Tinggal Balita"
+                          >
+                            <MapPin size={18} />
+                          </button>
+
+                          {/* 7th Action Icon: Asesmen SDIDTK (Stimulasi & Deteksi Tumbuh Kembang) */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSdidtkBalitaData(b);
+                              setSdidtkModalOpen(true);
+                            }}
+                            className="action-btn indigo inline-flex items-center justify-center w-[34px] h-[34px] min-w-[34px] min-h-[34px] rounded-[9px] bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300 hover:text-indigo-700 transition shadow-sm"
+                            title="🧠 Asesmen SDIDTK (Stimulasi, Deteksi, & Intervensi Dini Tumbuh Kembang)"
+                          >
+                            <Brain size={18} />
                           </button>
                         </div>
                       </td>
@@ -1500,6 +1620,42 @@ export default function MonitoringIndex() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal 5: TPG (Tinggi Potensi Genetik) */}
+      {tpgModalOpen && tpgBalitaData && (
+        <TinggiPotensiGenetikModal
+          balita={tpgBalitaData}
+          onClose={() => {
+            setTpgModalOpen(false);
+            setTpgBalitaData(null);
+          }}
+          onSaveSuccess={() => onSubmit()}
+        />
+      )}
+
+      {/* Modal 6: Geotag Lokasi Balita */}
+      {geotagModalOpen && geotagBalitaData && (
+        <GeotagModal
+          balita={geotagBalitaData}
+          onClose={() => {
+            setGeotagModalOpen(false);
+            setGeotagBalitaData(null);
+          }}
+          onSaveSuccess={() => onSubmit()}
+        />
+      )}
+
+      {/* Modal 7: SDIDTK (Stimulasi & Deteksi Dini Tumbuh Kembang) */}
+      {sdidtkModalOpen && sdidtkBalitaData && (
+        <SdidtkModal
+          balita={sdidtkBalitaData}
+          onClose={() => {
+            setSdidtkModalOpen(false);
+            setSdidtkBalitaData(null);
+          }}
+          onSaveSuccess={() => onSubmit()}
+        />
       )}
     </>
   );
