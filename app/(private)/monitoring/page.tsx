@@ -1,12 +1,15 @@
 "use client";
 
-import { X, Ruler, UtensilsCrossed, HandHeart, Filter, Search, Info, CheckCircle2, Award, AlertCircle, Sparkles, Check, Dna, MapPin, Brain } from "lucide-react";
+import { X, Ruler, UtensilsCrossed, HandHeart, Filter, Search, Info, CheckCircle2, Award, AlertCircle, Sparkles, Check, Dna, MapPin, Brain, QrCode } from "lucide-react";
+
 import { useEffect, useState } from "react";
 import { ensureServerSession, getAuthHeaders } from "@/lib/clientSession";
 import Link from "next/link";
 import TinggiPotensiGenetikModal from "@/components/monitoring/TinggiPotensiGenetikModal";
 import GeotagModal from "@/components/monitoring/GeotagModal";
 import SdidtkModal from "@/components/monitoring/SdidtkModal";
+import RaporQrModal from "@/components/monitoring/RaporQrModal";
+
 
 type Balita = { id: string; nik: string | null; nama_balita: string; desa_kel: string | null; puskesmas_id: string; kohort?: any[] };
 type Pkm = { id: string; nama: string };
@@ -112,6 +115,11 @@ export default function MonitoringIndex() {
   // Modal for SDIDTK (Stimulasi, Deteksi, Intervensi Dini Tumbuh Kembang)
   const [sdidtkModalOpen, setSdidtkModalOpen] = useState(false);
   const [sdidtkBalitaData, setSdidtkBalitaData] = useState<any>(null);
+
+  // Modal for Rapor Balita & KMS Digital (QR Code & Tautan Ortu)
+  const [raporModalOpen, setRaporModalOpen] = useState(false);
+  const [raporBalitaData, setRaporBalitaData] = useState<any>(null);
+
 
   useEffect(() => {
     (async () => {
@@ -607,6 +615,17 @@ export default function MonitoringIndex() {
           background: #e0e7ff !important;
           border-color: #a5b4fc !important;
           color: #4338ca !important;
+        }
+        :global(.action-btn.rose) {
+
+          background: #fff1f2 !important;
+          color: #e11d48 !important;
+          border: 1px solid #fecdd3 !important;
+        }
+        :global(.action-btn.rose:hover) {
+          background: #ffe4e6 !important;
+          border-color: #fda4af !important;
+          color: #be123c !important;
         }
 
         /* 4th Action Button Styling */
@@ -1203,7 +1222,21 @@ export default function MonitoringIndex() {
                           >
                             <Brain size={18} />
                           </button>
+
+                          {/* 8th Action Icon: Rapor Balita & KMS Digital (QR Code Akses Ortu) */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRaporBalitaData(b);
+                              setRaporModalOpen(true);
+                            }}
+                            className="action-btn rose inline-flex items-center justify-center w-[34px] h-[34px] min-w-[34px] min-h-[34px] rounded-[9px] bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 hover:border-rose-300 hover:text-rose-700 transition shadow-sm"
+                            title="📖 Rapor Balita & KMS Digital (QR Code & Tautan Akses Orang Tua)"
+                          >
+                            <QrCode size={18} />
+                          </button>
                         </div>
+
                       </td>
                     </tr>
                   );
@@ -1657,6 +1690,19 @@ export default function MonitoringIndex() {
           onSaveSuccess={() => onSubmit()}
         />
       )}
+
+      {/* Modal 8: Rapor Balita & KMS Digital QR Modal */}
+      {raporModalOpen && raporBalitaData && (
+        <RaporQrModal
+          isOpen={raporModalOpen}
+          onClose={() => {
+            setRaporModalOpen(false);
+            setRaporBalitaData(null);
+          }}
+          balita={raporBalitaData}
+        />
+      )}
     </>
   );
 }
+
