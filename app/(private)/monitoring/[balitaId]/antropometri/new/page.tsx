@@ -729,33 +729,30 @@ export default function NewAntropometri() {
       )}
 
       {/* Main Form Card */}
-      <form onSubmit={onSubmit} style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <form onSubmit={onSubmit} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
 
         {/* Section 0: Geotag Lokasi Tempat Tinggal (Cukup 1x Akses) */}
-        <div style={{ padding: '24px 32px', borderBottom: '1px solid #f0f3f5', background: '#f0f9ff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 40, background: '#e0f2fe', color: '#0284c7', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📍</div>
+        <div className="p-4 sm:p-7 border-b border-sky-100 bg-sky-50/50">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-lg shrink-0">📍</div>
               <div>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0369a1', margin: 0 }}>Geotag Lokasi Tempat Tinggal Balita</h3>
-                <p style={{ fontSize: 12, color: '#0284c7', margin: 0, marginTop: 2 }}>Ambil koordinat GPS lokasi rumah balita (cukup 1 kali saja untuk pemetaan Geo AI).</p>
+                <h3 className="text-sm sm:text-base font-bold text-sky-950 m-0">Geotag Lokasi Tempat Tinggal Balita</h3>
+                <p className="text-xs text-sky-700 m-0 mt-0.5">Ambil koordinat GPS lokasi rumah balita (cukup 1 kali saja untuk pemetaan Geo AI).</p>
               </div>
             </div>
             <button
               type="button"
               onClick={handleGetGpsLocation}
               disabled={detectingGps}
-              style={{
-                padding: '8px 16px', background: '#0284c7', color: 'white', border: 'none', borderRadius: 8,
-                fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
-              }}
+              className="w-full sm:w-auto px-4 py-2.5 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition shadow-sm shrink-0"
             >
               {detectingGps ? '⏱️ Mendeteksi...' : '🛰️ Ambil Lokasi GPS (1-Klik)'}
             </button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }} className="form-grid-responsive">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', textTransform: 'uppercase' }}>Latitude (Lintang)</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Latitude (Lintang)</label>
               <input
                 className="input"
                 type="number"
@@ -766,8 +763,8 @@ export default function NewAntropometri() {
                 style={{ fontSize: 13, fontFamily: 'monospace' }}
               />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', textTransform: 'uppercase' }}>Longitude (Bujur)</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Longitude (Bujur)</label>
               <input
                 className="input"
                 type="number"
@@ -782,254 +779,253 @@ export default function NewAntropometri() {
         </div>
 
         {/* Section 1: Data Pengukuran Dasar */}
-        <div style={{ padding: '28px 32px', borderBottom: '1px solid #f0f3f5' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-            <div style={{ width: 40, height: 40, background: '#eff6ff', color: '#3b82f6', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📏</div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111518' }}>Data Pengukuran Dasar</h3>
+        <div className="p-4 sm:p-7 border-b border-slate-100">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shrink-0">📏</div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 m-0">Data Pengukuran Dasar</h3>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 28 }} className="form-grid-responsive">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#111518' }}>Minggu Ke <span style={{ color: '#ef4444' }}>*</span></label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-slate-800">Minggu Ke <span className="text-rose-500">*</span></label>
               <input type="number" min={1} max={12} value={form.minggu_ke} onChange={(e) => setForm({ ...form, minggu_ke: Number(e.target.value) })} className="input" required />
-              {errors.minggu_ke && <p style={{ fontSize: 12, color: '#dc2626' }}>{errors.minggu_ke}</p>}
+              {errors.minggu_ke && <p className="text-xs text-rose-600 m-0">{errors.minggu_ke}</p>}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#111518' }}>Tanggal Pengukuran <span style={{ color: '#ef4444' }}>*</span></label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-slate-800">Tanggal Pengukuran <span className="text-rose-500">*</span></label>
               <input type="date" value={form.tanggal} max={today} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} className="input" required />
-              {errors.tanggal && <p style={{ fontSize: 12, color: '#dc2626' }}>{errors.tanggal}</p>}
+              {errors.tanggal && <p className="text-xs text-rose-600 m-0">{errors.tanggal}</p>}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#111518' }}>Cara Ukur <span style={{ color: '#ef4444' }}>*</span></label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-slate-800">Cara Ukur <span className="text-rose-500">*</span></label>
               <select value={form.cara_ukur} onChange={(e) => setForm({ ...form, cara_ukur: e.target.value })} className="input" required>
                 <option value="terlentang">Terlentang</option>
                 <option value="berdiri">Berdiri</option>
               </select>
-              {errors.cara_ukur && <p style={{ fontSize: 12, color: '#dc2626' }}>{errors.cara_ukur}</p>}
-              <p style={{ fontSize: 11, color: '#f59e0b', fontStyle: 'italic' }}>Koreksi -0.7cm jika &lt; 24bln diukur berdiri.</p>
+              {errors.cara_ukur && <p className="text-xs text-rose-600 m-0">{errors.cara_ukur}</p>}
+              <p className="text-[11px] text-amber-600 italic m-0">Koreksi -0.7cm jika &lt; 24bln diukur berdiri.</p>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 500, color: '#607a8a' }}>Usia Saat Ukur</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-medium text-slate-500">Usia Saat Ukur</label>
               <input className="input" type="text" value={form.usia_bulan ? `${form.usia_bulan} Bulan` : '-'} readOnly style={{ background: '#f9fafb', color: '#607a8a' }} />
             </div>
           </div>
         </div>
 
+
         {/* Section 2: Data Fisik */}
-        <div style={{ padding: '28px 32px', borderBottom: '1px solid #f0f3f5' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-            <div style={{ width: 40, height: 40, background: '#ecfdf5', color: '#10b981', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>⚖️</div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111518' }}>Data Fisik</h3>
+        <div className="p-4 sm:p-7 border-b border-slate-100">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0">⚖️</div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 m-0">Data Fisik</h3>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 28 }} className="form-grid-responsive">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#111518' }}>Berat Badan (BB)</label>
-              <div style={{ position: 'relative' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-slate-800">Berat Badan (BB)</label>
+              <div className="relative">
                 <input className="input" type="number" step="0.001" value={form.bb_kg} onChange={(e) => setForm({ ...form, bb_kg: e.target.value })} placeholder="0.0" style={{ paddingRight: 40 }} />
-                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#607a8a' }}>kg</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs sm:text-sm text-slate-400 font-medium">kg</span>
               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#111518' }}>Tinggi Badan (TB)</label>
-              <div style={{ position: 'relative' }}>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-slate-800">Tinggi Badan (TB)</label>
+              <div className="relative">
                 <input className="input" type="number" step="0.01" value={form.tb_cm} onChange={(e) => setForm({ ...form, tb_cm: e.target.value })} placeholder="0.0" style={{ paddingRight: 40 }} />
-                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#607a8a' }}>cm</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs sm:text-sm text-slate-400 font-medium">cm</span>
               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: '#607a8a' }}>TB Koreksi</label>
-                <span style={{ background: '#f3f4f6', color: '#6b7280', fontSize: 10, padding: '2px 6px', borderRadius: 4, border: '1px solid #e5e7eb' }}>AUTO</span>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex justify-between items-center">
+                <label className="text-xs sm:text-sm font-medium text-slate-500">TB Koreksi</label>
+                <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-200">AUTO</span>
               </div>
-              <div style={{ position: 'relative' }}>
+              <div className="relative">
                 <input className="input" type="number" step="0.01" value={form.tb_corr_cm} readOnly style={{ background: '#f9fafb', color: '#607a8a', paddingRight: 40 }} />
-                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#607a8a' }}>cm</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs sm:text-sm text-slate-400 font-medium">cm</span>
               </div>
               {corrBadge && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', padding: '2px 8px', borderRadius: 9999, width: 'fit-content' }}>
+                <span className="inline-flex items-center text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full w-fit">
                   Koreksi {corrBadge}
                 </span>
               )}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#111518' }}>LILA</label>
-              <div style={{ position: 'relative' }}>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-slate-800">LILA</label>
+              <div className="relative">
                 <input className="input" type="number" step="0.01" value={form.lila_cm} onChange={(e) => setForm({ ...form, lila_cm: e.target.value })} placeholder="0.0" style={{ paddingRight: 40 }} />
-                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#607a8a' }}>cm</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs sm:text-sm text-slate-400 font-medium">cm</span>
               </div>
             </div>
           </div>
         </div>
+
         {/* Section 3: Z-Score & Klasifikasi */}
-        <div style={{ padding: '28px 32px', borderBottom: '1px solid #f0f3f5', background: '#f8fafc' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-            <div style={{ width: 40, height: 40, background: '#eef2ff', color: '#6366f1', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📊</div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111518' }}>Z-Score & Klasifikasi</h3>
+        <div className="p-4 sm:p-7 border-b border-slate-100 bg-slate-50/60">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg shrink-0">📊</div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 m-0">Z-Score &amp; Klasifikasi</h3>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }} className="form-grid-responsive">
+          
+          {/* Row 1: 4 Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* ZS-BBU Card */}
-            <div style={{ background: 'white', padding: 16, borderRadius: 12, border: '1px solid #e5e7eb', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#6b7280' }}>ZS BB/U</span>
-                <span style={{
-                  background: form.klas_bbu?.includes('Normal') ? '#dcfce7' : form.klas_bbu?.includes('Sangat') ? '#fee2e2' : '#fef9c3',
-                  color: form.klas_bbu?.includes('Normal') ? '#166534' : form.klas_bbu?.includes('Sangat') ? '#991b1b' : '#854d0e',
-                  fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 9999,
-                  border: form.klas_bbu?.includes('Normal') ? '1px solid #bbf7d0' : form.klas_bbu?.includes('Sangat') ? '1px solid #fecaca' : '1px solid #fde047'
-                }}>{form.klas_bbu || '-'}</span>
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <div className="flex justify-between items-start mb-2 gap-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">ZS BB/U</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border truncate max-w-[120px] ${
+                  form.klas_bbu?.includes('Normal') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : form.klas_bbu?.includes('Sangat') ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                }`}>{form.klas_bbu || '-'}</span>
               </div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#111518', fontFamily: 'ui-monospace, monospace' }}>{form.zs_bbu || '-'}<span style={{ fontSize: 12, color: '#9ca3af', marginLeft: 4 }}>SD</span></div>
-              <div style={{ width: '100%', height: 6, background: '#e5e7eb', borderRadius: 3, marginTop: 12 }}>
-                <div style={{ width: `${Math.min(100, Math.max(0, ((Number(form.zs_bbu) || 0) + 3) / 6 * 100))}%`, height: 6, background: form.klas_bbu?.includes('Normal') ? '#22c55e' : form.klas_bbu?.includes('Sangat') ? '#ef4444' : '#eab308', borderRadius: 3 }} />
+              <div className="text-2xl sm:text-3xl font-black text-slate-800 font-mono tracking-tight my-1">
+                {form.zs_bbu || '-'}<span className="text-xs font-normal text-slate-400 ml-1">SD</span>
               </div>
-              {lmsWarn.bbu && <p style={{ fontSize: 11, color: '#ca8a04', marginTop: 6 }}>LMS tidak ditemukan</p>}
-              {outlier.bbu && <p style={{ fontSize: 11, color: '#dc2626', marginTop: 6 }}>Outlier</p>}
+              <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                <div style={{ width: `${Math.min(100, Math.max(0, ((Number(form.zs_bbu) || 0) + 3) / 6 * 100))}%` }} className={`h-full rounded-full ${form.klas_bbu?.includes('Normal') ? 'bg-emerald-500' : form.klas_bbu?.includes('Sangat') ? 'bg-rose-500' : 'bg-amber-500'}`} />
+              </div>
+              {lmsWarn.bbu && <p className="text-[10px] text-amber-600 mt-1.5 m-0">LMS tidak ditemukan</p>}
+              {outlier.bbu && <p className="text-[10px] text-rose-600 mt-1.5 m-0">Outlier</p>}
             </div>
+
             {/* ZS-TBU Card */}
-            <div style={{ background: 'white', padding: 16, borderRadius: 12, border: '1px solid #e5e7eb', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#6b7280' }}>ZS TB/U</span>
-                <span style={{
-                  background: form.klas_tbu?.includes('Normal') ? '#dcfce7' : form.klas_tbu?.includes('Sangat') ? '#fee2e2' : '#ffedd5',
-                  color: form.klas_tbu?.includes('Normal') ? '#166534' : form.klas_tbu?.includes('Sangat') ? '#991b1b' : '#9a3412',
-                  fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 9999,
-                  border: form.klas_tbu?.includes('Normal') ? '1px solid #bbf7d0' : form.klas_tbu?.includes('Sangat') ? '1px solid #fecaca' : '1px solid #fed7aa'
-                }}>{form.klas_tbu || '-'}</span>
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <div className="flex justify-between items-start mb-2 gap-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">ZS TB/U</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border truncate max-w-[120px] ${
+                  form.klas_tbu?.includes('Normal') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : form.klas_tbu?.includes('Sangat') ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-orange-50 text-orange-700 border-orange-200'
+                }`}>{form.klas_tbu || '-'}</span>
               </div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#111518', fontFamily: 'ui-monospace, monospace' }}>{form.zs_tbu || '-'}<span style={{ fontSize: 12, color: '#9ca3af', marginLeft: 4 }}>SD</span></div>
-              <div style={{ width: '100%', height: 6, background: '#e5e7eb', borderRadius: 3, marginTop: 12 }}>
-                <div style={{ width: `${Math.min(100, Math.max(0, ((Number(form.zs_tbu) || 0) + 3) / 6 * 100))}%`, height: 6, background: form.klas_tbu?.includes('Normal') ? '#22c55e' : form.klas_tbu?.includes('Sangat') ? '#ef4444' : '#f97316', borderRadius: 3 }} />
+              <div className="text-2xl sm:text-3xl font-black text-slate-800 font-mono tracking-tight my-1">
+                {form.zs_tbu || '-'}<span className="text-xs font-normal text-slate-400 ml-1">SD</span>
               </div>
-              {lmsWarn.tbu && <p style={{ fontSize: 11, color: '#ca8a04', marginTop: 6 }}>LMS tidak ditemukan</p>}
-              {outlier.tbu && <p style={{ fontSize: 11, color: '#dc2626', marginTop: 6 }}>Outlier</p>}
+              <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                <div style={{ width: `${Math.min(100, Math.max(0, ((Number(form.zs_tbu) || 0) + 3) / 6 * 100))}%` }} className={`h-full rounded-full ${form.klas_tbu?.includes('Normal') ? 'bg-emerald-500' : form.klas_tbu?.includes('Sangat') ? 'bg-rose-500' : 'bg-orange-500'}`} />
+              </div>
+              {lmsWarn.tbu && <p className="text-[10px] text-amber-600 mt-1.5 m-0">LMS tidak ditemukan</p>}
+              {outlier.tbu && <p className="text-[10px] text-rose-600 mt-1.5 m-0">Outlier</p>}
             </div>
+
             {/* ZS-BBTB Card */}
-            <div style={{ background: 'white', padding: 16, borderRadius: 12, border: '1px solid #e5e7eb', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#6b7280' }}>ZS BB/TB</span>
-                <span style={{
-                  background: form.klas_bbtb?.includes('Normal') ? '#dcfce7' : form.klas_bbtb?.includes('Sangat') || form.klas_bbtb?.includes('Kurus') ? '#fee2e2' : '#fef9c3',
-                  color: form.klas_bbtb?.includes('Normal') ? '#166534' : form.klas_bbtb?.includes('Sangat') || form.klas_bbtb?.includes('Kurus') ? '#991b1b' : '#854d0e',
-                  fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 9999,
-                  border: form.klas_bbtb?.includes('Normal') ? '1px solid #bbf7d0' : form.klas_bbtb?.includes('Sangat') || form.klas_bbtb?.includes('Kurus') ? '1px solid #fecaca' : '1px solid #fde047'
-                }}>{form.klas_bbtb || '-'}</span>
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <div className="flex justify-between items-start mb-2 gap-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">ZS BB/TB</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border truncate max-w-[120px] ${
+                  form.klas_bbtb?.includes('Normal') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : form.klas_bbtb?.includes('Sangat') || form.klas_bbtb?.includes('Kurus') ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                }`}>{form.klas_bbtb || '-'}</span>
               </div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#111518', fontFamily: 'ui-monospace, monospace' }}>{form.zs_bbtb || '-'}<span style={{ fontSize: 12, color: '#9ca3af', marginLeft: 4 }}>SD</span></div>
-              <div style={{ width: '100%', height: 6, background: '#e5e7eb', borderRadius: 3, marginTop: 12 }}>
-                <div style={{ width: `${Math.min(100, Math.max(0, ((Number(form.zs_bbtb) || 0) + 3) / 6 * 100))}%`, height: 6, background: form.klas_bbtb?.includes('Normal') ? '#22c55e' : form.klas_bbtb?.includes('Sangat') || form.klas_bbtb?.includes('Kurus') ? '#ef4444' : '#eab308', borderRadius: 3 }} />
+              <div className="text-2xl sm:text-3xl font-black text-slate-800 font-mono tracking-tight my-1">
+                {form.zs_bbtb || '-'}<span className="text-xs font-normal text-slate-400 ml-1">SD</span>
               </div>
-              {lmsWarn.bbtb && <p style={{ fontSize: 11, color: '#ca8a04', marginTop: 6 }}>LMS tidak ditemukan</p>}
-              {outlier.bbtb && <p style={{ fontSize: 11, color: '#dc2626', marginTop: 6 }}>Outlier</p>}
+              <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                <div style={{ width: `${Math.min(100, Math.max(0, ((Number(form.zs_bbtb) || 0) + 3) / 6 * 100))}%` }} className={`h-full rounded-full ${form.klas_bbtb?.includes('Normal') ? 'bg-emerald-500' : form.klas_bbtb?.includes('Sangat') || form.klas_bbtb?.includes('Kurus') ? 'bg-rose-500' : 'bg-amber-500'}`} />
+              </div>
+              {lmsWarn.bbtb && <p className="text-[10px] text-amber-600 mt-1.5 m-0">LMS tidak ditemukan</p>}
+              {outlier.bbtb && <p className="text-[10px] text-rose-600 mt-1.5 m-0">Outlier</p>}
             </div>
+
             {/* Delta BB Card */}
-            <div style={{ background: 'white', padding: 16, borderRadius: 12, border: '1px solid #e5e7eb', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 4, background: deltaInfo?.status === 'sesuai' ? '#22c55e' : deltaInfo?.status === 'lebih' ? '#f97316' : '#ef4444' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#6b7280' }}>Kenaikan BB</span>
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div className={`absolute right-0 top-0 bottom-0 w-1 ${deltaInfo?.status === 'sesuai' ? 'bg-emerald-500' : deltaInfo?.status === 'lebih' ? 'bg-orange-500' : 'bg-rose-500'}`} />
+              <div className="flex justify-between items-start mb-2 gap-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Kenaikan BB</span>
                 {deltaInfo && (
-                  <span style={{
-                    background: deltaInfo.status === 'sesuai' ? '#dcfce7' : deltaInfo.status === 'lebih' ? '#ffedd5' : '#fee2e2',
-                    color: deltaInfo.status === 'sesuai' ? '#166534' : deltaInfo.status === 'lebih' ? '#9a3412' : '#991b1b',
-                    fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 9999,
-                    border: deltaInfo.status === 'sesuai' ? '1px solid #bbf7d0' : deltaInfo.status === 'lebih' ? '1px solid #fed7aa' : '1px solid #fecaca'
-                  }}>{deltaInfo.status === 'sesuai' ? 'Adekuat' : deltaInfo.status === 'lebih' ? 'Di Atas' : 'Di Bawah'}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                    deltaInfo.status === 'sesuai' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : deltaInfo.status === 'lebih' ? 'bg-orange-50 text-orange-700 border-orange-200' : 'bg-rose-50 text-rose-700 border-rose-200'
+                  }`}>{deltaInfo.status === 'sesuai' ? 'Adekuat' : deltaInfo.status === 'lebih' ? 'Di Atas' : 'Di Bawah'}</span>
                 )}
               </div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#111518' }}>
+              <div className="text-2xl sm:text-3xl font-black text-slate-800 font-mono tracking-tight my-1">
                 {form.delta_bb_kg ? `${Number(form.delta_bb_kg) >= 0 ? '+' : ''}${(Number(form.delta_bb_kg) * 1000).toFixed(0)}` : '-'}
-                <span style={{ fontSize: 14, color: '#6b7280', marginLeft: 4 }}>gr</span>
+                <span className="text-xs font-normal text-slate-400 ml-1">gr</span>
               </div>
-              {deltaInfo && (
-                <p style={{ fontSize: 11, color: '#6b7280', marginTop: 8 }}>
-                  Rekomendasi: ≥ {(deltaInfo.low * 1000).toFixed(0)} gr
+              {deltaInfo ? (
+                <p className="text-[10px] text-slate-500 mt-2 m-0">
+                  Target: ≥ {(deltaInfo.low * 1000).toFixed(0)} gr/minggu
                 </p>
+              ) : (
+                <div className="h-4" />
               )}
             </div>
           </div>
 
           {/* Row 2: Probable Stunting + BB Ideal Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20, marginTop: 20 }} className="form-grid-responsive">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
             {/* Probable Stunting Card */}
-            <div style={{
-              background: 'white', padding: 20, borderRadius: 12, border: `2px solid ${probableStunting?.result === true ? '#fecaca' : probableStunting?.result === false ? '#bbf7d0' : '#e5e7eb'}`,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden'
-            }}>
-              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: probableStunting?.result === true ? '#ef4444' : probableStunting?.result === false ? '#22c55e' : '#d1d5db' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 18 }}>🔬</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#374151' }}>Probable Stunting</span>
+            <div className={`bg-white p-4 sm:p-5 rounded-2xl border shadow-sm relative overflow-hidden ${
+              probableStunting?.result === true ? 'border-rose-300' : probableStunting?.result === false ? 'border-emerald-300' : 'border-slate-200'
+            }`}>
+              <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${probableStunting?.result === true ? 'bg-rose-500' : probableStunting?.result === false ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🔬</span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-800">Probable Stunting</span>
                 </div>
                 {probableStunting !== null && (
-                  <span style={{
-                    background: probableStunting.result === true ? '#fee2e2' : probableStunting.result === false ? '#dcfce7' : '#f3f4f6',
-                    color: probableStunting.result === true ? '#991b1b' : probableStunting.result === false ? '#166534' : '#6b7280',
-                    fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 9999,
-                    border: probableStunting.result === true ? '1px solid #fecaca' : probableStunting.result === false ? '1px solid #bbf7d0' : '1px solid #e5e7eb',
-                    letterSpacing: '0.03em'
-                  }}>
+                  <span className={`text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full border ${
+                    probableStunting.result === true ? 'bg-rose-50 text-rose-800 border-rose-200' : probableStunting.result === false ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'
+                  }`}>
                     {probableStunting.result === true ? '⚠ YA — Probable Stunting' : probableStunting.result === false ? '✓ TIDAK' : 'Data kurang'}
                   </span>
                 )}
               </div>
-              {probableStunting && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: 8, textAlign: 'center' }}>
-                    <p style={{ fontSize: 10, color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>Weight Age</p>
-                    <p style={{ fontSize: 18, fontWeight: 700, color: '#3b82f6' }}>{probableStunting.weightAge ?? '-'}</p>
-                    <p style={{ fontSize: 10, color: '#9ca3af' }}>bulan</p>
+              {probableStunting ? (
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-slate-50 p-2 sm:p-3 rounded-xl text-center border border-slate-100">
+                    <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Weight Age</p>
+                    <p className="text-base sm:text-xl font-black text-blue-600 m-0">{probableStunting.weightAge ?? '-'}</p>
+                    <p className="text-[9px] text-slate-400 m-0">bulan</p>
                   </div>
-                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: 8, textAlign: 'center' }}>
-                    <p style={{ fontSize: 10, color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>Length Age</p>
-                    <p style={{ fontSize: 18, fontWeight: 700, color: '#8b5cf6' }}>{probableStunting.lengthAge ?? '-'}</p>
-                    <p style={{ fontSize: 10, color: '#9ca3af' }}>bulan</p>
+                  <div className="bg-slate-50 p-2 sm:p-3 rounded-xl text-center border border-slate-100">
+                    <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Length Age</p>
+                    <p className="text-base sm:text-xl font-black text-purple-600 m-0">{probableStunting.lengthAge ?? '-'}</p>
+                    <p className="text-[9px] text-slate-400 m-0">bulan</p>
                   </div>
-                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: 8, textAlign: 'center' }}>
-                    <p style={{ fontSize: 10, color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>Chron. Age</p>
-                    <p style={{ fontSize: 18, fontWeight: 700, color: '#0f172a' }}>{probableStunting.chronologicalAge ?? '-'}</p>
-                    <p style={{ fontSize: 10, color: '#9ca3af' }}>bulan</p>
+                  <div className="bg-slate-50 p-2 sm:p-3 rounded-xl text-center border border-slate-100">
+                    <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Chron. Age</p>
+                    <p className="text-base sm:text-xl font-black text-slate-800 m-0">{probableStunting.chronologicalAge ?? '-'}</p>
+                    <p className="text-[9px] text-slate-400 m-0">bulan</p>
                   </div>
                 </div>
+              ) : (
+                <p className="text-xs text-slate-400 italic m-0">Isi BB, TB, dan tanggal pengukuran untuk melihat analisis.</p>
               )}
-              {!probableStunting && (
-                <p style={{ fontSize: 12, color: '#9ca3af', fontStyle: 'italic' }}>Isi BB, TB, dan tanggal pengukuran untuk melihat analisis.</p>
-              )}
-              <p style={{ fontSize: 10, color: '#94a3b8', marginTop: 10, fontStyle: 'italic' }}>Kriteria: WA &lt; LA &lt; CA (Age Equivalent Method)</p>
+              <p className="text-[10px] text-slate-400 mt-2.5 italic m-0">Kriteria: WA &lt; LA &lt; CA (Age Equivalent Method)</p>
             </div>
 
             {/* BB Ideal Card */}
-            <div style={{ background: 'white', padding: 20, borderRadius: 12, border: '1px solid #e5e7eb', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: 'linear-gradient(180deg, #10b981, #059669)' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 18 }}>⚖️</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#374151' }}>BB Ideal (Median WHO)</span>
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+              <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-500 to-teal-600" />
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">⚖️</span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-800">BB Ideal (Median WHO)</span>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 36, fontWeight: 800, color: '#059669', fontFamily: 'ui-monospace, monospace' }}>
+              <div className="flex items-baseline gap-2 my-1">
+                <span className="text-3xl sm:text-4xl font-black text-emerald-600 font-mono">
                   {bbIdeal !== null ? bbIdeal.toFixed(1) : '-'}
                 </span>
-                <span style={{ fontSize: 16, color: '#6b7280', marginBottom: 6 }}>kg</span>
+                <span className="text-sm font-bold text-slate-400">kg</span>
               </div>
               {bbIdeal !== null && form.bb_kg && (
                 <>
-                  <div style={{ width: '100%', height: 8, background: '#e5e7eb', borderRadius: 4, marginBottom: 8, position: 'relative' }}>
-                    <div style={{
-                      width: `${Math.min(100, Math.max(0, (Number(form.bb_kg) / bbIdeal) * 100))}%`,
-                      height: 8, background: Number(form.bb_kg) >= bbIdeal ? '#10b981' : Number(form.bb_kg) >= bbIdeal * 0.8 ? '#f59e0b' : '#ef4444',
-                      borderRadius: 4, transition: 'width 0.4s ease'
-                    }} />
+                  <div className="w-full h-2 bg-slate-100 rounded-full my-2 overflow-hidden">
+                    <div
+                      style={{ width: `${Math.min(100, Math.max(0, (Number(form.bb_kg) / bbIdeal) * 100))}%` }}
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        Number(form.bb_kg) >= bbIdeal ? 'bg-emerald-500' : Number(form.bb_kg) >= bbIdeal * 0.8 ? 'bg-amber-500' : 'bg-rose-500'
+                      }`}
+                    />
                   </div>
-                  <p style={{ fontSize: 12, color: '#6b7280' }}>
-                    BB saat ini <strong style={{ color: Number(form.bb_kg) >= bbIdeal ? '#059669' : '#dc2626' }}>{form.bb_kg} kg</strong>
+                  <p className="text-xs text-slate-600 m-0">
+                    BB saat ini <strong className={Number(form.bb_kg) >= bbIdeal ? 'text-emerald-700' : 'text-rose-600'}>{form.bb_kg} kg</strong>
                     {' '}({Number(form.bb_kg) >= bbIdeal ? '+' : ''}{((Number(form.bb_kg) - bbIdeal) * 1000).toFixed(0)} gr dari ideal)
                   </p>
                 </>
               )}
-              <p style={{ fontSize: 10, color: '#94a3b8', marginTop: 8, fontStyle: 'italic' }}>Referensi: Median (P50) tabel WHO ref_lms_bbtb TB {form.tb_corr_cm || form.tb_cm || '-'} cm</p>
+              <p className="text-[10px] text-slate-400 mt-2 italic m-0">Referensi: Median (P50) WHO ref_lms_bbtb TB {form.tb_corr_cm || form.tb_cm || '-'} cm</p>
             </div>
           </div>
         </div>
+
 
         {/* Section 4: 🤖 AI Nutrition Advisor */}
         {(() => {
@@ -1134,74 +1130,75 @@ export default function NewAntropometri() {
 
               {/* PKMK Dosing Cards — Rule Engine (selalu tampil jika stunting) */}
               {isStunting && kondisi ? (
-                <div style={{ marginBottom: 20 }}>
+                <div className="mb-5">
                   {/* Kondisi Badge */}
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: kondisiColor.badge, color: kondisiColor.text, border: `1px solid ${kondisiColor.border}`, padding: '6px 14px', borderRadius: 9999, fontSize: 13, fontWeight: 700, marginBottom: 16 }}>
+                  <div style={{ background: kondisiColor.badge, color: kondisiColor.text, border: `1px solid ${kondisiColor.border}` }} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-bold mb-4">
                     <span>🏷️</span> {kondisi}
                   </div>
-                  {/* 4-column dose grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }} className="form-grid-responsive">
+                  {/* Responsive dose grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
                     {[
                       { icon: '🔥', label: 'Kebutuhan Kalori', value: `${kaloriHari} kkal`, sub: `per hari` },
-                      { icon: '📊', label: 'Persentase RDA', value: `${persenRda}%`, sub: `dari kebutuhan harian` },
+                      { icon: '📊', label: 'Persentase RDA', value: `${persenRda}%`, sub: `kebutuhan harian` },
                       { icon: '🥛', label: 'Jenis PKMK', value: jenisPkmk, sub: proteinEnergyRatio },
                       { icon: '📦', label: 'Kebutuhan 3 Bulan', value: `${kaleng3Bulan} kaleng`, sub: `kotak 400 gram` },
                     ].map((card, i) => (
-                      <div key={i} style={{ background: 'white', padding: '16px', borderRadius: 12, border: `1px solid ${kondisiColor.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                        <div style={{ fontSize: 22, marginBottom: 8 }}>{card.icon}</div>
-                        <p style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{card.label}</p>
-                        <p style={{ fontSize: 20, fontWeight: 800, color: kondisiColor.text, marginBottom: 2 }}>{card.value}</p>
-                        <p style={{ fontSize: 11, color: '#9ca3af' }}>{card.sub}</p>
+                      <div key={i} style={{ border: `1px solid ${kondisiColor.border}` }} className="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm flex flex-col justify-between">
+                        <div className="text-xl sm:text-2xl mb-1.5">{card.icon}</div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">{card.label}</p>
+                          <p style={{ color: kondisiColor.text }} className="text-base sm:text-xl font-black mb-0.5 tracking-tight">{card.value}</p>
+                          <p className="text-[10px] text-slate-400 m-0">{card.sub}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
-                  <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 10, fontStyle: 'italic' }}>Referensi: Tabel 3.2 & 4.1 Standar Pediatric Kemenkes RI — Pemberian PKMK untuk balita stunting usia ≥ 1 tahun</p>
+                  <p className="text-[10px] text-slate-400 mt-2.5 italic m-0">Referensi: Tabel 3.2 &amp; 4.1 Standar Pediatric Kemenkes RI — Pemberian PKMK untuk balita stunting usia ≥ 1 tahun</p>
                 </div>
               ) : !isStunting && form.klas_tbu ? (
-                <div style={{ padding: '16px', background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0', marginBottom: 20 }}>
-                  <p style={{ fontSize: 14, color: '#166534', fontWeight: 600 }}>✅ Tidak terdeteksi stunting</p>
-                  <p style={{ fontSize: 12, color: '#4ade80', marginTop: 4 }}>Klasifikasi TB/U: <strong>{form.klas_tbu}</strong> — Tidak memerlukan intervensi PKMK saat ini.</p>
+                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 mb-5">
+                  <p className="text-sm text-emerald-800 font-bold m-0">✅ Tidak terdeteksi stunting</p>
+                  <p className="text-xs text-emerald-600 mt-1 m-0">Klasifikasi TB/U: <strong>{form.klas_tbu}</strong> — Tidak memerlukan intervensi PKMK saat ini.</p>
                 </div>
               ) : (
-                <div style={{ padding: '16px', background: '#f8fafc', borderRadius: 10, border: '1px dashed #d1d5db', marginBottom: 20 }}>
-                  <p style={{ fontSize: 13, color: '#9ca3af', fontStyle: 'italic' }}>💡 Lengkapi data BB, TB, dan tanggal pengukuran untuk melihat rekomendasi PKMK otomatis.</p>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-300 mb-5">
+                  <p className="text-xs text-slate-400 italic m-0">💡 Lengkapi data BB, TB, dan tanggal pengukuran untuk melihat rekomendasi PKMK otomatis.</p>
                 </div>
               )}
 
               {/* AI Result Panel */}
               {(aiAdvisor.loading || aiAdvisor.result || aiAdvisor.error) && (
-                <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                  <div style={{ padding: '12px 20px', background: 'linear-gradient(90deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 14 }}>✨</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>Rekomendasi AI Nutrition Advisor</span>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', marginLeft: 'auto' }}>SIGMA Ai Advisor · Hanya sebagai referensi klinis</span>
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center gap-2 text-white">
+                    <span className="text-sm">✨</span>
+                    <span className="text-xs sm:text-sm font-bold">Rekomendasi AI Nutrition Advisor</span>
+                    <span className="text-[10px] text-indigo-200 ml-auto hidden sm:inline">SIGMA AI Advisor · Referensi Klinis</span>
                   </div>
-                  <div style={{ padding: '20px' }}>
+                  <div className="p-4 sm:p-5">
                     {aiAdvisor.loading && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div className="flex flex-col gap-2.5">
                         {[100, 80, 90, 70, 85].map((w, i) => (
-                          <div key={i} style={{ height: 12, background: `linear-gradient(90deg, #f3f4f6, #e5e7eb, #f3f4f6)`, borderRadius: 6, width: `${w}%`, animation: 'shimmer 1.5s ease-in-out infinite' }} />
+                          <div key={i} style={{ width: `${w}%`, animation: 'shimmer 1.5s ease-in-out infinite' }} className="h-3 bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100 rounded-full" />
                         ))}
-                        <p style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center', marginTop: 8 }}>Menganalisis data klinis dengan SIGMA Ai Advisor...</p>
+                        <p className="text-xs text-slate-400 text-center mt-2 m-0">Menganalisis data klinis dengan SIGMA AI Advisor...</p>
                       </div>
                     )}
                     {aiAdvisor.error && (
-                      <div style={{ padding: 14, background: '#fef2f2', borderRadius: 8, border: '1px solid #fecaca' }}>
-                        <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 600 }}>⚠️ Gagal menghubungi AI Advisor</p>
-                        <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>{aiAdvisor.error}</p>
+                      <div className="p-3.5 bg-rose-50 rounded-xl border border-rose-200">
+                        <p className="text-xs sm:text-sm text-rose-700 font-bold m-0">⚠️ Gagal menghubungi AI Advisor</p>
+                        <p className="text-xs text-slate-500 mt-1 m-0">{aiAdvisor.error}</p>
                       </div>
                     )}
                     {aiAdvisor.result && !aiAdvisor.loading && (
-                      <div style={{ fontSize: 13, lineHeight: 1.75, color: '#374151' }}>
+                      <div className="text-xs sm:text-sm leading-relaxed text-slate-700 space-y-1">
                         {aiAdvisor.result.split('\n').map((line, i) => {
-                          if (line.startsWith('## ')) return <h4 key={i} style={{ fontSize: 14, fontWeight: 700, color: '#4f46e5', margin: '16px 0 8px', borderBottom: '1px solid #e5e7eb', paddingBottom: 6 }}>{line.replace('## ', '')}</h4>;
-                          if (line.startsWith('**') && line.endsWith('**')) return <p key={i} style={{ fontWeight: 700, color: '#111518', margin: '8px 0 4px' }}>{line.replace(/\*\*/g, '')}</p>;
-                          if (line.startsWith('- ')) return <li key={i} style={{ marginLeft: 16, marginBottom: 4, listStyleType: 'disc' }}>{line.replace('- ', '')}</li>;
-                          if (line.startsWith('* ')) return <li key={i} style={{ marginLeft: 16, marginBottom: 4, listStyleType: 'disc' }}>{line.replace('* ', '')}</li>;
-                          if (line.trim() === '') return <div key={i} style={{ height: 8 }} />;
-                          // Handle bold inline **text**
+                          if (line.startsWith('## ')) return <h4 key={i} className="text-xs sm:text-sm font-bold text-indigo-700 mt-4 mb-2 pb-1.5 border-b border-slate-200">{line.replace('## ', '')}</h4>;
+                          if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="font-bold text-slate-900 mt-2 mb-1">{line.replace(/\*\*/g, '')}</p>;
+                          if (line.startsWith('- ')) return <li key={i} className="ml-4 mb-1 list-disc text-slate-600">{line.replace('- ', '')}</li>;
+                          if (line.startsWith('* ')) return <li key={i} className="ml-4 mb-1 list-disc text-slate-600">{line.replace('* ', '')}</li>;
+                          if (line.trim() === '') return <div key={i} className="h-2" />;
                           const parts = line.split(/(\*\*.*?\*\*)/g);
-                          return <p key={i} style={{ margin: '2px 0' }}>{parts.map((p, j) => p.startsWith('**') ? <strong key={j}>{p.replace(/\*\*/g, '')}</strong> : p)}</p>;
+                          return <p key={i} className="m-0 my-0.5">{parts.map((p, j) => p.startsWith('**') ? <strong key={j} className="text-slate-900">{p.replace(/\*\*/g, '')}</strong> : p)}</p>;
                         })}
                       </div>
                     )}
@@ -1219,8 +1216,8 @@ export default function NewAntropometri() {
         })()}
 
         {/* Section 5: Pemeriksaan Medis Lanjutan Toggle */}
-        <div style={{ padding: '20px 32px', borderBottom: '1px dashed #e5e7eb' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="p-4 sm:p-6 border-b border-dashed border-slate-200">
+          <div className="flex items-center gap-3">
             <input
               id="medis_lanjutan"
               type="checkbox"
@@ -1246,9 +1243,9 @@ export default function NewAntropometri() {
                   })
                 });
               }}
-              style={{ width: 20, height: 20, borderRadius: 4, accentColor: '#3b82f6' }}
+              className="w-5 h-5 rounded accent-blue-600 cursor-pointer"
             />
-            <label htmlFor="medis_lanjutan" style={{ fontSize: 15, fontWeight: 600, color: '#111518', cursor: 'pointer' }}>
+            <label htmlFor="medis_lanjutan" className="text-sm sm:text-base font-bold text-slate-800 cursor-pointer select-none">
               Apakah ada pemeriksaan medis lanjutan?
             </label>
           </div>
@@ -1257,115 +1254,109 @@ export default function NewAntropometri() {
         {form.medis_lanjutan && (
           <>
             {/* Redflag Section */}
-            <div style={{ padding: '28px 32px', background: 'rgba(254,242,242,0.5)', borderBottom: '1px solid #fecaca' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 40, height: 40, background: '#fee2e2', color: '#dc2626', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🚩</div>
+            <div className="p-4 sm:p-7 bg-rose-50/40 border-b border-rose-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-lg shrink-0">🚩</div>
                   <div>
-                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#991b1b', margin: 0 }}>Red Flag Assessment</h3>
-                    <p style={{ fontSize: 12, color: '#b91c1c', margin: 0, marginTop: 2 }}>Pemeriksaan indikator klinis & rujukan lanjutan</p>
+                    <h3 className="text-base sm:text-lg font-bold text-rose-950 m-0">Red Flag Assessment</h3>
+                    <p className="text-xs text-rose-700 m-0 mt-0.5">Pemeriksaan indikator klinis &amp; rujukan lanjutan</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={handleImportInitialRedflag}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700,
-                    background: '#ffffff', color: '#dc2626', border: '1px solid #fca5a5',
-                    cursor: 'pointer', boxShadow: '0 1px 3px rgba(220,38,38,0.1)',
-                    transition: 'all 0.2s'
-                  }}
+                  className="w-full sm:w-auto px-4 py-2 bg-white hover:bg-rose-50 text-rose-700 border border-rose-300 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition shadow-sm"
                   title="Salin data Red Flag yang sudah diisikan saat pendaftaran awal/import balita"
                 >
-                  📥 Import Data Redflag Awal Balita
+                  📥 Import Data Redflag Awal
                 </button>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }} className="form-grid-responsive">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#991b1b' }}>Kenaikan BB Tidak Adekuat</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-rose-900 uppercase">Kenaikan BB Tidak Adekuat</label>
                   <select className="input" value={form.bb_tidak_adekuat} onChange={(e) => setForm({ ...form, bb_tidak_adekuat: e.target.value })} style={{ borderColor: '#fecaca' }}>
                     <option value="">-</option>
                     <option value="ya">Ya</option>
                     <option value="tidak">Tidak</option>
                   </select>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#991b1b' }}>Murmur / Edema</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-rose-900 uppercase">Murmur / Edema</label>
                   <select className="input" value={form.murmur_edema} onChange={(e) => setForm({ ...form, murmur_edema: e.target.value })} style={{ borderColor: '#fecaca' }}>
                     <option value="">-</option>
                     <option value="ya">Ya</option>
                     <option value="tidak">Tidak</option>
                   </select>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#991b1b' }}>Keterlambatan Perkembangan</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-rose-900 uppercase">Keterlambatan Perkembangan</label>
                   <select className="input" value={form.delayed_development} onChange={(e) => setForm({ ...form, delayed_development: e.target.value })} style={{ borderColor: '#fecaca' }}>
                     <option value="">-</option>
                     <option value="ya">Ya</option>
                     <option value="tidak">Tidak</option>
                   </select>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#991b1b' }}>Wajah Dismorfik</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-rose-900 uppercase">Wajah Dismorfik</label>
                   <select className="input" value={form.wajah_dismorfik} onChange={(e) => setForm({ ...form, wajah_dismorfik: e.target.value })} style={{ borderColor: '#fecaca' }}>
                     <option value="">-</option>
                     <option value="ya">Ya</option>
                     <option value="tidak">Tidak</option>
                   </select>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#991b1b' }}>Organomegali / Limfadenopati</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-rose-900 uppercase">Organomegali / Limfadenopati</label>
                   <select className="input" value={form.organomegali_limfadenopati} onChange={(e) => setForm({ ...form, organomegali_limfadenopati: e.target.value })} style={{ borderColor: '#fecaca' }}>
                     <option value="">-</option>
                     <option value="ya">Ya</option>
                     <option value="tidak">Tidak</option>
                   </select>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#991b1b' }}>ISPA / Infeksi Berulang</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-rose-900 uppercase">ISPA / Infeksi Berulang</label>
                   <select className="input" value={form.ispa_cystitis} onChange={(e) => setForm({ ...form, ispa_cystitis: e.target.value })} style={{ borderColor: '#fecaca' }}>
                     <option value="">-</option>
                     <option value="ya">Ya</option>
                     <option value="tidak">Tidak</option>
                   </select>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#991b1b' }}>Muntah / Diare Berulang</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-rose-900 uppercase">Muntah / Diare Berulang</label>
                   <select className="input" value={form.muntah_diare_berulang} onChange={(e) => setForm({ ...form, muntah_diare_berulang: e.target.value })} style={{ borderColor: '#fecaca' }}>
                     <option value="">-</option>
                     <option value="ya">Ya</option>
                     <option value="tidak">Tidak</option>
                   </select>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, gridColumn: 'span 2' }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#991b1b' }}>Diagnosa Penyakit Penyerta</label>
+                <div className="flex flex-col gap-1.5 col-span-1 sm:col-span-2 lg:col-span-2">
+                  <label className="text-[11px] font-bold text-rose-900 uppercase">Diagnosa Penyakit Penyerta</label>
                   <input className="input" type="text" value={form.diagnosa_penyakit_penyerta} onChange={(e) => setForm({ ...form, diagnosa_penyakit_penyerta: e.target.value })} placeholder="Isi jika ada..." style={{ borderColor: '#fecaca' }} />
                 </div>
               </div>
             </div>
 
             {/* SOAP Section */}
-            <div style={{ padding: '28px 32px', background: 'rgba(250,245,255,0.5)', borderBottom: '1px solid #e9d5ff' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                <div style={{ width: 40, height: 40, background: '#f3e8ff', color: '#9333ea', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📋</div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#6b21a8' }}>SOAP Notes</h3>
+            <div className="p-4 sm:p-7 bg-purple-50/40 border-b border-purple-200">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-lg shrink-0">📋</div>
+                <h3 className="text-base sm:text-lg font-bold text-purple-950 m-0">SOAP Notes</h3>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }} className="form-grid-responsive">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#7c3aed' }}>Subjective</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-purple-900 uppercase">Subjective</label>
                   <textarea className="input" rows={3} value={form.subjective} onChange={(e) => setForm({ ...form, subjective: e.target.value })} style={{ borderColor: '#e9d5ff', resize: 'vertical' }} placeholder="Keluhan pasien..." />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#7c3aed' }}>Objective</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-purple-900 uppercase">Objective</label>
                   <textarea className="input" rows={3} value={form.objective} onChange={(e) => setForm({ ...form, objective: e.target.value })} style={{ borderColor: '#e9d5ff', resize: 'vertical' }} placeholder="Temuan pemeriksaan..." />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#7c3aed' }}>Assessment</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-purple-900 uppercase">Assessment</label>
                   <textarea className="input" rows={3} value={form.assesment} onChange={(e) => setForm({ ...form, assesment: e.target.value })} style={{ borderColor: '#e9d5ff', resize: 'vertical' }} placeholder="Diagnosis..." />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: '#7c3aed' }}>Plan</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-purple-900 uppercase">Plan</label>
                   <textarea className="input" rows={3} value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })} style={{ borderColor: '#e9d5ff', resize: 'vertical' }} placeholder="Rencana tindakan..." />
                 </div>
               </div>
@@ -1374,14 +1365,14 @@ export default function NewAntropometri() {
         )}
 
         {/* Form Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 32px', background: '#f9fafb', borderTop: '1px solid #e5e7eb' }}>
-          <p style={{ fontSize: 14, color: '#6b7280', fontStyle: 'italic' }}>* Kolom wajib diisi</p>
-          <div style={{ display: 'flex', gap: 12 }}>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 sm:p-6 bg-slate-50 border-t border-slate-200">
+          <p className="text-xs text-slate-500 italic m-0">* Kolom bertanda bintang wajib diisi</p>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             {editingId && (
               <button
                 type="button"
                 onClick={() => { setEditingId(null); setForm({ minggu_ke: 1, tanggal: "", cara_ukur: "terlentang", usia_bulan: "", bb_kg: "", tb_cm: "", tb_corr_cm: "", lila_cm: "", zs_bbu: "", zs_tbu: "", zs_bbtb: "", klas_bbu: "", klas_tbu: "", klas_bbtb: "", delta_bb_kg: "", medis_lanjutan: false, bb_tidak_adekuat: "", murmur_edema: "", delayed_development: "", wajah_dismorfik: "", organomegali_limfadenopati: "", ispa_cystitis: "", muntah_diare_berulang: "", diagnosa_penyakit_penyerta: "", subjective: "", objective: "", assesment: "", plan: "" }); }}
-                style={{ padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 500, background: 'white', color: '#374151', border: '1px solid #d1d5db', cursor: 'pointer' }}
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold transition"
               >
                 Batal
               </button>
@@ -1389,19 +1380,16 @@ export default function NewAntropometri() {
             <button
               type="submit"
               disabled={saving || Object.keys(errors).length > 0}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '10px 24px', borderRadius: 8, fontSize: 14, fontWeight: 700,
-                background: saving || Object.keys(errors).length > 0 ? '#9ca3af' : '#3b82f6',
-                color: 'white', border: 'none', cursor: saving || Object.keys(errors).length > 0 ? 'not-allowed' : 'pointer',
-                boxShadow: '0 1px 3px rgba(59,130,246,0.3)'
-              }}
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white flex items-center justify-center gap-2 transition shadow-sm ${
+                saving || Object.keys(errors).length > 0 ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+              }`}
             >
               💾 {saving ? "Menyimpan..." : editingId ? "Perbarui" : "Simpan Data"}
             </button>
           </div>
         </div>
       </form>
+
 
       {/* Riwayat Antropometri - Stitch Design */}
       <div style={{ marginTop: 32, background: 'white', border: '1px solid #e5e7eb', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>

@@ -111,14 +111,14 @@ export default function NewPemberian() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full pb-28 sm:pb-12">
       {/* Breadcrumbs */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#607a8a', marginBottom: 8 }}>
         <span>Anak</span>
         <span style={{ fontSize: 12 }}>›</span>
         <span>Detail</span>
         <span style={{ fontSize: 12 }}>›</span>
-        <span style={{ color: '#3b82f6', fontWeight: 500 }}>Monitoring Pemberian</span>
+        <span style={{ color: '#3b82f6', fontWeight: 500 }}>Tambah Monitoring</span>
       </div>
 
       {/* Page Title */}
@@ -154,64 +154,64 @@ export default function NewPemberian() {
       )}
 
       {/* Main Form Card */}
-      <form onSubmit={onSubmit} style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <form onSubmit={onSubmit} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
 
         {/* Section 1: Data Pengukuran Dasar */}
-        <div style={{ padding: '28px 32px', borderBottom: '1px solid #f0f3f5' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-            <div style={{ width: 40, height: 40, background: '#eff6ff', color: '#3b82f6', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📦</div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111518' }}>Data Pemberian</h3>
+        <div className="p-4 sm:p-7 border-b border-slate-100">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shrink-0">📦</div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 m-0">Data Pemberian</h3>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 28 }} className="form-grid-responsive">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#111518' }}>Minggu Ke <span style={{ color: '#ef4444' }}>*</span></label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-slate-800">Minggu Ke <span className="text-rose-500">*</span></label>
               <input type="number" min={1} max={12} value={form.minggu_ke} onChange={(e) => setForm({ ...form, minggu_ke: Number(e.target.value) })} className="input" required />
-              {errors.minggu_ke && <p style={{ fontSize: 12, color: '#dc2626' }}>{errors.minggu_ke}</p>}
+              {errors.minggu_ke && <p className="text-xs text-rose-600 m-0">{errors.minggu_ke}</p>}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#111518' }}>Tanggal Pemberian <span style={{ color: '#ef4444' }}>*</span></label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-slate-800">Tanggal Pemberian <span className="text-rose-500">*</span></label>
               <input type="date" value={form.tanggal} max={today} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} className="input" required />
-              {errors.tanggal && <p style={{ fontSize: 12, color: '#dc2626' }}>{errors.tanggal}</p>}
+              {errors.tanggal && <p className="text-xs text-rose-600 m-0">{errors.tanggal}</p>}
             </div>
           </div>
         </div>
 
         {/* Section 2: Detail Pemberian */}
-        <div style={{ padding: '28px 32px', borderBottom: '1px solid #f0f3f5' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-            <div style={{ width: 40, height: 40, background: '#ecfdf5', color: '#10b981', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🥛</div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111518' }}>Detail Formulasi</h3>
+        <div className="p-4 sm:p-7 border-b border-slate-100">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0">🥛</div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 m-0">Detail Formulasi</h3>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 280 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#111518' }}>Jumlah Unit <span style={{ color: '#ef4444' }}>*</span></label>
-              <div style={{ position: 'relative' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-slate-800">Jumlah Unit <span className="text-rose-500">*</span></label>
+              <div className="relative">
                 <input type="number" value={form.jumlah_unit} onChange={(e) => setForm({ ...form, jumlah_unit: e.target.value })} className="input" required placeholder="0" style={{ paddingRight: 50 }} />
-                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#607a8a' }}>ml</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs sm:text-sm text-slate-400 font-medium">ml</span>
               </div>
-              {errors.jumlah_unit && <p style={{ fontSize: 12, color: '#dc2626' }}>{errors.jumlah_unit}</p>}
+              {errors.jumlah_unit && <p className="text-xs text-rose-600 m-0">{errors.jumlah_unit}</p>}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#111518' }}>Jenis Formulasi / Merk PKMK <span style={{ color: '#ef4444' }}>*</span></label>
-              <select value={form.jenis_formulasi} onChange={(e) => setForm({ ...form, jenis_formulasi: e.target.value })} className="input" required style={{ maxWidth: 500 }}>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-slate-800">Jenis Formulasi / Merk PKMK <span className="text-rose-500">*</span></label>
+              <select value={form.jenis_formulasi} onChange={(e) => setForm({ ...form, jenis_formulasi: e.target.value })} className="input" required>
                 <option value="">- Pilih Formulasi -</option>
                 {jenisPkmkList.map(j => (
                   <option key={j.id} value={j.nama_merk}>{j.nama_merk} ({j.rentang_usia})</option>
                 ))}
               </select>
-              {errors.jenis_formulasi && <p style={{ fontSize: 12, color: '#dc2626' }}>{errors.jenis_formulasi}</p>}
+              {errors.jenis_formulasi && <p className="text-xs text-rose-600 m-0">{errors.jenis_formulasi}</p>}
             </div>
           </div>
         </div>
 
         {/* Section 3: Keterangan */}
-        <div style={{ padding: '28px 32px', borderBottom: '1px solid #f0f3f5' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-            <div style={{ width: 40, height: 40, background: '#f3f4f6', color: '#6b7280', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📝</div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111518' }}>Keterangan Tambahan</h3>
+        <div className="p-4 sm:p-7 border-b border-slate-100">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-lg shrink-0">📝</div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 m-0">Keterangan Tambahan</h3>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 13, fontWeight: 500, color: '#6b7280' }}>Catatan (Opsional)</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs sm:text-sm font-medium text-slate-600">Catatan (Opsional)</label>
             <textarea
               value={form.keterangan}
               onChange={(e) => setForm({ ...form, keterangan: e.target.value })}
@@ -223,22 +223,25 @@ export default function NewPemberian() {
         </div>
 
         {/* Form Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 32px', background: '#f9fafb' }}>
-          <p style={{ fontSize: 14, color: '#6b7280', fontStyle: 'italic' }}>* Kolom wajib diisi</p>
-          <div style={{ display: 'flex', gap: 12 }}>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 sm:p-6 bg-slate-50 border-t border-slate-200">
+          <p className="text-xs text-slate-500 italic m-0">* Kolom bertanda bintang wajib diisi</p>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             {editingId && (
               <button type="button" onClick={() => { setEditingId(null); setForm({ minggu_ke: 1, tanggal: "", jumlah_unit: "", jenis_formulasi: "", keterangan: "" }); }}
-                style={{ padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 500, background: 'white', color: '#374151', border: '1px solid #d1d5db', cursor: 'pointer' }}>
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold transition">
                 Batal
               </button>
             )}
             <button type="submit" disabled={saving || Object.keys(errors).length > 0}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 8, fontSize: 14, fontWeight: 700, background: saving || Object.keys(errors).length > 0 ? '#9ca3af' : '#3b82f6', color: 'white', border: 'none', cursor: saving || Object.keys(errors).length > 0 ? 'not-allowed' : 'pointer', boxShadow: '0 1px 3px rgba(59,130,246,0.3)' }}>
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white flex items-center justify-center gap-2 transition shadow-sm ${
+                saving || Object.keys(errors).length > 0 ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+              }`}>
               💾 {saving ? "Menyimpan..." : editingId ? "Perbarui" : "Simpan Data"}
             </button>
           </div>
         </div>
       </form>
+
 
       {/* Riwayat Pemberian - Stitch Design */}
       <div style={{ marginTop: 32, background: 'white', border: '1px solid #e5e7eb', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>

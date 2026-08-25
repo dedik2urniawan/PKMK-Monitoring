@@ -89,14 +89,14 @@ export default function NewKonsumsi() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full pb-28 sm:pb-12">
       {/* Breadcrumbs */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#607a8a', marginBottom: 8 }}>
         <span>Anak</span>
         <span style={{ fontSize: 12 }}>›</span>
         <span>Detail</span>
         <span style={{ fontSize: 12 }}>›</span>
-        <span style={{ color: '#3b82f6', fontWeight: 500 }}>Monitoring Konsumsi</span>
+        <span style={{ color: '#3b82f6', fontWeight: 500 }}>Tambah Monitoring</span>
       </div>
 
       {/* Page Title */}
@@ -132,104 +132,103 @@ export default function NewKonsumsi() {
       )}
 
       {/* Main Form Card */}
-      <form onSubmit={onSubmit} style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <form onSubmit={onSubmit} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
 
         {/* Section 1: Data Pengukuran Dasar */}
-        <div style={{ padding: '28px 32px', borderBottom: '1px solid #f0f3f5' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-            <div style={{ width: 40, height: 40, background: '#fef3c7', color: '#d97706', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🍽️</div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111518' }}>Data Konsumsi</h3>
+        <div className="p-4 sm:p-7 border-b border-slate-100">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg shrink-0">🍽️</div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 m-0">Data Konsumsi</h3>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 28 }} className="form-grid-responsive">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#111518' }}>Minggu Ke <span style={{ color: '#ef4444' }}>*</span></label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-slate-800">Minggu Ke <span className="text-rose-500">*</span></label>
               <input type="number" min={1} max={12} value={form.minggu_ke} onChange={(e) => setForm({ ...form, minggu_ke: Number(e.target.value) })} className="input" required />
-              {errors.minggu_ke && <p style={{ fontSize: 12, color: '#dc2626' }}>{errors.minggu_ke}</p>}
+              {errors.minggu_ke && <p className="text-xs text-rose-600 m-0">{errors.minggu_ke}</p>}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#111518' }}>Tanggal Monitoring <span style={{ color: '#ef4444' }}>*</span></label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-slate-800">Tanggal Monitoring <span className="text-rose-500">*</span></label>
               <input type="date" value={form.tanggal} max={today} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} className="input" required />
-              {errors.tanggal && <p style={{ fontSize: 12, color: '#dc2626' }}>{errors.tanggal}</p>}
+              {errors.tanggal && <p className="text-xs text-rose-600 m-0">{errors.tanggal}</p>}
             </div>
           </div>
         </div>
 
         {/* Section 2: Ceklist MT */}
-        <div style={{ padding: '28px 32px', borderBottom: '1px solid #f0f3f5' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-            <div style={{ width: 40, height: 40, background: '#ecfdf5', color: '#10b981', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>✅</div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111518' }}>Ceklist Monitoring MT (1–7)</h3>
+        <div className="p-4 sm:p-7 border-b border-slate-100">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0">✅</div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 m-0">Ceklist Monitoring MT (Hari 1–7)</h3>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 12 }}>
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-3">
             {mt.map((v, i) => (
               <Tooltip key={i}>
                 <TooltipTrigger asChild>
-                  <label style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    padding: '16px 8px', border: v ? '2px solid #10b981' : '1px solid #e5e7eb',
-                    borderRadius: 10, cursor: 'pointer', background: v ? '#ecfdf5' : 'white',
-                    transition: 'all 0.2s'
-                  }}>
+                  <label className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl cursor-pointer border transition ${
+                    v ? 'bg-emerald-50 border-emerald-500 text-emerald-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}>
                     <input type="checkbox" checked={v} onChange={(e) => {
                       const arr = [...mt]; arr[i] = e.target.checked; setMt(arr);
                       const count = arr.filter(Boolean).length;
                       const pct = Math.round((count / 7) * 100);
                       setForm((f) => ({ ...f, kepatuhan_pct: String(pct) }));
-                    }} style={{ width: 20, height: 20, accentColor: '#10b981' }} />
-                    <span style={{ fontWeight: 600, fontSize: 14, color: v ? '#059669' : '#6b7280' }}>Hari {i + 1}</span>
+                    }} className="w-4 h-4 accent-emerald-600 cursor-pointer" />
+                    <span className="text-xs font-bold">Hari {i + 1}</span>
                   </label>
                 </TooltipTrigger>
                 <TooltipContent sideOffset={6}>Centang jika konsumsi dilakukan hari ke-{i + 1}</TooltipContent>
               </Tooltip>
             ))}
           </div>
-          <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <span style={{ fontSize: 14, color: '#6b7280' }}>Kepatuhan:</span>
-            <div style={{ flex: 1, height: 12, background: '#e5e7eb', borderRadius: 6, overflow: 'hidden' }}>
-              <div style={{ width: `${form.kepatuhan_pct || 0}%`, height: '100%', background: Number(form.kepatuhan_pct) >= 70 ? '#22c55e' : Number(form.kepatuhan_pct) >= 40 ? '#eab308' : '#ef4444', borderRadius: 6, transition: 'width 0.3s' }} />
+          <div className="mt-5 flex items-center gap-3">
+            <span className="text-xs sm:text-sm font-semibold text-slate-600">Kepatuhan:</span>
+            <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+              <div style={{ width: `${form.kepatuhan_pct || 0}%` }} className={`h-full rounded-full transition-all duration-300 ${
+                Number(form.kepatuhan_pct) >= 70 ? 'bg-emerald-500' : Number(form.kepatuhan_pct) >= 40 ? 'bg-amber-500' : 'bg-rose-500'
+              }`} />
             </div>
-            <span style={{ fontSize: 20, fontWeight: 700, color: Number(form.kepatuhan_pct) >= 70 ? '#16a34a' : Number(form.kepatuhan_pct) >= 40 ? '#ca8a04' : '#dc2626' }}>{form.kepatuhan_pct || 0}%</span>
+            <span className={`text-base sm:text-lg font-black ${
+              Number(form.kepatuhan_pct) >= 70 ? 'text-emerald-700' : Number(form.kepatuhan_pct) >= 40 ? 'text-amber-700' : 'text-rose-700'
+            }`}>{form.kepatuhan_pct || 0}%</span>
           </div>
         </div>
 
         {/* Section 3: Pemantauan Kesehatan */}
-        <div style={{ padding: '28px 32px', borderBottom: '1px solid #f0f3f5' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-            <div style={{ width: 40, height: 40, background: '#eff6ff', color: '#3b82f6', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>💊</div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111518' }}>Pemantauan Kesehatan</h3>
+        <div className="p-4 sm:p-7 border-b border-slate-100">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shrink-0">💊</div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 m-0">Pemantauan Kesehatan</h3>
           </div>
-          <div style={{ display: 'flex', gap: 16 }}>
-            <label style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '16px 24px',
-              border: form.catatan === 'Sehat' ? '2px solid #22c55e' : '1px solid #e5e7eb',
-              borderRadius: 10, cursor: 'pointer', background: form.catatan === 'Sehat' ? '#f0fdf4' : 'white'
-            }}>
-              <input type="radio" name="kesehatan" value="Sehat" checked={form.catatan === 'Sehat'} onChange={(e) => setForm({ ...form, catatan: e.target.value })} style={{ width: 20, height: 20, accentColor: '#22c55e' }} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: form.catatan === 'Sehat' ? '#16a34a' : '#374151' }}>😊 Sehat</span>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <label className={`flex-1 flex items-center gap-3 p-4 rounded-xl cursor-pointer border transition ${
+              form.catatan === 'Sehat' ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+            }`}>
+              <input type="radio" name="kesehatan" value="Sehat" checked={form.catatan === 'Sehat'} onChange={(e) => setForm({ ...form, catatan: e.target.value })} className="w-4 h-4 accent-emerald-600" />
+              <span className="text-sm font-bold">😊 Sehat</span>
             </label>
-            <label style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '16px 24px',
-              border: form.catatan === 'Sakit' ? '2px solid #ef4444' : '1px solid #e5e7eb',
-              borderRadius: 10, cursor: 'pointer', background: form.catatan === 'Sakit' ? '#fef2f2' : 'white'
-            }}>
-              <input type="radio" name="kesehatan" value="Sakit" checked={form.catatan === 'Sakit'} onChange={(e) => setForm({ ...form, catatan: e.target.value })} style={{ width: 20, height: 20, accentColor: '#ef4444' }} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: form.catatan === 'Sakit' ? '#dc2626' : '#374151' }}>🤒 Sakit</span>
+            <label className={`flex-1 flex items-center gap-3 p-4 rounded-xl cursor-pointer border transition ${
+              form.catatan === 'Sakit' ? 'bg-rose-50 border-rose-500 text-rose-900' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+            }`}>
+              <input type="radio" name="kesehatan" value="Sakit" checked={form.catatan === 'Sakit'} onChange={(e) => setForm({ ...form, catatan: e.target.value })} className="w-4 h-4 accent-rose-600" />
+              <span className="text-sm font-bold">🤒 Sakit</span>
             </label>
           </div>
         </div>
 
         {/* Form Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 32px', background: '#f9fafb' }}>
-          <p style={{ fontSize: 14, color: '#6b7280', fontStyle: 'italic' }}>* Kolom wajib diisi</p>
-          <div style={{ display: 'flex', gap: 12 }}>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 sm:p-6 bg-slate-50 border-t border-slate-200">
+          <p className="text-xs text-slate-500 italic m-0">* Kolom bertanda bintang wajib diisi</p>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             {editingId && (
               <button type="button" onClick={() => { setEditingId(null); setForm({ minggu_ke: 1, tanggal: "", kepatuhan_pct: "", catatan: "" }); setMt([false, false, false, false, false, false, false]); }}
-                style={{ padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 500, background: 'white', color: '#374151', border: '1px solid #d1d5db', cursor: 'pointer' }}>
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold transition">
                 Batal
               </button>
             )}
             <button type="submit" disabled={saving || Object.keys(errors).length > 0}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 8, fontSize: 14, fontWeight: 700, background: saving || Object.keys(errors).length > 0 ? '#9ca3af' : '#3b82f6', color: 'white', border: 'none', cursor: saving || Object.keys(errors).length > 0 ? 'not-allowed' : 'pointer', boxShadow: '0 1px 3px rgba(59,130,246,0.3)' }}>
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white flex items-center justify-center gap-2 transition shadow-sm ${
+                saving || Object.keys(errors).length > 0 ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+              }`}>
               💾 {saving ? "Menyimpan..." : editingId ? "Perbarui" : "Simpan Data"}
             </button>
           </div>
