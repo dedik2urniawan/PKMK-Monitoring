@@ -136,25 +136,104 @@ export default function AnalyticalScientific() {
         ))}
       </div>
 
-      {/* === ANALYSIS TAB SWITCHER === */}
-      <div className="flex flex-wrap gap-2 bg-slate-100 p-1.5 rounded-xl">
-        {[
-          { key: 'growth', label: '📈 Trajektori Pertumbuhan', desc: 'Z-Score & Velocity' },
-          { key: 'redflag', label: '🚨 Red Flag Matrix', desc: 'Multi-Faktorial' },
-          { key: 'sex', label: '⚥ Analisis Sex-Stratified', desc: 'L vs P' },
-          { key: 'age', label: '👶 Kohort Usia', desc: 'Bracket SDIDTK' },
-          { key: 'sdidtk', label: '🧠 SDIDTK Ecosystem', desc: 'KPSP + Sensorik' },
-        ].map((tab) => (
+      {/* === SCIENTIFIC MODULES LAYER SWITCHER BAR (AI GEO LAYER STYLE) === */}
+      <div className="bg-slate-100/90 p-2 sm:p-2.5 rounded-2xl border border-slate-200/90 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center gap-2">
+          <Layers className="w-4 h-4 text-slate-600 ml-2" />
+          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-700">Scientific Modules:</span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* 1. Trajektori Pertumbuhan */}
           <button
-            key={tab.key}
-            onClick={() => setSelectedTab(tab.key as any)}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-              selectedTab === tab.key ? 'bg-white text-teal-700 shadow border border-teal-200' : 'text-slate-500 hover:bg-white/50'
+            onClick={() => setSelectedTab('growth')}
+            className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all duration-200 ${
+              selectedTab === 'growth'
+                ? 'bg-teal-600 text-white shadow-md shadow-teal-500/25 border border-teal-600 scale-[1.02]'
+                : 'bg-white text-slate-700 hover:bg-slate-50 hover:text-teal-700 border border-slate-200/90 shadow-xs'
             }`}
           >
-            {tab.label} <span className="text-[10px] font-normal hidden sm:block text-slate-400">• {tab.desc}</span>
+            <span>📈</span>
+            <span>1. Trajektori Pertumbuhan</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold hidden md:inline ${
+              selectedTab === 'growth' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+            }`}>
+              Z-Score &amp; Velocity
+            </span>
           </button>
-        ))}
+
+          {/* 2. Red Flag Matrix */}
+          <button
+            onClick={() => setSelectedTab('redflag')}
+            className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all duration-200 ${
+              selectedTab === 'redflag'
+                ? 'bg-rose-600 text-white shadow-md shadow-rose-500/25 border border-rose-600 scale-[1.02]'
+                : 'bg-white text-slate-700 hover:bg-slate-50 hover:text-rose-700 border border-slate-200/90 shadow-xs'
+            }`}
+          >
+            <span>🚨</span>
+            <span>2. Red Flag Matrix</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold hidden md:inline ${
+              selectedTab === 'redflag' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+            }`}>
+              Multi-Faktorial
+            </span>
+          </button>
+
+          {/* 3. Analisis Sex-Stratified */}
+          <button
+            onClick={() => setSelectedTab('sex')}
+            className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all duration-200 ${
+              selectedTab === 'sex'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25 border border-blue-600 scale-[1.02]'
+                : 'bg-white text-slate-700 hover:bg-slate-50 hover:text-blue-700 border border-slate-200/90 shadow-xs'
+            }`}
+          >
+            <span>⚥</span>
+            <span>3. Analisis Sex-Stratified</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold hidden md:inline ${
+              selectedTab === 'sex' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+            }`}>
+              L vs P
+            </span>
+          </button>
+
+          {/* 4. Kohort Usia */}
+          <button
+            onClick={() => setSelectedTab('age')}
+            className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all duration-200 ${
+              selectedTab === 'age'
+                ? 'bg-amber-600 text-white shadow-md shadow-amber-500/25 border border-amber-600 scale-[1.02]'
+                : 'bg-white text-slate-700 hover:bg-slate-50 hover:text-amber-700 border border-slate-200/90 shadow-xs'
+            }`}
+          >
+            <span>👶</span>
+            <span>4. Kohort Usia</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold hidden md:inline ${
+              selectedTab === 'age' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+            }`}>
+              Bracket SDIDTK
+            </span>
+          </button>
+
+          {/* 5. SDIDTK Ecosystem */}
+          <button
+            onClick={() => setSelectedTab('sdidtk')}
+            className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all duration-200 ${
+              selectedTab === 'sdidtk'
+                ? 'bg-purple-600 text-white shadow-md shadow-purple-500/25 border border-purple-600 scale-[1.02]'
+                : 'bg-white text-slate-700 hover:bg-slate-50 hover:text-purple-700 border border-slate-200/90 shadow-xs'
+            }`}
+          >
+            <span>🧠</span>
+            <span>5. SDIDTK Ecosystem</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold hidden md:inline ${
+              selectedTab === 'sdidtk' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+            }`}>
+              KPSP + Sensorik
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* === TAB 1: GROWTH TRAJECTORY === */}

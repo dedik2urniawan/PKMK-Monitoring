@@ -42,45 +42,72 @@ export default function DashboardTabContainer() {
         </div>
       </div>
 
-      {/* Sub Tab Navigation Bar */}
-      <div className="bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 mb-8 grid grid-cols-1 md:grid-cols-3 gap-2">
+      {/* Sub Tab Navigation Bar — Modern Roundbox Solid Aesthetic */}
+      <div className="bg-slate-100/90 p-2 sm:p-2.5 rounded-2xl border border-slate-200/90 mb-8 grid grid-cols-1 md:grid-cols-3 gap-2.5 shadow-xs">
         {/* Sub Tab 1: Analysis Geo AI */}
         <button
           onClick={() => setActiveTab('geo_ai')}
-          className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-lg font-bold text-xs md:text-sm transition ${
+          className={`flex items-center justify-between gap-3 py-3 px-4 rounded-xl font-extrabold text-xs md:text-sm transition-all duration-200 ${
             activeTab === 'geo_ai'
-              ? 'bg-white text-blue-600 shadow-sm border border-slate-200/80'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25 border border-blue-600 scale-[1.01]'
+              : 'bg-white text-slate-700 hover:bg-slate-50 hover:text-blue-600 border border-slate-200/90 shadow-xs'
           }`}
         >
-          <MapPin className={`w-4 h-4 ${activeTab === 'geo_ai' ? 'text-blue-600' : 'text-slate-400'}`} />
-          <span>Analysis Geo AI</span>
+          <div className="flex items-center gap-2.5 truncate">
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${activeTab === 'geo_ai' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'}`}>
+              <MapPin className="w-4 h-4" />
+            </div>
+            <span className="truncate">Analysis Geo AI</span>
+          </div>
+          <span className={`text-[10px] uppercase tracking-wider font-black px-2 py-0.5 rounded-full shrink-0 ${
+            activeTab === 'geo_ai' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-700'
+          }`}>
+            Spatial
+          </span>
         </button>
 
         {/* Sub Tab 2: Dashboard KPI PKMK */}
         <button
           onClick={() => setActiveTab('kpi_pkmk')}
-          className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-lg font-bold text-xs md:text-sm transition ${
+          className={`flex items-center justify-between gap-3 py-3 px-4 rounded-xl font-extrabold text-xs md:text-sm transition-all duration-200 ${
             activeTab === 'kpi_pkmk'
-              ? 'bg-white text-teal-600 shadow-sm border border-slate-200/80'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+              ? 'bg-teal-600 text-white shadow-md shadow-teal-500/25 border border-teal-600 scale-[1.01]'
+              : 'bg-white text-slate-700 hover:bg-slate-50 hover:text-teal-600 border border-slate-200/90 shadow-xs'
           }`}
         >
-          <LayoutDashboard className={`w-4 h-4 ${activeTab === 'kpi_pkmk' ? 'text-teal-600' : 'text-slate-400'}`} />
-          <span>Dashboard KPI PKMK</span>
+          <div className="flex items-center gap-2.5 truncate">
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${activeTab === 'kpi_pkmk' ? 'bg-white/20 text-white' : 'bg-teal-50 text-teal-600'}`}>
+              <LayoutDashboard className="w-4 h-4" />
+            </div>
+            <span className="truncate">Dashboard KPI PKMK</span>
+          </div>
+          <span className={`text-[10px] uppercase tracking-wider font-black px-2 py-0.5 rounded-full shrink-0 ${
+            activeTab === 'kpi_pkmk' ? 'bg-white/20 text-white' : 'bg-teal-50 text-teal-700'
+          }`}>
+            Kohort Core
+          </span>
         </button>
 
         {/* Sub Tab 3: Analytical Scientific PKMK */}
         <button
           onClick={() => setActiveTab('scientific')}
-          className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-lg font-bold text-xs md:text-sm transition ${
+          className={`flex items-center justify-between gap-3 py-3 px-4 rounded-xl font-extrabold text-xs md:text-sm transition-all duration-200 ${
             activeTab === 'scientific'
-              ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/80'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25 border border-indigo-600 scale-[1.01]'
+              : 'bg-white text-slate-700 hover:bg-slate-50 hover:text-indigo-600 border border-slate-200/90 shadow-xs'
           }`}
         >
-          <Microscope className={`w-4 h-4 ${activeTab === 'scientific' ? 'text-indigo-600' : 'text-slate-400'}`} />
-          <span>Analytical Scientific PKMK</span>
+          <div className="flex items-center gap-2.5 truncate">
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${activeTab === 'scientific' ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
+              <Microscope className="w-4 h-4" />
+            </div>
+            <span className="truncate">Analytical Scientific PKMK</span>
+          </div>
+          <span className={`text-[10px] uppercase tracking-wider font-black px-2 py-0.5 rounded-full shrink-0 ${
+            activeTab === 'scientific' ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-700'
+          }`}>
+            SDIDTK + TPG
+          </span>
         </button>
       </div>
 
