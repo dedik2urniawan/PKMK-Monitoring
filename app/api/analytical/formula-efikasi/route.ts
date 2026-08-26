@@ -1,0 +1,172 @@
+﻿import { NextRequest, NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+import { createAdminClient } from "@/lib/supabase/server";
+import { getAppUser } from "@/lib/appUser";
+
+export async function GET(req: NextRequest) {
+  const supabase = createAdminClient();
+
+  try {
+    const appUser = await getAppUser();
+    const isAdminPuskesmas = appUser?.role === "admin_puskesmas" && !!appUser.puskesmas_id;
+    const userPuskesmasId = isAdminPuskesmas ? appUser.puskesmas_id : null;
+
+    // === 1. Fetch Kohort (scoped by puskesmas if needed) ===
+    let kohortQuery = supabase.from("kohort").select("id, balita_id, puskesmas_id");
+    if (userPuskesmasId) kohortQuery = kohortQuery.eq("puskesmas_id", userPuskesmasId);
+    const { data: kohortRaw } = await kohortQuery.limit(2000);
+
+    const allowedKohortIds = new Set((kohortRaw || []).map((k: any) => k.id));
+    const kohortToBalita = new Map<string, string>();
+    (kohortRaw || []).forEach((k: any) => kohortToBalita.set(k.id, k.balita_id));
+
+    // === 2. Fetch monitoring_pkmk_pemberian ===
+    let pemberianQuery = supabase
+      .from("monitoring_pkmk_pemberian")
+      .select("id, kohort_id, minggu_ke, jenis_formulasi, jumlah_unit");
+    if (userPuskesmasId && allowedKohortIds.size > 0) {
+      pemberianQuery = pemberianQuery.in("kohort_id", Array.from(allowedKohortIds));
+    }
+    const { data: pemberianRaw } = await pemberianQuery.limit(10000);
+    const pemberian = userPuskesmasId
+      ? (pemberianRaw || []).filter((p: any) => allowedKohortIds.has(p.kohort_id))
+      : (pemberianRaw || []);
+
+    // === 3. Fetch monitoring_antropometri ===
+    let antroQuery = supabase
+      .from("monitoring_antropometri")
+      .select("id, kohort_id, minggu_ke, bb_kg, tb_cm, zs_tbu, zs_bbu, zs_bbtb, delta_bb_kg, usia_bulan")
+      .order("minggu_ke", { ascending: true });
+    if (userPuskesmasId && allowedKohortIds.size > 0) {
+      antroQuery = antroQuery.in("kohort_id", Array.from(allowedKohortIds));
+    }
+    const { data: antroRawInitial } = await antroQuery.limit(10000);
+    const antroRaw = userPuskesmasId
+      ? (antroRawInitial || []).filter((a: any) => allowedKohortIds.has(a.kohort_id))
+      : (antroRawInitial || []);
+
+    // === 4. Build first/last antro per kohort ===
+    const firstAntroByKohort = new Map<string, any>();
+    const lastAntroByKohort = new Map<string, any>();
+    (antroRaw || []).forEach((a: any) => {
+      const ex = firstAntroByKohort.get(a.kohort_id);
+      if (!ex || Number(a.minggu_ke) < Number(ex.minggu_ke)) firstAntroByKohort.set(a.kohort_id, a);
+      const exL = lastAntroByKohort.get(a.kohort_id);
+      if (!exL || Number(a.minggu_ke) > Number(exL.minggu_ke)) lastAntroByKohort.set(a.kohort_id, a);
+    });
+
+    // === 5. Weight velocity per kohort ===
+    const velocityByKohort = new Map<string, number[]>();
+    (antroRaw || []).forEach((a: any) => {
+      if (a.delta_bb_kg != null && Number(a.delta_bb_kg) > 0) {
+        const v = (Number(a.delta_bb_kg) * 1000) / 7;
+        if (!velocityByKohort.has(a.kohort_id)) velocityByKohort.set(a.kohort_id, []);
+        velocityByKohort.get(a.kohort_id)!.push(v);
+      }
+    });
+
+    // === 6. Group by formulasi ===
+    const formulaStats: Record<string, {
+      kohortIds: Set<string>;
+      hazArr: number[]; wazArr: number[]; whzArr: number[];
+      hazDeltaArr: number[]; velocityArr: number[]; episodeCount: number;
+    }> = {};
+
+    (pemberian || []).forEach((p: any) => {
+      const f = p.jenis_formulasi;
+      if (!f) return;
+      if (!formulaStats[f]) {
+        formulaStats[f] = { kohortIds: new Set(), hazArr: [], wazArr: [], whzArr: [], hazDeltaArr: [], velocityArr: [], episodeCount: 0 };
+      }
+      formulaStats[f].kohortIds.add(p.kohort_id);
+      formulaStats[f].episodeCount++;
+    });
+
+    // === 7. Compute metrics ===
+    const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, c) => a + c, 0) / arr.length : null;
+
+    Object.entries(formulaStats).forEach(([, stats]) => {
+      stats.kohortIds.forEach((kohortId) => {
+        const last = lastAntroByKohort.get(kohortId);
+        const first = firstAntroByKohort.get(kohortId);
+        if (last) {
+          if (last.zs_tbu != null) stats.hazArr.push(Number(last.zs_tbu));
+          if (last.zs_bbu != null) stats.wazArr.push(Number(last.zs_bbu));
+          if (last.zs_bbtb != null) stats.whzArr.push(Number(last.zs_bbtb));
+        }
+        if (last && first && last.zs_tbu != null && first.zs_tbu != null) {
+          stats.hazDeltaArr.push(Number(last.zs_tbu) - Number(first.zs_tbu));
+        }
+        const velocities = velocityByKohort.get(kohortId) || [];
+        stats.velocityArr.push(...velocities);
+      });
+    });
+
+    // === 8. Build response ===
+    const formulaEfikasi = Object.entries(formulaStats)
+      .filter(([, stats]) => stats.kohortIds.size > 0)
+      .map(([formula, stats]) => {
+        const meanHAZ = avg(stats.hazArr);
+        const meanWAZ = avg(stats.wazArr);
+        const meanWHZ = avg(stats.whzArr);
+        const meanHAZDelta = avg(stats.hazDeltaArr);
+        const meanVelocity = avg(stats.velocityArr);
+        const nBalita = stats.kohortIds.size;
+
+        const responseCount = stats.velocityArr.filter(v => v >= 15).length;
+        const responseRate = stats.velocityArr.length > 0 ? Math.round((responseCount / nBalita) * 100) : 0;
+        const severePct = stats.hazArr.length > 0 ? Math.round((stats.hazArr.filter(z => z < -3.0).length / stats.hazArr.length) * 100) : 0;
+        const stuntedPct = stats.hazArr.length > 0 ? Math.round((stats.hazArr.filter(z => z >= -3.0 && z < -2.0).length / stats.hazArr.length) * 100) : 0;
+        const normalPct = stats.hazArr.length > 0 ? Math.round((stats.hazArr.filter(z => z >= -2.0).length / stats.hazArr.length) * 100) : 0;
+
+        let efikasiScore = 0;
+        if (meanHAZ !== null && meanHAZ >= -2.0) efikasiScore += 3;
+        else if (meanHAZ !== null && meanHAZ >= -2.5) efikasiScore += 2;
+        else if (meanHAZ !== null && meanHAZ >= -3.0) efikasiScore += 1;
+        if (meanVelocity !== null && meanVelocity >= 15) efikasiScore += 3;
+        else if (meanVelocity !== null && meanVelocity >= 10) efikasiScore += 2;
+        else if (meanVelocity !== null && meanVelocity >= 5) efikasiScore += 1;
+        if (meanHAZDelta !== null && meanHAZDelta > 0) efikasiScore += 2;
+        if (responseRate >= 60) efikasiScore += 2;
+        else if (responseRate >= 40) efikasiScore += 1;
+
+        const efikasiKlinis = efikasiScore >= 8 ? "Excellent" : efikasiScore >= 5 ? "Good" : efikasiScore >= 3 ? "Moderate" : "Poor";
+
+        return {
+          formula,
+          n_balita: nBalita,
+          n_episode: stats.episodeCount,
+          mean_haz: meanHAZ !== null ? Math.round(meanHAZ * 100) / 100 : null,
+          mean_waz: meanWAZ !== null ? Math.round(meanWAZ * 100) / 100 : null,
+          mean_whz: meanWHZ !== null ? Math.round(meanWHZ * 100) / 100 : null,
+          mean_haz_delta: meanHAZDelta !== null ? Math.round(meanHAZDelta * 100) / 100 : null,
+          mean_velocity_gday: meanVelocity !== null ? Math.round(meanVelocity * 10) / 10 : null,
+          response_rate_pct: responseRate,
+          severe_stunting_pct: severePct,
+          stunted_pct: stuntedPct,
+          normal_pct: normalPct,
+          efikasi_klinis: efikasiKlinis,
+          efikasi_score: efikasiScore,
+        };
+      })
+      .sort((a, b) => b.efikasi_score - a.efikasi_score);
+
+    const totalBalitaFormula = new Set(
+      (pemberian || []).map((p: any) => kohortToBalita.get(p.kohort_id)).filter(Boolean)
+    ).size;
+
+    return NextResponse.json({
+      formulaEfikasi,
+      summary: {
+        totalFormulaTypes: formulaEfikasi.length,
+        totalBalitaFormula,
+        totalEpisode: (pemberian || []).length,
+        bestFormula: formulaEfikasi[0]?.formula || null,
+      },
+    });
+  } catch (err: any) {
+    console.error("[GET /api/analytical/formula-efikasi] Error:", err);
+    return NextResponse.json({ error: err?.message || "Internal Server Error" }, { status: 500 });
+  }
+}

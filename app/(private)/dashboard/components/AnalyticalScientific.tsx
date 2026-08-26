@@ -25,7 +25,10 @@ export default function AnalyticalScientific() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [selectedCycle, setSelectedCycle] = useState("ALL");
-  const [selectedTab, setSelectedTab] = useState<'growth' | 'sdidtk' | 'redflag' | 'sex' | 'age'>("growth");
+  const [selectedTab, setSelectedTab] = useState<'growth' | 'redflag' | 'sex' | 'age' | 'sdidtk' | 'formula'>('growth');
+
+  const [formulaData, setFormulaData] = useState<any>(null);
+  const [formulaLoading, setFormulaLoading] = useState(false);
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -41,7 +44,23 @@ export default function AnalyticalScientific() {
     }
   };
 
+  const fetchFormulaData = async () => {
+    setFormulaLoading(true);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/analytical/formula-efikasi", { credentials: "include", headers });
+      if (!res.ok) return;
+      setFormulaData(await res.json());
+    } catch (e) {
+      console.error("Error loading formula efikasi:", e);
+    } finally {
+      setFormulaLoading(false);
+    }
+  };
+
   useEffect(() => { fetchAnalytics(); }, []);
+  useEffect(() => { if (selectedTab === 'formula' && !formulaData) fetchFormulaData(); }, [selectedTab]);
+
 
   const summary = data?.summary || {};
   const trajectoryData = data?.trajectoryData || [];
@@ -231,6 +250,24 @@ export default function AnalyticalScientific() {
               selectedTab === 'sdidtk' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
             }`}>
               KPSP + Sensorik
+            </span>
+          </button>
+
+          {/* 6. Efikasi PKMK Formula */}
+          <button
+            onClick={() => setSelectedTab('formula')}
+            className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all duration-200 ${
+              selectedTab === 'formula'
+                ? 'bg-orange-600 text-white shadow-md shadow-orange-500/25 border border-orange-600 scale-[1.02]'
+                : 'bg-white text-slate-700 hover:bg-slate-50 hover:text-orange-700 border border-slate-200/90 shadow-xs'
+            }`}
+          >
+            <span>🧪</span>
+            <span>6. Efikasi PKMK Formula</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold hidden md:inline ${
+              selectedTab === 'formula' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+            }`}>
+              ONS Efikasi
             </span>
           </button>
         </div>
@@ -661,7 +698,383 @@ export default function AnalyticalScientific() {
         </div>
       )}
 
+      {/* === TAB 6: EFIKASI PKMK/ONS FORMULA === */}
+      {selectedTab === 'formula' && (
+        <div className="space-y-6">
+
+          {/* Header Banner */}
+          <div className="bg-gradient-to-r from-orange-900 via-amber-900 to-orange-950 rounded-2xl p-6 text-white shadow-xl border border-orange-800/50">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="bg-orange-400/20 text-orange-200 border border-orange-300/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <FlaskConical className="w-3.5 h-3.5 text-orange-300" /> Clinical Efficacy Analytics
+                  </span>
+                  <span className="bg-amber-400/20 text-amber-200 border border-amber-300/30 px-3 py-1 rounded-full text-xs font-bold">
+                    ONS/PKMK Formula Comparison • HAZ · WAZ · WHZ · WGV
+                  </span>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-black tracking-tight !text-white" style={{ color: '#ffffff' }}>
+                  Analisis Efikasi PKMK / ONS Formula
+                </h3>
+                <p className="text-sm max-w-3xl leading-relaxed" style={{ color: '#fde68a' }}>
+                  Perbandingan efektivitas klinis tiap merek/formulasi PKMK berbasis outcome nyata kohort balita —
+                  meliputi <strong>mean HAZ (TB/U)</strong>, <strong>WAZ (BB/U)</strong>, <strong>WHZ (BB/TB)</strong>,
+                  dan <strong>Weight Gain Velocity</strong> (g/hari) Nelson catch-up standard.
+                </p>
+              </div>
+              <button
+                onClick={fetchFormulaData}
+                disabled={formulaLoading}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-xs font-bold transition shrink-0"
+              >
+                <RefreshCw className={`w-4 h-4 ${formulaLoading ? 'animate-spin' : ''}`} />
+                Sync Data
+              </button>
+            </div>
+          </div>
+
+          {/* Loading State */}
+          {formulaLoading && (
+            <div className="flex items-center justify-center py-16 text-orange-600">
+              <RefreshCw className="w-6 h-6 animate-spin mr-3" />
+              <span className="font-semibold text-sm">Menganalisis data efikasi formulasi...</span>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!formulaLoading && (!formulaData || formulaData.formulaEfikasi?.length === 0) && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-8 text-center">
+              <FlaskConical className="w-12 h-12 text-amber-400 mx-auto mb-3" />
+              <h4 className="font-bold text-amber-900 mb-1">Belum Ada Data Pemberian Formulasi</h4>
+              <p className="text-xs text-amber-700">Data analisis akan muncul setelah terdapat input pemberian PKMK pada menu Monitoring → Pemberian.</p>
+            </div>
+          )}
+
+          {/* Summary KPI Row */}
+          {!formulaLoading && formulaData?.formulaEfikasi?.length > 0 && (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  {
+                    label: 'Total Jenis Formulasi', icon: <FlaskConical className="w-5 h-5" />, bg: 'bg-orange-50', color: 'text-orange-600',
+                    value: formulaData.summary?.totalFormulaTypes || 0,
+                    sub: 'Merek PKMK/ONS Terdaftar'
+                  },
+                  {
+                    label: 'Balita Menerima PKMK', icon: <Baby className="w-5 h-5" />, bg: 'bg-amber-50', color: 'text-amber-600',
+                    value: formulaData.summary?.totalBalitaFormula || 0,
+                    sub: 'Kohort dengan Pemberian Aktual'
+                  },
+                  {
+                    label: 'Total Episode Pemberian', icon: <Activity className="w-5 h-5" />, bg: 'bg-teal-50', color: 'text-teal-600',
+                    value: (formulaData.summary?.totalEpisode || 0).toLocaleString(),
+                    sub: 'Catatan Pemberian Tercatat'
+                  },
+                  {
+                    label: 'Formula Terbaik (Efikasi)', icon: <Zap className="w-5 h-5" />, bg: 'bg-emerald-50', color: 'text-emerald-600',
+                    value: formulaData.summary?.bestFormula ? '🏆' : '—',
+                    sub: formulaData.summary?.bestFormula || 'Belum Tersedia'
+                  },
+                ].map((kpi, i) => (
+                  <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-tight">{kpi.label}</span>
+                      <div className={`w-8 h-8 rounded-lg ${kpi.bg} ${kpi.color} flex items-center justify-center`}>{kpi.icon}</div>
+                    </div>
+                    <div className="text-xl font-black text-slate-800">{kpi.value}</div>
+                    <p className="text-[10px] text-slate-500 mt-0.5">{kpi.sub}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Formula Cards — Per Merek */}
+              <div>
+                <h4 className="font-black text-slate-800 text-sm mb-3 flex items-center gap-2">
+                  <FlaskConical className="w-4 h-4 text-orange-600" />
+                  Profil Efikasi per Formulasi PKMK/ONS
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {formulaData.formulaEfikasi.map((f: any, i: number) => {
+                    const badgeColor = f.efikasi_klinis === 'Excellent' ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                      : f.efikasi_klinis === 'Good' ? 'bg-teal-100 text-teal-800 border-teal-300'
+                      : f.efikasi_klinis === 'Moderate' ? 'bg-amber-100 text-amber-800 border-amber-300'
+                      : 'bg-rose-100 text-rose-800 border-rose-300';
+                    const borderColor = f.efikasi_klinis === 'Excellent' ? 'border-emerald-300'
+                      : f.efikasi_klinis === 'Good' ? 'border-teal-300'
+                      : f.efikasi_klinis === 'Moderate' ? 'border-amber-300'
+                      : 'border-rose-300';
+                    const hazColor = f.mean_haz !== null
+                      ? (f.mean_haz >= -2.0 ? 'text-emerald-700' : f.mean_haz >= -3.0 ? 'text-amber-700' : 'text-rose-700')
+                      : 'text-slate-400';
+                    const velocityColor = f.mean_velocity_gday !== null
+                      ? (f.mean_velocity_gday >= 15 ? 'text-emerald-700' : f.mean_velocity_gday >= 10 ? 'text-amber-700' : 'text-rose-700')
+                      : 'text-slate-400';
+                    return (
+                      <div key={i} className={`bg-white rounded-xl border-2 ${borderColor} p-5 shadow-sm hover:shadow-md transition space-y-4`}>
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="text-orange-500">🧪</span>
+                              {i === 0 && <span className="text-amber-500 text-xs font-bold">🏆</span>}
+                            </div>
+                            <h5 className="font-extrabold text-slate-800 text-sm leading-tight">{f.formula}</h5>
+                            <p className="text-[11px] text-slate-500 mt-0.5">{f.n_balita} balita · {f.n_episode} episode</p>
+                          </div>
+                          <span className={`text-[10px] font-extrabold border px-2 py-1 rounded-lg uppercase tracking-wide shrink-0 ${badgeColor}`}>
+                            {f.efikasi_klinis}
+                          </span>
+                        </div>
+
+                        {/* Z-Score Metrics */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { label: 'HAZ (TB/U)', value: f.mean_haz !== null ? `${f.mean_haz} SD` : '—', color: hazColor, sub: 'Height-for-Age' },
+                            { label: 'WAZ (BB/U)', value: f.mean_waz !== null ? `${f.mean_waz} SD` : '—', color: 'text-blue-700', sub: 'Weight-for-Age' },
+                            { label: 'WHZ (BB/TB)', value: f.mean_whz !== null ? `${f.mean_whz} SD` : '—', color: 'text-indigo-700', sub: 'Weight-for-Ht' },
+                          ].map((m, idx) => (
+                            <div key={idx} className="bg-slate-50 rounded-lg p-2 text-center">
+                              <div className={`text-base font-black ${m.color}`}>{m.value}</div>
+                              <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wide mt-0.5">{m.label}</div>
+                              <div className="text-[9px] text-slate-400">{m.sub}</div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Velocity + Response Rate */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-orange-50 rounded-lg p-2.5">
+                            <div className={`text-sm font-black ${velocityColor}`}>
+                              {f.mean_velocity_gday !== null ? `${f.mean_velocity_gday} g/hr` : '—'}
+                            </div>
+                            <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wide">Weight Velocity</div>
+                            <div className="text-[9px] text-slate-400">Nelson: target ≥15 g/hr</div>
+                          </div>
+                          <div className="bg-emerald-50 rounded-lg p-2.5">
+                            <div className="text-sm font-black text-emerald-700">{f.response_rate_pct}%</div>
+                            <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wide">Response Rate</div>
+                            <div className="text-[9px] text-slate-400">Balita ≥15 g/hr</div>
+                          </div>
+                        </div>
+
+                        {/* HAZ Delta */}
+                        {f.mean_haz_delta !== null && (
+                          <div className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 ${
+                            f.mean_haz_delta > 0 ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'
+                          }`}>
+                            <ArrowUpRight className="w-3 h-3" />
+                            Catch-Up HAZ: {f.mean_haz_delta > 0 ? '+' : ''}{f.mean_haz_delta} SD (awal → akhir intervensi)
+                          </div>
+                        )}
+
+                        {/* Stunting Distribution */}
+                        <div>
+                          <div className="text-[9px] text-slate-500 font-semibold uppercase tracking-wide mb-1">Distribusi Status Gizi</div>
+                          <div className="flex rounded-full overflow-hidden h-2">
+                            {f.severe_stunting_pct > 0 && <div style={{ width: `${f.severe_stunting_pct}%` }} className="bg-rose-600" title={`Sangat Pendek ${f.severe_stunting_pct}%`} />}
+                            {f.stunted_pct > 0 && <div style={{ width: `${f.stunted_pct}%` }} className="bg-orange-400" title={`Pendek ${f.stunted_pct}%`} />}
+                            {f.normal_pct > 0 && <div style={{ width: `${f.normal_pct}%` }} className="bg-emerald-500" title={`Normal ${f.normal_pct}%`} />}
+                          </div>
+                          <div className="flex gap-3 mt-1">
+                            {[
+                              { label: 'Sangat Pendek', pct: f.severe_stunting_pct, color: 'bg-rose-600' },
+                              { label: 'Pendek', pct: f.stunted_pct, color: 'bg-orange-400' },
+                              { label: 'Normal+', pct: f.normal_pct, color: 'bg-emerald-500' },
+                            ].map((d, idx) => (
+                              <div key={idx} className="flex items-center gap-1">
+                                <div className={`w-2 h-2 rounded-full ${d.color}`} />
+                                <span className="text-[9px] text-slate-600">{d.label} {d.pct}%</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Charts Section — 2 columns */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* Chart 1: HAZ & WHZ Comparison */}
+                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                      <BarChart2 className="w-4 h-4 text-orange-600" />
+                      Komparasi Mean Z-Score per Formulasi
+                    </h4>
+                    <p className="text-[10px] text-slate-500">HAZ (TB/U) vs WHZ (BB/TB) — Mean Z-Score terakhir intervensi</p>
+                  </div>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={formulaData.formulaEfikasi} margin={{ top: 5, right: 10, left: -15, bottom: 40 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="formula" tick={{ fontSize: 9 }} angle={-20} textAnchor="end" />
+                      <YAxis tick={{ fontSize: 10 }} domain={['auto', 'auto']} />
+                      <Tooltip
+                        contentStyle={{ fontSize: 11, borderRadius: 8 }}
+                        formatter={(val: any, name: string) => [`${val} SD`, name === 'mean_haz' ? 'HAZ (TB/U)' : name === 'mean_waz' ? 'WAZ (BB/U)' : 'WHZ (BB/TB)']}
+                      />
+                      <Legend wrapperStyle={{ fontSize: '10px', paddingTop: 8 }} formatter={(v) => v === 'mean_haz' ? 'HAZ (TB/U)' : v === 'mean_waz' ? 'WAZ (BB/U)' : 'WHZ (BB/TB)'} />
+                      <Bar dataKey="mean_haz" name="mean_haz" fill="#f97316" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="mean_waz" name="mean_waz" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="mean_whz" name="mean_whz" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <div className="p-2 bg-orange-50 border border-orange-200 rounded-lg text-[10px] text-orange-900">
+                    <strong>Interpretasi:</strong> Nilai Z-score mendekati 0 (atau ≥ -2.0 SD) menunjukkan efikasi pemulihan gizi yang lebih baik. Nilai negatif yang tinggi (&lt;-3 SD) memerlukan evaluasi tambahan.
+                  </div>
+                </div>
+
+                {/* Chart 2: Weight Gain Velocity */}
+                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-amber-600" />
+                      Weight Gain Velocity per Formulasi (g/hari)
+                    </h4>
+                    <p className="text-[10px] text-slate-500">Kecepatan kenaikan berat badan — Nelson Catch-Up Standard ≥15 g/hari</p>
+                  </div>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <ComposedChart data={formulaData.formulaEfikasi} margin={{ top: 5, right: 10, left: -15, bottom: 40 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="formula" tick={{ fontSize: 9 }} angle={-20} textAnchor="end" />
+                      <YAxis tick={{ fontSize: 10 }} />
+                      <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} formatter={(val: any) => [`${val} g/hari`, 'Mean Velocity']} />
+                      <Bar dataKey="mean_velocity_gday" name="mean_velocity_gday" radius={[4, 4, 0, 0]}>
+                        {formulaData.formulaEfikasi.map((f: any, idx: number) => (
+                          <Cell key={idx} fill={f.mean_velocity_gday >= 15 ? '#16a34a' : f.mean_velocity_gday >= 10 ? '#d97706' : '#dc2626'} />
+                        ))}
+                      </Bar>
+                      <Line type="monotone" dataKey={() => 15} stroke="#6366f1" strokeDasharray="5 5" dot={false} name="Nelson Target (15 g/hr)" strokeWidth={2} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                  <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-[10px] text-amber-900">
+                    <strong>Referensi Nelson:</strong> Weight gain velocity ≥15 g/hari = catch-up adequacy. 🟢 ≥15 g/hr (Adekuat), 🟡 10–14 g/hr (Cukup), 🔴 &lt;10 g/hr (Tidak Adekuat).
+                  </div>
+                </div>
+              </div>
+
+              {/* Radar Chart — Multi-dimensional */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                      <Atom className="w-4 h-4 text-orange-600" />
+                      Analisis Multidimensi — Response Rate &amp; Efikasi Score
+                    </h4>
+                    <p className="text-[10px] text-slate-500">Response rate (≥15 g/hr) vs efikasi score klinis per formulasi</p>
+                  </div>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart
+                      data={formulaData.formulaEfikasi}
+                      layout="vertical"
+                      margin={{ top: 5, right: 20, left: 80, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis type="number" tick={{ fontSize: 10 }} domain={[0, 100]} />
+                      <YAxis type="category" dataKey="formula" tick={{ fontSize: 9 }} width={80} />
+                      <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} formatter={(val: any) => [`${val}%`, 'Response Rate']} />
+                      <Bar dataKey="response_rate_pct" name="Response Rate (%)" radius={[0, 4, 4, 0]}>
+                        {formulaData.formulaEfikasi.map((f: any, idx: number) => (
+                          <Cell key={idx} fill={f.response_rate_pct >= 60 ? '#16a34a' : f.response_rate_pct >= 40 ? '#d97706' : '#dc2626'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Statistical Insight Table */}
+                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                  <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <Microscope className="w-4 h-4 text-orange-600" />
+                    Tabel Statistik Efikasi Klinis
+                  </h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-slate-50 text-slate-600 uppercase text-[10px] tracking-wide">
+                          <th className="p-2 text-left font-bold">Formula</th>
+                          <th className="p-2 text-center font-bold">N</th>
+                          <th className="p-2 text-center font-bold">HAZ</th>
+                          <th className="p-2 text-center font-bold">WHZ</th>
+                          <th className="p-2 text-center font-bold">Vel.</th>
+                          <th className="p-2 text-center font-bold">Efikasi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {formulaData.formulaEfikasi.map((f: any, i: number) => {
+                          const efikasiBg = f.efikasi_klinis === 'Excellent' ? 'bg-emerald-100 text-emerald-800'
+                            : f.efikasi_klinis === 'Good' ? 'bg-teal-100 text-teal-800'
+                            : f.efikasi_klinis === 'Moderate' ? 'bg-amber-100 text-amber-800'
+                            : 'bg-rose-100 text-rose-800';
+                          return (
+                            <tr key={i} className={`border-b border-slate-100 ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+                              <td className="p-2 font-semibold text-slate-800 text-xs leading-tight">{f.formula}</td>
+                              <td className="p-2 text-center font-bold text-slate-700">{f.n_balita}</td>
+                              <td className={`p-2 text-center font-bold ${f.mean_haz !== null && f.mean_haz >= -2 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                {f.mean_haz !== null ? `${f.mean_haz}` : '—'}
+                              </td>
+                              <td className={`p-2 text-center font-bold ${f.mean_whz !== null && f.mean_whz >= -2 ? 'text-indigo-700' : 'text-slate-500'}`}>
+                                {f.mean_whz !== null ? `${f.mean_whz}` : '—'}
+                              </td>
+                              <td className={`p-2 text-center font-bold ${f.mean_velocity_gday !== null && f.mean_velocity_gday >= 15 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                                {f.mean_velocity_gday !== null ? `${f.mean_velocity_gday}` : '—'}
+                              </td>
+                              <td className="p-2 text-center">
+                                <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase ${efikasiBg}`}>
+                                  {f.efikasi_klinis}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Statistical Insight */}
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-5 space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-5 h-5 text-orange-600" />
+                  <h4 className="font-black text-sm text-orange-900">SIGMA AI — Statistical Insight Efikasi Formula</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {formulaData.formulaEfikasi.slice(0, 2).map((f: any, i: number) => (
+                    <div key={i} className={`p-3 rounded-lg border text-xs leading-relaxed ${
+                      i === 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'
+                    }`}>
+                      <div className="font-extrabold mb-1">{i === 0 ? '🏆 Formula Terbaik' : '⚠️ Formula Perlu Evaluasi'}: {f.formula}</div>
+                      <p>
+                        Berdasarkan analisis multidimensi ({f.n_balita} balita, {f.n_episode} episode pemberian),
+                        formula <strong>{f.formula}</strong> menunjukkan efikasi klinis <strong>{f.efikasi_klinis}</strong> dengan
+                        mean HAZ {f.mean_haz !== null ? `${f.mean_haz} SD` : 'tidak tersedia'},
+                        weight gain velocity {f.mean_velocity_gday !== null ? `${f.mean_velocity_gday} g/hari` : 'belum ada data'},
+                        dan response rate {f.response_rate_pct}% (balita mencapai ≥15 g/hari).
+                        {f.mean_haz_delta !== null && f.mean_haz_delta > 0
+                          ? ` Tren catch-up HAZ positif sebesar +${f.mean_haz_delta} SD mengindikasikan respons linear growth yang baik.`
+                          : ''
+                        }
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-orange-700 leading-relaxed">
+                  <strong>Metodologi:</strong> Efikasi Score dihitung berdasarkan composite metric: mean HAZ/WAZ/WHZ akhir intervensi (bobot 3),
+                  weight gain velocity vs Nelson 15 g/hari benchmark (bobot 3), delta HAZ catch-up (bobot 2), dan response rate ≥15 g/hr (bobot 2).
+                  Data bersumber dari tabel <code>monitoring_pkmk_pemberian</code> (join) <code>monitoring_antropometri</code> via kohort_id.
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {/* === FOOTER === */}
+
       <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-5 flex items-start gap-4">
         <BookOpen className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
         <div className="space-y-1">
