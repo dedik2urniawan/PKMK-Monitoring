@@ -29,6 +29,9 @@ export default function AnalyticalScientific() {
 
   const [formulaData, setFormulaData] = useState<any>(null);
   const [formulaLoading, setFormulaLoading] = useState(false);
+  const [aiInsight, setAiInsight] = useState<any>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -58,8 +61,36 @@ export default function AnalyticalScientific() {
     }
   };
 
+  const fetchAiInsight = async (formulaPayload: any) => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/ai/formula-advisor", {
+        method: "POST",
+        credentials: "include",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formulaEfikasi: formulaPayload?.formulaEfikasi || [],
+          summary: formulaPayload?.summary || {},
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setAiError(json.error || "Gagal memuat analisis AI");
+        return;
+      }
+      setAiInsight(json);
+    } catch (e: any) {
+      setAiError(e?.message || "Koneksi ke SIGMA AI gagal");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   useEffect(() => { fetchAnalytics(); }, []);
   useEffect(() => { if (selectedTab === 'formula' && !formulaData) fetchFormulaData(); }, [selectedTab]);
+
 
 
   const summary = data?.summary || {};
@@ -1036,37 +1067,196 @@ export default function AnalyticalScientific() {
                 </div>
               </div>
 
-              {/* AI Statistical Insight */}
-              <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-5 space-y-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="w-5 h-5 text-orange-600" />
-                  <h4 className="font-black text-sm text-orange-900">SIGMA AI — Statistical Insight Efikasi Formula</h4>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {formulaData.formulaEfikasi.slice(0, 2).map((f: any, i: number) => (
-                    <div key={i} className={`p-3 rounded-lg border text-xs leading-relaxed ${
-                      i === 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'
-                    }`}>
-                      <div className="font-extrabold mb-1">{i === 0 ? '🏆 Formula Terbaik' : '⚠️ Formula Perlu Evaluasi'}: {f.formula}</div>
-                      <p>
-                        Berdasarkan analisis multidimensi ({f.n_balita} balita, {f.n_episode} episode pemberian),
-                        formula <strong>{f.formula}</strong> menunjukkan efikasi klinis <strong>{f.efikasi_klinis}</strong> dengan
-                        mean HAZ {f.mean_haz !== null ? `${f.mean_haz} SD` : 'tidak tersedia'},
-                        weight gain velocity {f.mean_velocity_gday !== null ? `${f.mean_velocity_gday} g/hari` : 'belum ada data'},
-                        dan response rate {f.response_rate_pct}% (balita mencapai ≥15 g/hari).
-                        {f.mean_haz_delta !== null && f.mean_haz_delta > 0
-                          ? ` Tren catch-up HAZ positif sebesar +${f.mean_haz_delta} SD mengindikasikan respons linear growth yang baik.`
-                          : ''
-                        }
-                      </p>
+              {/* AI Statistical Insight — DYNAMIC via SIGMA AI Engine */}
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-5 space-y-4">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-orange-600" />
+                    <div>
+                      <h4 className="font-black text-sm text-orange-900">SIGMA AI — Clinical Efficacy Intelligence</h4>
+                      <p className="text-[10px] text-orange-700">Analisis klinis dinamis berbasis data real-time · Powered by Gemini AI</p>
                     </div>
-                  ))}
+                  </div>
+                  <button
+                    onClick={() => fetchAiInsight(formulaData)}
+                    disabled={aiLoading}
+                    className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white rounded-xl text-xs font-bold transition shrink-0 shadow-sm shadow-orange-500/25"
+                  >
+                    <Sparkles className={`w-3.5 h-3.5 ${aiLoading ? 'animate-pulse' : ''}`} />
+                    {aiLoading ? 'Menganalisis...' : aiInsight ? 'Refresh Analisis AI' : 'Generate Analisis AI'}
+                  </button>
                 </div>
-                <p className="text-[10px] text-orange-700 leading-relaxed">
-                  <strong>Metodologi:</strong> Efikasi Score dihitung berdasarkan composite metric: mean HAZ/WAZ/WHZ akhir intervensi (bobot 3),
-                  weight gain velocity vs Nelson 15 g/hari benchmark (bobot 3), delta HAZ catch-up (bobot 2), dan response rate ≥15 g/hr (bobot 2).
-                  Data bersumber dari tabel <code>monitoring_pkmk_pemberian</code> (join) <code>monitoring_antropometri</code> via kohort_id.
-                </p>
+
+                {/* Loading State */}
+                {aiLoading && (
+                  <div className="bg-white/70 rounded-xl p-6 flex flex-col items-center justify-center gap-3 border border-orange-200">
+                    <div className="flex items-center gap-3">
+                      <RefreshCw className="w-5 h-5 text-orange-500 animate-spin" />
+                      <span className="text-sm font-semibold text-orange-700">SIGMA AI sedang menganalisis data efikasi formulasi...</span>
+                    </div>
+                    <div className="flex gap-1">
+                      {[0, 1, 2, 3].map(i => (
+                        <div key={i} className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-orange-600 text-center">Model: {typeof window !== 'undefined' ? 'Gemini AI' : ''} · Memproses {formulaData?.formulaEfikasi?.length || 0} formulasi · {formulaData?.summary?.totalBalitaFormula || 0} balita kohort</p>
+                  </div>
+                )}
+
+                {/* Error State */}
+                {aiError && !aiLoading && (
+                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3">
+                    <ShieldAlert className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold text-rose-800">Gagal menghubungi SIGMA AI Engine</p>
+                      <p className="text-[11px] text-rose-700 mt-0.5">{aiError}</p>
+                      <button onClick={() => fetchAiInsight(formulaData)} className="text-[10px] text-rose-600 underline mt-1 hover:text-rose-800">Coba lagi</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Idle state (belum di-generate) */}
+                {!aiLoading && !aiError && !aiInsight && (
+                  <div className="bg-white/60 border border-orange-100 rounded-xl p-5 text-center space-y-2">
+                    <Sparkles className="w-10 h-10 text-orange-300 mx-auto" />
+                    <p className="text-sm font-semibold text-orange-700">Klik tombol <strong>"Generate Analisis AI"</strong> untuk mendapatkan insight klinis komprehensif dari SIGMA AI Engine</p>
+                    <p className="text-[10px] text-orange-600">AI akan menganalisis {formulaData?.formulaEfikasi?.length || 0} formulasi · {formulaData?.summary?.totalBalitaFormula || 0} balita · {(formulaData?.summary?.totalEpisode || 0).toLocaleString()} episode pemberian secara real-time</p>
+                  </div>
+                )}
+
+                {/* AI Result */}
+                {!aiLoading && !aiError && aiInsight?.analysis && (
+                  <div className="space-y-4">
+                    {/* Meta info */}
+                    <div className="flex flex-wrap items-center gap-2 text-[10px] text-orange-600">
+                      <span className="bg-orange-100 border border-orange-200 px-2 py-0.5 rounded-full font-bold">
+                        🤖 Model: {aiInsight.modelUsed || 'Gemini AI'}
+                      </span>
+                      <span className="bg-orange-100 border border-orange-200 px-2 py-0.5 rounded-full">
+                        📅 {aiInsight.generatedAt ? new Date(aiInsight.generatedAt).toLocaleString('id-ID') : ''}
+                      </span>
+                      <span className="bg-emerald-100 border border-emerald-200 text-emerald-700 px-2 py-0.5 rounded-full font-bold">✅ Analisis Real-Time</span>
+                    </div>
+
+                    {/* Overall Conclusion */}
+                    {aiInsight.analysis.overallConclusion && (
+                      <div className="bg-white border border-orange-200 rounded-xl p-4 space-y-1">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Atom className="w-4 h-4 text-orange-600" />
+                          <span className="text-xs font-extrabold text-orange-900 uppercase tracking-wide">Kesimpulan Komparatif Efikasi</span>
+                        </div>
+                        <p className="text-xs text-slate-700 leading-relaxed">{aiInsight.analysis.overallConclusion}</p>
+                      </div>
+                    )}
+
+                    {/* Best & Attention Formula */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {aiInsight.analysis.bestFormula && (
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">🏆</span>
+                            <span className="text-xs font-extrabold text-emerald-900">Formula Efikasi Terbaik</span>
+                          </div>
+                          <p className="text-sm font-black text-emerald-800">{aiInsight.analysis.bestFormula.name}</p>
+                          <p className="text-[11px] text-emerald-700 leading-relaxed">{aiInsight.analysis.bestFormula.rationale}</p>
+                        </div>
+                      )}
+                      {aiInsight.analysis.attentionFormula?.name && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">⚠️</span>
+                            <span className="text-xs font-extrabold text-amber-900">Formula Perlu Evaluasi</span>
+                          </div>
+                          <p className="text-sm font-black text-amber-800">{aiInsight.analysis.attentionFormula.name}</p>
+                          <p className="text-[11px] text-amber-700 leading-relaxed">{aiInsight.analysis.attentionFormula.rationale}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Per-Formula AI Insights */}
+                    {aiInsight.analysis.formulaInsights && aiInsight.analysis.formulaInsights.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5">
+                          <FlaskConical className="w-4 h-4 text-orange-600" />
+                          <span className="text-xs font-extrabold text-orange-900 uppercase tracking-wide">Analisis Klinis Per Formulasi</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {aiInsight.analysis.formulaInsights.map((fi: any, idx: number) => {
+                            const bgMap: Record<string, string> = {
+                              Excellent: 'bg-emerald-50 border-emerald-200',
+                              Good: 'bg-teal-50 border-teal-200',
+                              Moderate: 'bg-amber-50 border-amber-200',
+                              Poor: 'bg-rose-50 border-rose-200',
+                            };
+                            const badgeMap: Record<string, string> = {
+                              Excellent: 'bg-emerald-100 text-emerald-800',
+                              Good: 'bg-teal-100 text-teal-800',
+                              Moderate: 'bg-amber-100 text-amber-800',
+                              Poor: 'bg-rose-100 text-rose-800',
+                            };
+                            const bg = bgMap[fi.efikasiKlinis] || 'bg-slate-50 border-slate-200';
+                            const badge = badgeMap[fi.efikasiKlinis] || 'bg-slate-100 text-slate-700';
+                            return (
+                              <div key={idx} className={`rounded-xl border p-3.5 space-y-2 ${bg}`}>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-xs font-extrabold text-slate-800">🧪 {fi.formula}</span>
+                                  <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase ${badge}`}>{fi.efikasiKlinis}</span>
+                                </div>
+                                <p className="text-[11px] text-slate-700 leading-relaxed">{fi.clinicalNarrative}</p>
+                                {fi.keyStrength && (
+                                  <div className="text-[10px] text-emerald-700 flex items-start gap-1">
+                                    <CheckCircle2 className="w-3 h-3 mt-0.5 shrink-0" />
+                                    <span><strong>Keunggulan:</strong> {fi.keyStrength}</span>
+                                  </div>
+                                )}
+                                {fi.areaOfConcern && fi.areaOfConcern !== 'null' && (
+                                  <div className="text-[10px] text-amber-700 flex items-start gap-1">
+                                    <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
+                                    <span><strong>Perhatian:</strong> {fi.areaOfConcern}</span>
+                                  </div>
+                                )}
+                                <div className="text-[10px] text-blue-700 flex items-start gap-1">
+                                  <ArrowUpRight className="w-3 h-3 mt-0.5 shrink-0" />
+                                  <span><strong>Rekomendasi:</strong> {fi.recommendation}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Population Insight */}
+                    {aiInsight.analysis.populationLevelInsight && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Users className="w-4 h-4 text-blue-600" />
+                          <span className="text-xs font-extrabold text-blue-900 uppercase tracking-wide">Wawasan Tingkat Populasi</span>
+                        </div>
+                        <p className="text-[11px] text-blue-800 leading-relaxed">{aiInsight.analysis.populationLevelInsight}</p>
+                      </div>
+                    )}
+
+                    {/* Policy Recommendation */}
+                    {aiInsight.analysis.policyRecommendation && (
+                      <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Heart className="w-4 h-4 text-indigo-600" />
+                          <span className="text-xs font-extrabold text-indigo-900 uppercase tracking-wide">Rekomendasi Kebijakan Dinas Kesehatan</span>
+                        </div>
+                        <p className="text-[11px] text-indigo-800 leading-relaxed">{aiInsight.analysis.policyRecommendation}</p>
+                      </div>
+                    )}
+
+                    {/* Methodology note */}
+                    <p className="text-[10px] text-orange-700 leading-relaxed border-t border-orange-200 pt-3">
+                      <strong>Metodologi:</strong> Efikasi Score dihitung berdasarkan composite metric: mean HAZ/WAZ/WHZ akhir intervensi (bobot 3),
+                      weight gain velocity vs Nelson 15 g/hari benchmark (bobot 3), delta HAZ catch-up (bobot 2), dan response rate ≥15 g/hr (bobot 2).
+                      Narasi analisis dihasilkan secara <strong>real-time oleh SIGMA AI Engine (Gemini)</strong> berdasarkan data aktual kohort balita stunting.
+                    </p>
+                  </div>
+                )}
               </div>
             </>
           )}
