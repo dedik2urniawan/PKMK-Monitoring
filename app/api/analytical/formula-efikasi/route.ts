@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 import { createAdminClient } from "@/lib/supabase/server";
@@ -29,9 +29,45 @@ export async function GET(req: NextRequest) {
       pemberianQuery = pemberianQuery.in("kohort_id", Array.from(allowedKohortIds));
     }
     const { data: pemberianRaw } = await pemberianQuery.limit(10000);
-    const pemberian = userPuskesmasId
+
+    // === 2a. Fetch canonical formula names from ref_jenis_pkmk for normalization ===
+    const { data: refFormula } = await supabase
+      .from("ref_jenis_pkmk")
+      .select("id, nama_merk, kategori_usia, rentang_usia")
+      .eq("is_active", true);
+    const canonicalNames = new Set((refFormula || []).map((r: any) => r.nama_merk as string));
+
+    // Build normalization map: any variant → canonical name
+    // Handles legacy data: "Dangrow (12-59 bulan)" → "Dangrow", "Gain 100" → "SGM Ananda Gain 100", etc.
+    const normalizeFormula = (raw: string | null): string | null => {
+      if (!raw) return null;
+      const trimmed = raw.trim();
+      // Exact match first
+      if (canonicalNames.has(trimmed)) return trimmed;
+      // Substring match: find canonical where raw contains it or vice versa
+      for (const canonical of canonicalNames) {
+        if (trimmed.toLowerCase().includes(canonical.toLowerCase()) ||
+            canonical.toLowerCase().includes(trimmed.toLowerCase())) {
+          return canonical;
+        }
+      }
+      // Legacy hardcoded fallbacks
+      const lower = trimmed.toLowerCase();
+      if (lower.includes("dangrow") || lower.includes("gain & grow") || lower.includes("pkmk 1")) return "Dangrow";
+      if (lower.includes("isocal")) return "Isocal";
+      if (lower.includes("proteed")) return "Proteed";
+      if (lower.includes("optigrowth")) return "SGM Optigrowth";
+      if (lower.includes("ananda") || lower.includes("gain 100")) return "SGM Ananda Gain 100";
+      return trimmed; // keep as-is if no match found
+    };
+
+    const pemberian = (userPuskesmasId
       ? (pemberianRaw || []).filter((p: any) => allowedKohortIds.has(p.kohort_id))
-      : (pemberianRaw || []);
+      : (pemberianRaw || [])
+    ).map((p: any) => ({
+      ...p,
+      jenis_formulasi: normalizeFormula(p.jenis_formulasi),
+    })).filter((p: any) => p.jenis_formulasi !== null);
 
     // === 3. Fetch monitoring_antropometri ===
     let antroQuery = supabase
