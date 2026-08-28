@@ -1119,20 +1119,17 @@ export default function AnalyticalScientific() {
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                   {formulaData.formulaEfikasi.map((f: any, i: number) => {
-                    const badgeColor = f.efikasi_klinis === 'Excellent' ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                    const isPilot = f.is_pilot || f.n_balita < 5;
+                    const badgeColor = isPilot ? 'bg-slate-100 text-slate-700 border-slate-300'
+                      : f.efikasi_klinis === 'Excellent' ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                       : f.efikasi_klinis === 'Good' ? 'bg-teal-100 text-teal-800 border-teal-300'
                       : f.efikasi_klinis === 'Moderate' ? 'bg-amber-100 text-amber-800 border-amber-300'
                       : 'bg-rose-100 text-rose-800 border-rose-300';
-                    const borderColor = f.efikasi_klinis === 'Excellent' ? 'border-emerald-300'
+                    const borderColor = isPilot ? 'border-slate-200'
+                      : f.efikasi_klinis === 'Excellent' ? 'border-emerald-300'
                       : f.efikasi_klinis === 'Good' ? 'border-teal-300'
                       : f.efikasi_klinis === 'Moderate' ? 'border-amber-300'
                       : 'border-rose-300';
-                    const hazColor = f.mean_haz !== null
-                      ? (f.mean_haz >= -2.0 ? 'text-emerald-700' : f.mean_haz >= -3.0 ? 'text-amber-700' : 'text-rose-700')
-                      : 'text-slate-400';
-                    const velocityColor = f.mean_velocity_gday !== null
-                      ? (f.mean_velocity_gday >= 15 ? 'text-emerald-700' : f.mean_velocity_gday >= 10 ? 'text-amber-700' : 'text-rose-700')
-                      : 'text-slate-400';
                     return (
                       <div key={i} className={`bg-white rounded-xl border-2 ${borderColor} p-5 shadow-sm hover:shadow-md transition space-y-4`}>
                         {/* Header */}
@@ -1140,7 +1137,8 @@ export default function AnalyticalScientific() {
                           <div>
                             <div className="flex items-center gap-1.5 mb-1">
                               <span className="text-orange-500">🧪</span>
-                              {i === 0 && <span className="text-amber-500 text-xs font-bold">🏆</span>}
+                              {!isPilot && i === 0 && <span className="text-amber-500 text-xs font-bold">🏆 Rekomendasi Utama</span>}
+                              {isPilot && <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-bold">Data Pilot (n &lt; 5)</span>}
                             </div>
                             <h5 className="font-extrabold text-slate-800 text-sm leading-tight">{f.formula}</h5>
                             <p className="text-[11px] text-slate-500 mt-0.5">{f.n_balita} balita · {f.n_episode} episode</p>
@@ -1153,14 +1151,13 @@ export default function AnalyticalScientific() {
                         {/* Z-Score Metrics */}
                         <div className="grid grid-cols-3 gap-2">
                           {[
-                            { label: 'HAZ (TB/U)', value: f.mean_haz !== null ? `${f.mean_haz} SD` : '—', color: hazColor, sub: 'Height-for-Age' },
-                            { label: 'WAZ (BB/U)', value: f.mean_waz !== null ? `${f.mean_waz} SD` : '—', color: 'text-blue-700', sub: 'Weight-for-Age' },
-                            { label: 'WHZ (BB/TB)', value: f.mean_whz !== null ? `${f.mean_whz} SD` : '—', color: 'text-indigo-700', sub: 'Weight-for-Ht' },
+                            { label: 'HAZ', value: f.mean_haz ?? '—', color: 'text-orange-700' },
+                            { label: 'WAZ', value: f.mean_waz ?? '—', color: 'text-blue-700' },
+                            { label: 'WHZ', value: f.mean_whz ?? '—', color: 'text-indigo-700' },
                           ].map((m, idx) => (
                             <div key={idx} className="bg-slate-50 rounded-lg p-2 text-center">
-                              <div className={`text-base font-black ${m.color}`}>{m.value}</div>
-                              <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wide mt-0.5">{m.label}</div>
-                              <div className="text-[9px] text-slate-400">{m.sub}</div>
+                              <div className={`text-sm font-black ${m.color}`}>{m.value}</div>
+                              <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wide">{m.label}</div>
                             </div>
                           ))}
                         </div>
@@ -1168,16 +1165,18 @@ export default function AnalyticalScientific() {
                         {/* Velocity + Response Rate */}
                         <div className="grid grid-cols-2 gap-2">
                           <div className="bg-orange-50 rounded-lg p-2.5">
-                            <div className={`text-sm font-black ${velocityColor}`}>
-                              {f.mean_velocity_gday !== null ? `${f.mean_velocity_gday} g/hr` : '—'}
+                            <div className="text-[10px] font-bold text-orange-900">
+                              {f.mean_velocity_gkgday !== null ? `${f.mean_velocity_gkgday} g/kg/hr` : `${f.mean_velocity_gday ?? '—'} g/hr`}
                             </div>
-                            <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wide">Weight Velocity</div>
-                            <div className="text-[9px] text-slate-400">Nelson: target ≥15 g/hr</div>
+                            <div className="text-[9px] font-bold text-orange-800 uppercase tracking-wide mt-0.5">WHO Velocity</div>
+                            <div className="text-[9px] text-orange-600">Nelson: {f.mean_velocity_gday ?? '—'} g/hr</div>
                           </div>
                           <div className="bg-emerald-50 rounded-lg p-2.5">
-                            <div className="text-sm font-black text-emerald-700">{f.response_rate_pct}%</div>
-                            <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wide">Response Rate</div>
-                            <div className="text-[9px] text-slate-400">Balita ≥15 g/hr</div>
+                            <div className="text-base font-black text-emerald-800">
+                              {f.response_rate_pct ?? '—'}%
+                            </div>
+                            <div className="text-[9px] font-bold text-emerald-900 uppercase tracking-wide mt-0.5">Response Rate</div>
+                            <div className="text-[9px] text-emerald-700">Balita ≥15 g/hr</div>
                           </div>
                         </div>
 
@@ -1187,7 +1186,7 @@ export default function AnalyticalScientific() {
                             f.mean_haz_delta > 0 ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'
                           }`}>
                             <ArrowUpRight className="w-3 h-3" />
-                            Catch-Up HAZ: {f.mean_haz_delta > 0 ? '+' : ''}{f.mean_haz_delta} SD (awal → akhir intervensi)
+                            Catch-Up HAZ: {f.mean_haz_delta > 0 ? '+' : ''}{f.mean_haz_delta} SD
                           </div>
                         )}
 

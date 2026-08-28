@@ -155,12 +155,16 @@ export async function GET(req: NextRequest) {
         const meanWAZ = avg(stats.wazArr);
         const meanWHZ = avg(stats.whzArr);
         const meanHAZDelta = avg(stats.hazDeltaArr);
-        const meanVelocity = avg(stats.velocityArr);
-        const meanVelocityGkg = avg(stats.velocityGkgArr);
+        // Robust winsorization: clamp extreme measurement anomalies to physiological limits
+        const cleanedVelocitiesGday = stats.velocityArr.map(v => Math.max(-20, Math.min(45, v)));
+        const cleanedVelocitiesGkg = stats.velocityGkgArr.map(v => Math.max(-5, Math.min(25, v)));
+
+        const meanVelocity = avg(cleanedVelocitiesGday);
+        const meanVelocityGkg = avg(cleanedVelocitiesGkg);
         const nBalita = stats.kohortIds.size;
 
-        const responseCount = stats.velocityArr.filter(v => v >= 15).length;
-        const responseRate = stats.velocityArr.length > 0 ? Math.round((responseCount / nBalita) * 100) : 0;
+        const responseCount = cleanedVelocitiesGday.filter(v => v >= 15).length;
+        const responseRate = cleanedVelocitiesGday.length > 0 ? Math.round((responseCount / nBalita) * 100) : 0;
         const severePct = stats.hazArr.length > 0 ? Math.round((stats.hazArr.filter(z => z < -3.0).length / stats.hazArr.length) * 100) : 0;
         const stuntedPct = stats.hazArr.length > 0 ? Math.round((stats.hazArr.filter(z => z >= -3.0 && z < -2.0).length / stats.hazArr.length) * 100) : 0;
         const normalPct = stats.hazArr.length > 0 ? Math.round((stats.hazArr.filter(z => z >= -2.0).length / stats.hazArr.length) * 100) : 0;
@@ -169,19 +173,31 @@ export async function GET(req: NextRequest) {
         if (meanHAZ !== null && meanHAZ >= -2.0) efikasiScore += 3;
         else if (meanHAZ !== null && meanHAZ >= -2.5) efikasiScore += 2;
         else if (meanHAZ !== null && meanHAZ >= -3.0) efikasiScore += 1;
-        if (meanVelocity !== null && meanVelocity >= 15) efikasiScore += 3;
-        else if (meanVelocity !== null && meanVelocity >= 10) efikasiScore += 2;
-        else if (meanVelocity !== null && meanVelocity >= 5) efikasiScore += 1;
+
+        if (meanVelocityGkg !== null && meanVelocityGkg >= 5.0 && meanVelocityGkg <= 10.0) efikasiScore += 3; // WHO Optimal
+        else if (meanVelocityGkg !== null && meanVelocityGkg > 10.0) efikasiScore += 2; // Rapid
+        else if (meanVelocityGkg !== null && meanVelocityGkg >= 0) efikasiScore += 1; // Suboptimal
+
         if (meanHAZDelta !== null && meanHAZDelta > 0) efikasiScore += 2;
         if (responseRate >= 60) efikasiScore += 2;
         else if (responseRate >= 40) efikasiScore += 1;
 
-        const efikasiKlinis = efikasiScore >= 8 ? "Excellent" : efikasiScore >= 5 ? "Good" : efikasiScore >= 3 ? "Moderate" : "Poor";
+        // Statistical significance penalty for small pilot sample size (n < 5)
+        const isPilot = nBalita < 5;
+        const weightedScore = isPilot ? efikasiScore * 0.4 : nBalita < 10 ? efikasiScore * 0.8 : efikasiScore;
+
+        const efikasiKlinis = isPilot 
+          ? "Pilot Data (n<5)" 
+          : weightedScore >= 7 ? "Excellent" 
+          : weightedScore >= 4.5 ? "Good" 
+          : weightedScore >= 2.5 ? "Moderate" 
+          : "Poor";
 
         return {
           formula,
           n_balita: nBalita,
           n_episode: stats.episodeCount,
+          is_pilot: isPilot,
           mean_haz: meanHAZ !== null ? Math.round(meanHAZ * 100) / 100 : null,
           mean_waz: meanWAZ !== null ? Math.round(meanWAZ * 100) / 100 : null,
           mean_whz: meanWHZ !== null ? Math.round(meanWHZ * 100) / 100 : null,
@@ -193,10 +209,14 @@ export async function GET(req: NextRequest) {
           stunted_pct: stuntedPct,
           normal_pct: normalPct,
           efikasi_klinis: efikasiKlinis,
-          efikasi_score: efikasiScore,
+          efikasi_score: Math.round(weightedScore * 10) / 10,
         };
       })
-      .sort((a, b) => b.efikasi_score - a.efikasi_score);
+      .sort((a, b) => {
+        // Robust sort: Main cohorts (n >= 5) first by weighted score, then pilot cohorts
+        if (a.is_pilot !== b.is_pilot) return a.is_pilot ? 1 : -1;
+        return b.efikasi_score - a.efikasi_score;
+      });
 
     const totalBalitaFormula = new Set(
       (pemberian || []).map((p: any) => kohortToBalita.get(p.kohort_id)).filter(Boolean)
@@ -208,7 +228,7 @@ export async function GET(req: NextRequest) {
         totalFormulaTypes: formulaEfikasi.length,
         totalBalitaFormula,
         totalEpisode: (pemberian || []).length,
-        bestFormula: formulaEfikasi[0]?.formula || null,
+        bestFormula: formulaEfikasi.find((f: any) => !f.is_pilot)?.formula || formulaEfikasi[0]?.formula || null,
       },
     });
   } catch (err: any) {
