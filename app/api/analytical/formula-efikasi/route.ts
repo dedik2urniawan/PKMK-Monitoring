@@ -92,13 +92,18 @@ export async function GET(req: NextRequest) {
       if (!exL || Number(a.minggu_ke) > Number(exL.minggu_ke)) lastAntroByKohort.set(a.kohort_id, a);
     });
 
-    // === 5. Weight velocity per kohort ===
-    const velocityByKohort = new Map<string, number[]>();
+    // === 5. Weight velocity per kohort (WHO g/kg/day & Nelson g/day) ===
+    const velocityByKohort = new Map<string, { gday: number[]; gkgday: number[] }>();
     (antroRaw || []).forEach((a: any) => {
       if (a.delta_bb_kg != null && Number(a.delta_bb_kg) > 0) {
-        const v = (Number(a.delta_bb_kg) * 1000) / 7;
-        if (!velocityByKohort.has(a.kohort_id)) velocityByKohort.set(a.kohort_id, []);
-        velocityByKohort.get(a.kohort_id)!.push(v);
+        const vGday = (Number(a.delta_bb_kg) * 1000) / 7;
+        const bb = Number(a.bb_kg) || 7.0;
+        const vGkg = (Number(a.delta_bb_kg) * 1000) / (bb * 7);
+        if (!velocityByKohort.has(a.kohort_id)) {
+          velocityByKohort.set(a.kohort_id, { gday: [], gkgday: [] });
+        }
+        velocityByKohort.get(a.kohort_id)!.gday.push(vGday);
+        velocityByKohort.get(a.kohort_id)!.gkgday.push(vGkg);
       }
     });
 
@@ -106,14 +111,14 @@ export async function GET(req: NextRequest) {
     const formulaStats: Record<string, {
       kohortIds: Set<string>;
       hazArr: number[]; wazArr: number[]; whzArr: number[];
-      hazDeltaArr: number[]; velocityArr: number[]; episodeCount: number;
+      hazDeltaArr: number[]; velocityArr: number[]; velocityGkgArr: number[]; episodeCount: number;
     }> = {};
 
     (pemberian || []).forEach((p: any) => {
       const f = p.jenis_formulasi;
       if (!f) return;
       if (!formulaStats[f]) {
-        formulaStats[f] = { kohortIds: new Set(), hazArr: [], wazArr: [], whzArr: [], hazDeltaArr: [], velocityArr: [], episodeCount: 0 };
+        formulaStats[f] = { kohortIds: new Set(), hazArr: [], wazArr: [], whzArr: [], hazDeltaArr: [], velocityArr: [], velocityGkgArr: [], episodeCount: 0 };
       }
       formulaStats[f].kohortIds.add(p.kohort_id);
       formulaStats[f].episodeCount++;
@@ -134,8 +139,11 @@ export async function GET(req: NextRequest) {
         if (last && first && last.zs_tbu != null && first.zs_tbu != null) {
           stats.hazDeltaArr.push(Number(last.zs_tbu) - Number(first.zs_tbu));
         }
-        const velocities = velocityByKohort.get(kohortId) || [];
-        stats.velocityArr.push(...velocities);
+        const vObj = velocityByKohort.get(kohortId);
+        if (vObj) {
+          stats.velocityArr.push(...vObj.gday);
+          stats.velocityGkgArr.push(...vObj.gkgday);
+        }
       });
     });
 
@@ -148,6 +156,7 @@ export async function GET(req: NextRequest) {
         const meanWHZ = avg(stats.whzArr);
         const meanHAZDelta = avg(stats.hazDeltaArr);
         const meanVelocity = avg(stats.velocityArr);
+        const meanVelocityGkg = avg(stats.velocityGkgArr);
         const nBalita = stats.kohortIds.size;
 
         const responseCount = stats.velocityArr.filter(v => v >= 15).length;
@@ -178,6 +187,7 @@ export async function GET(req: NextRequest) {
           mean_whz: meanWHZ !== null ? Math.round(meanWHZ * 100) / 100 : null,
           mean_haz_delta: meanHAZDelta !== null ? Math.round(meanHAZDelta * 100) / 100 : null,
           mean_velocity_gday: meanVelocity !== null ? Math.round(meanVelocity * 10) / 10 : null,
+          mean_velocity_gkgday: meanVelocityGkg !== null ? Math.round(meanVelocityGkg * 100) / 100 : null,
           response_rate_pct: responseRate,
           severe_stunting_pct: severePct,
           stunted_pct: stuntedPct,
