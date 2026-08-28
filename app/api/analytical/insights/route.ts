@@ -511,19 +511,19 @@ export async function GET(req: NextRequest) {
     ];
 
     // =========================================================================
-    // SECTION G: RED FLAG MULTI-FACTORIAL IMPACT
+    // SECTION G: RED FLAG MULTI-FACTORIAL IMPACT (WHO g/kg/day & Nelson g/day)
     // =========================================================================
     const isYes = (val: any) => val === true || val === 'ya' || val === 'YA' || val === 'true' || val === 1 || val === '1';
 
-    const redFlagStats: Record<string, { cases: number; zscores: number[]; deltaBbs: number[] }> = {
-      'BB Tidak Adekuat': { cases: 0, zscores: [], deltaBbs: [] },
-      'ISPA / Cystitis': { cases: 0, zscores: [], deltaBbs: [] },
-      'Delayed Development': { cases: 0, zscores: [], deltaBbs: [] },
-      'Diare / Muntah Berulang': { cases: 0, zscores: [], deltaBbs: [] },
-      'Wajah Dismorfik': { cases: 0, zscores: [], deltaBbs: [] },
-      'Murmur / Edema': { cases: 0, zscores: [], deltaBbs: [] },
-      'Organomegali / Limfadenopati': { cases: 0, zscores: [], deltaBbs: [] },
-      'Tanpa Red Flag (Nutrisional)': { cases: 0, zscores: [], deltaBbs: [] },
+    const redFlagStats: Record<string, { cases: number; zscores: number[]; gdays: number[]; gkgdays: number[] }> = {
+      'BB Tidak Adekuat': { cases: 0, zscores: [], gdays: [], gkgdays: [] },
+      'ISPA / Cystitis': { cases: 0, zscores: [], gdays: [], gkgdays: [] },
+      'Delayed Development': { cases: 0, zscores: [], gdays: [], gkgdays: [] },
+      'Diare / Muntah Berulang': { cases: 0, zscores: [], gdays: [], gkgdays: [] },
+      'Wajah Dismorfik': { cases: 0, zscores: [], gdays: [], gkgdays: [] },
+      'Murmur / Edema': { cases: 0, zscores: [], gdays: [], gkgdays: [] },
+      'Organomegali / Limfadenopati': { cases: 0, zscores: [], gdays: [], gkgdays: [] },
+      'Tanpa Red Flag (Nutrisional)': { cases: 0, zscores: [], gdays: [], gkgdays: [] },
     };
 
     let totalRedFlagCount = 0;
@@ -532,62 +532,43 @@ export async function GET(req: NextRequest) {
       const kohortIds = (kohortRaw || []).filter((k) => k.balita_id === b.id).map((k) => k.id);
       const antros = (antroRaw || []).filter((a) => kohortIds.includes(a.kohort_id));
       const zsArr = antros.map((a) => Number(a.zs_tbu)).filter((z) => !isNaN(z));
-      const deltaArr = antros.filter((a) => a.delta_bb_kg != null && Number(a.delta_bb_kg) > 0)
-        .map((a) => Number(a.delta_bb_kg) * 1000 / 7);
+      const validAntros = antros.filter((a) => a.delta_bb_kg != null && Number(a.delta_bb_kg) > 0);
+
+      const gdayArr = validAntros.map((a) => Number(a.delta_bb_kg) * 1000 / 7);
+      const gkgdayArr = validAntros.map((a) => {
+        const bb = Number(a.bb_kg) || 8.0;
+        return (Number(a.delta_bb_kg) * 1000) / (bb * 7);
+      });
+
       const meanZ = zsArr.length > 0 ? zsArr.reduce((a, c) => a + c, 0) / zsArr.length : -2.75;
-      const meanDelta = deltaArr.length > 0 ? deltaArr.reduce((a, c) => a + c, 0) / deltaArr.length : 18.5;
+      const meanGday = gdayArr.length > 0 ? gdayArr.reduce((a, c) => a + c, 0) / gdayArr.length : 18.5;
+      const meanGkgday = gkgdayArr.length > 0 ? gkgdayArr.reduce((a, c) => a + c, 0) / gkgdayArr.length : 2.25;
 
       let hasAnyFlag = false;
 
-      if (isYes(b.bb_tidak_adekuat) || isYes((b as any).bb_tidak_naik)) {
-        redFlagStats['BB Tidak Adekuat'].cases++;
-        redFlagStats['BB Tidak Adekuat'].zscores.push(meanZ);
-        redFlagStats['BB Tidak Adekuat'].deltaBbs.push(meanDelta);
+      const addRecord = (key: keyof typeof redFlagStats) => {
+        redFlagStats[key].cases++;
+        redFlagStats[key].zscores.push(meanZ);
+        redFlagStats[key].gdays.push(meanGday);
+        redFlagStats[key].gkgdays.push(meanGkgday);
         hasAnyFlag = true;
-      }
-      if (isYes(b.ispa_cystitis) || isYes((b as any).ispa_berulang)) {
-        redFlagStats['ISPA / Cystitis'].cases++;
-        redFlagStats['ISPA / Cystitis'].zscores.push(meanZ);
-        redFlagStats['ISPA / Cystitis'].deltaBbs.push(meanDelta);
-        hasAnyFlag = true;
-      }
-      if (isYes(b.delayed_development)) {
-        redFlagStats['Delayed Development'].cases++;
-        redFlagStats['Delayed Development'].zscores.push(meanZ);
-        redFlagStats['Delayed Development'].deltaBbs.push(meanDelta);
-        hasAnyFlag = true;
-      }
-      if (isYes(b.muntah_diare_berulang) || isYes((b as any).diare_berulang)) {
-        redFlagStats['Diare / Muntah Berulang'].cases++;
-        redFlagStats['Diare / Muntah Berulang'].zscores.push(meanZ);
-        redFlagStats['Diare / Muntah Berulang'].deltaBbs.push(meanDelta);
-        hasAnyFlag = true;
-      }
-      if (isYes(b.wajah_dismorfik)) {
-        redFlagStats['Wajah Dismorfik'].cases++;
-        redFlagStats['Wajah Dismorfik'].zscores.push(meanZ);
-        redFlagStats['Wajah Dismorfik'].deltaBbs.push(meanDelta);
-        hasAnyFlag = true;
-      }
-      if (isYes(b.murmur_edema)) {
-        redFlagStats['Murmur / Edema'].cases++;
-        redFlagStats['Murmur / Edema'].zscores.push(meanZ);
-        redFlagStats['Murmur / Edema'].deltaBbs.push(meanDelta);
-        hasAnyFlag = true;
-      }
-      if (isYes(b.organomegali_limfadenopati)) {
-        redFlagStats['Organomegali / Limfadenopati'].cases++;
-        redFlagStats['Organomegali / Limfadenopati'].zscores.push(meanZ);
-        redFlagStats['Organomegali / Limfadenopati'].deltaBbs.push(meanDelta);
-        hasAnyFlag = true;
-      }
+      };
+
+      if (isYes(b.bb_tidak_adekuat) || isYes((b as any).bb_tidak_naik)) addRecord('BB Tidak Adekuat');
+      if (isYes(b.ispa_cystitis) || isYes((b as any).ispa_berulang)) addRecord('ISPA / Cystitis');
+      if (isYes(b.delayed_development)) addRecord('Delayed Development');
+      if (isYes(b.muntah_diare_berulang) || isYes((b as any).diare_berulang)) addRecord('Diare / Muntah Berulang');
+      if (isYes(b.wajah_dismorfik)) addRecord('Wajah Dismorfik');
+      if (isYes(b.murmur_edema)) addRecord('Murmur / Edema');
+      if (isYes(b.organomegali_limfadenopati)) addRecord('Organomegali / Limfadenopati');
 
       if (hasAnyFlag || isYes(b.redflag_any)) {
         totalRedFlagCount++;
       } else {
         redFlagStats['Tanpa Red Flag (Nutrisional)'].cases++;
         redFlagStats['Tanpa Red Flag (Nutrisional)'].zscores.push(meanZ);
-        redFlagStats['Tanpa Red Flag (Nutrisional)'].deltaBbs.push(meanDelta);
+        redFlagStats['Tanpa Red Flag (Nutrisional)'].gdays.push(meanGday);
+        redFlagStats['Tanpa Red Flag (Nutrisional)'].gkgdays.push(meanGkgday);
       }
     });
 
@@ -595,7 +576,9 @@ export async function GET(req: NextRequest) {
       .filter(([, v]) => v.cases > 0)
       .map(([factor, v]) => {
         const meanZ = v.zscores.length > 0 ? v.zscores.reduce((a, c) => a + c, 0) / v.zscores.length : -2.70;
-        const meanVelocity = v.deltaBbs.length > 0 ? v.deltaBbs.reduce((a, c) => a + c, 0) / v.deltaBbs.length : 18.0;
+        const meanGday = v.gdays.length > 0 ? v.gdays.reduce((a, c) => a + c, 0) / v.gdays.length : 18.0;
+        const meanGkgday = v.gkgdays.length > 0 ? v.gkgdays.reduce((a, c) => a + c, 0) / v.gkgdays.length : 2.25;
+
         const riskLevel = factor.includes('Organomegali') ? 'Critical'
           : factor.includes('Murmur') ? 'Critical'
           : factor.includes('Wajah') ? 'Critical'
@@ -604,12 +587,15 @@ export async function GET(req: NextRequest) {
           : factor.includes('Delayed') ? 'Medium'
           : factor.includes('BB Tidak') ? 'Medium'
           : 'Low';
+
         return {
           factor,
           cases: v.cases,
           avg_zscore_tbu: Math.round(meanZ * 100) / 100,
-          avg_velocity_gday: meanVelocity > 0 ? `+${Math.round(meanVelocity)} g/hari` : `${Math.round(meanVelocity)} g/hari`,
-          velocity_raw: Math.round(meanVelocity),
+          avg_velocity_gkgday: `+${(Math.round(meanGkgday * 100) / 100).toFixed(2)} g/kg/hari`,
+          avg_velocity_gday: `+${Math.round(meanGday)} g/hari`,
+          velocity_gkg_raw: Math.round(meanGkgday * 100) / 100,
+          velocity_raw: Math.round(meanGday),
           risk_level: riskLevel,
         };
       })

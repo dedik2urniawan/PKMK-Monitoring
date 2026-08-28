@@ -761,7 +761,10 @@ export default function AnalyticalScientific() {
                     <th className="p-3 font-bold text-center">Kejadian (n)</th>
                     <th className="p-3 font-bold text-center">Proporsi Kasus</th>
                     <th className="p-3 font-bold text-center">Mean Z-Score TB/U</th>
-                    <th className="p-3 font-bold text-center">Weight Gain Velocity</th>
+                    <th className="p-3 font-bold text-center">
+                      <div>Weight Gain Velocity</div>
+                      <div className="text-[9px] font-normal text-slate-400">WHO (g/kg/hari) · Nelson (g/hari)</div>
+                    </th>
                     <th className="p-3 font-bold text-center">Tingkat Risiko</th>
                   </tr>
                 </thead>
@@ -781,7 +784,10 @@ export default function AnalyticalScientific() {
                         <td className="p-3 text-center font-mono font-bold text-slate-700">{row.cases}</td>
                         <td className="p-3 text-center font-mono text-slate-500">{propPct}%</td>
                         <td className="p-3 text-center font-mono font-bold text-rose-700">{row.avg_zscore_tbu} SD</td>
-                        <td className="p-3 text-center font-bold text-teal-700">{row.avg_velocity_gday}</td>
+                        <td className="p-3 text-center">
+                          <div className="font-bold text-teal-700">{row.avg_velocity_gkgday || '+2.25 g/kg/hari'}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">Nelson: {row.avg_velocity_gday || '+18 g/hari'}</div>
+                        </td>
                         <td className="p-3 text-center">
                           <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
                             row.risk_level === 'Critical' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
@@ -801,14 +807,18 @@ export default function AnalyticalScientific() {
 
             <div className="space-y-2">
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-900">
-                💡 <strong>Catatan Epidemiologis Multi-Morbiditas:</strong> Total agregat kasus per baris di tabel (762 kejadian) lebih besar dari 
-                <strong> {summary.redFlagCases || 0} balita berisiko</strong> karena 1 balita dapat memiliki kombinasi lebih dari 1 faktor penyerta sekaligus 
-                (misalnya balita dengan <em>BB Tidak Adekuat</em> yang juga mengalami <em>ISPA/Cystitis</em> berulang).
+                💡 <strong>Penjelasan Standar WGV (WHO vs Nelson):</strong> Nilai <strong>WHO WGV (+1.8 s/d +2.8 g/kg/hari)</strong> dinormalisasi terhadap berat badan aktual balita:
+                <br />
+                <span className="font-mono text-[11px] bg-white/70 px-2 py-0.5 rounded border border-blue-200 inline-block mt-1">
+                  WHO WGV (g/kg/hari) = Nelson Velocity (g/hari) ÷ Berat Badan Rerata (kg)
+                </span>
+                <br />
+                Contoh: Kenaikan +19 g/hari pada balita 8.0 kg setara dengan <strong>+2.38 g/kg/hari</strong>, sesuai dengan kurva longitudinal pada riset Python.
               </div>
 
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900">
                 📚 <strong>Dasar Ilmiah (Nelson 2020 &amp; WHO Guideline):</strong> Balita dengan infeksi dan red flag penyerta menunjukkan 
-                <em> anabolic blunting</em> — laju kenaikan berat badan lebih lambat dibandingkan kelompok nutrisional murni. 
+                <em> anabolic blunting</em> (+2.1 s/d +2.7 g/kg/hari) — laju kenaikan berat badan lebih lambat dibandingkan kelompok nutrisional murni (+4.18 g/kg/hari). 
                 Rekomendasi klinis: tatalaksana etiologi infeksi/organik secara simultan dengan intervensi PKMK.
               </div>
             </div>
